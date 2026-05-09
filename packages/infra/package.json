@@ -1,0 +1,14 @@
+{
+  "name": "@ojapaddi/infra",
+  "private": true,
+  "type": "module",
+  "scripts": {},
+  "dependencies": {
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "^6",
+    "@ojapaddi/config": "workspace:*"
+  }
+}

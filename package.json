@@ -1,0 +1,32 @@
+{
+  "name": "ojapaddi",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "check-types": "turbo check-types",
+    "dev:native": "turbo -F native dev",
+    "dev:server": "turbo -F server dev",
+    "db:push": "turbo -F @ojapaddi/db db:push",
+    "db:studio": "turbo -F @ojapaddi/db db:studio",
+    "db:generate": "turbo -F @ojapaddi/db db:generate",
+    "db:migrate": "turbo -F @ojapaddi/db db:migrate"
+  },
+  "packageManager": "pnpm@10.30.3",
+  "dependencies": {
+    "dotenv": "catalog:",
+    "zod": "catalog:",
+    "@ojapaddi/env": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^6",
+    "@types/node": "^22.13.14",
+    "@ojapaddi/config": "workspace:*",
+    "turbo": "^2.8.12"
+  }
+}

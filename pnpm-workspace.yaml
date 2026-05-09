@@ -1,0 +1,8 @@
+packages:
+  - apps/*
+  - packages/*
+catalog:
+  dotenv: ^17.2.2
+  zod: ^4.1.13
+  better-auth: 1.6.9
+  "@better-auth/expo": 1.6.9

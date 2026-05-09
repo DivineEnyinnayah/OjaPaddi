@@ -1,0 +1,27 @@
+{
+  "name": "@ojapaddi/db",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio",
+    "db:migrate": "drizzle-kit migrate"
+  },
+  "devDependencies": {
+    "typescript": "^6",
+    "@ojapaddi/config": "workspace:*",
+    "drizzle-kit": "^0.31.8"
+  },
+  "dependencies": {
+    "dotenv": "catalog:",
+    "zod": "catalog:",
+    "@ojapaddi/env": "workspace:*",
+    "drizzle-orm": "^0.45.1",
+    "@neondatabase/serverless": "^1.0.2"
+  }
+}
