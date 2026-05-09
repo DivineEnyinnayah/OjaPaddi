@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "scheme": "ojapaddi",
+    "userInterfaceStyle": "automatic",
+    "orientation": "default",
+    "web": {
+      "bundler": "metro"
+    },
+    "name": "ojapaddi",
+    "slug": "ojapaddi",
+    "plugins": ["expo-font"],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
