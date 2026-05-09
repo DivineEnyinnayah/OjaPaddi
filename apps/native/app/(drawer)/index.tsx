@@ -1,12 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Button, Chip, Separator, Spinner, Surface, useThemeColor } from "heroui-native";
 import { Text, View } from "react-native";
+import { useState } from "react";
 
 import { Container } from "@/components/container";
 
 export default function Home() {
   const successColor = useThemeColor("success");
   const dangerColor = useThemeColor("danger");
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
   return (
     <Container className="px-4 pb-4">

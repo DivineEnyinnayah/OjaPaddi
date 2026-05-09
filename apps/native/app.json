@@ -3,15 +3,36 @@
     "scheme": "ojapaddi",
     "userInterfaceStyle": "automatic",
     "orientation": "default",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#FFFBF5"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ojapaddi.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFBF5"
+      },
+      "package": "com.ojapaddi.app"
+    },
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
     },
     "name": "ojapaddi",
     "slug": "ojapaddi",
-    "plugins": ["expo-font"],
+    "plugins": [
+      "expo-font",
+      "expo-router",
+      "expo-web-browser"
+    ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     }
   }
 }

@@ -18,7 +18,7 @@
     "build": "turbo build",
     "check-types": "turbo check-types",
     "dev:native": "turbo -F native dev",
-    "dev:server": "turbo -F server dev",
+    "dev:server": "bun --env-file=apps/server/.env run --hot apps/server/src/server.ts",
     "db:push": "turbo -F @ojapaddi/db db:push",
     "db:studio": "turbo -F @ojapaddi/db db:studio",
     "db:generate": "turbo -F @ojapaddi/db db:generate",
