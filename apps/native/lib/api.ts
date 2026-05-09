@@ -1,4 +1,4 @@
-import Constants from 'expo-constants';
+import { useAuthStore } from '../stores/authStore';
 
 const BASE_URL = process.env.EXPO_PUBLIC_SERVER_URL || 'http://localhost:3001';
 
@@ -8,12 +8,15 @@ export async function apiRequest<T>(
 ): Promise<{ success: boolean; data?: T; error?: { code: string; message: string } }> {
   const url = `${BASE_URL}${endpoint}`;
 
+  const { accessToken } = useAuthStore.getState();
+
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
-  // If we have a token in storage, we should add it here. 
-  // For now, let's assume it's handled by the caller or we'll add it in a more central way.
+  if (accessToken) {
+    defaultHeaders['Authorization'] = `Bearer ${accessToken}`;
+  }
 
   const response = await fetch(url, {
     ...options,

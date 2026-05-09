@@ -97,7 +97,7 @@ export default function OnboardingScreen() {
       
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      router.replace('/(tabs)');
+      router.replace('/');
     } catch (error) {
       Alert.alert('Error', 'Failed to set up your business. Please try again.');
     } finally {
@@ -249,7 +249,7 @@ export default function OnboardingScreen() {
 
             <TouchableOpacity 
               style={styles.skipButton}
-              onPress={() => router.replace('/(tabs)')}
+              onPress={() => router.replace('/')}
             >
               <Text style={styles.skipText}>Skip for now</Text>
             </TouchableOpacity>

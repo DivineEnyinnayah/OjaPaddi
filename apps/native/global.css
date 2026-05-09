@@ -1,3 +1,56 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --background: #FFFFFF;
+  --foreground: #1A1A1A;
+  --surface: #FFFFFF;
+  --surface-foreground: #1A1A1A;
+  --muted: #6B7280;
+  --accent: #F5A623;
+  --accent-foreground: #FFFFFF;
+  --accent-hover: #F6B647;
+  --accent-soft: #FEF6E7;
+  --accent-soft-hover: #FDF0D5;
+  --default: #E5E7EB;
+  --default-foreground: #1A1A1A;
+  --default-hover: #D1D5DB;
+  --danger: #E53935;
+  --danger-foreground: #FFFFFF;
+  --danger-hover: #D32F2F;
+  --danger-soft: #FFEBEE;
+  --danger-soft-hover: #FFCDD2;
+  --success: #2E7D32;
+  --success-foreground: #FFFFFF;
+  --success-hover: #216F26;
+  --warning: #F5A623;
+  --warning-foreground: #FFFFFF;
+  --warning-hover: #E89512;
+  --border: #E5E7EB;
+  --separator: #E5E7EB;
+  --focus: #F5A623;
+  --link: #1A6B3C;
+  --radius: 12px;
+
+  /* Explicitly define --color- prefixed variables for heroui-native */
+  --color-background: #FFFFFF;
+  --color-foreground: #1A1A1A;
+  --color-accent: #F5A623;
+  --color-accent-foreground: #FFFFFF;
+  --color-accent-hover: #F6B647;
+  --color-default: #E5E7EB;
+  --color-default-foreground: #1A1A1A;
+  --color-default-hover: #D1D5DB;
+  --color-danger: #E53935;
+  --color-danger-foreground: #FFFFFF;
+  --color-danger-hover: #D32F2F;
+  --color-success: #2E7D32;
+  --color-success-foreground: #FFFFFF;
+  --color-success-hover: #216F26;
+  --color-warning: #F5A623;
+  --color-warning-foreground: #FFFFFF;
+  --color-warning-hover: #E89512;
+  --color-muted: #6B7280;
+  --color-border: #E5E7EB;
+}

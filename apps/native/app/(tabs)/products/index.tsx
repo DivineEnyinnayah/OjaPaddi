@@ -25,7 +25,7 @@ export default function ProductsScreen() {
   const renderProduct = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={styles.productCard}
-      onPress={() => router.push(`/(tabs)/products/${item.id}`)}
+      onPress={() => router.push({ pathname: '/products/[id]', params: { id: item.id } })}
     >
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.name}</Text>
@@ -64,7 +64,7 @@ export default function ProductsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Products</Text>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/products/add')}>
+        <TouchableOpacity onPress={() => router.push('/products/add')}>
           <Ionicons name="add-circle" size={32} color="#F59E0B" />
         </TouchableOpacity>
       </View>
@@ -84,7 +84,7 @@ export default function ProductsScreen() {
             <Button
               size="lg"
               style={{ marginTop: 16 }}
-              onPress={() => router.push('/(tabs)/products/add')}
+              onPress={() => router.push('/products/add')}
             >
               Add Product
             </Button>
@@ -94,7 +94,7 @@ export default function ProductsScreen() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push('/(tabs)/products/add')}
+        onPress={() => router.push('/products/add')}
       >
         <Ionicons name="add" size={30} color="#FFF" />
       </TouchableOpacity>

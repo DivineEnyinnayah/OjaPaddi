@@ -6,10 +6,13 @@ export const authRoutes = new Hono();
 authRoutes.post("/register", async (c) => {
   try {
     const body = await c.req.json();
+    console.log("[AUTH] Register attempt for:", body.email);
     const result = await registerUser(body);
     return c.json({ success: true, data: result }, 201);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "REGISTRATION_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[AUTH] Registration failed:", message);
+    return c.json({ success: false, error: { code: "REGISTRATION_FAILED", message } }, 400);
   }
 });
 

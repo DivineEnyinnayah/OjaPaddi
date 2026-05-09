@@ -21,14 +21,14 @@ export default function WelcomeScreen() {
           <Button
             size="lg"
             style={styles.primaryButton}
-            onPress={() => router.push('/(auth)/register')}
+            onPress={() => router.push('/register')}
           >
             Get Started
           </Button>
 
           <TouchableOpacity 
             style={styles.secondaryButton}
-            onPress={() => router.push('/(auth)/login')}
+            onPress={() => router.push('/login')}
           >
             <Text style={styles.secondaryButtonText}>I already have an account</Text>
           </TouchableOpacity>
@@ -86,12 +86,9 @@ const styles = StyleSheet.create({
   primaryButton: {
     borderRadius: 16,
     height: 56,
-    backgroundColor: '#F59E0B',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   secondaryButton: {
-    paddingVertical: 16,
+    paddingVertical: 16,  
     alignItems: 'center',
   },
   secondaryButtonText: {

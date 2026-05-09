@@ -72,7 +72,7 @@ export default function RegisterScreen() {
 
       if (result.success && result.data) {
         await setUser(result.data.user, result.data.access_token, result.data.refresh_token);
-        router.replace('/(tabs)');
+        router.replace('/');
       } else {
         Alert.alert('Registration Failed', result.error?.message || 'An error occurred');
       }
@@ -173,7 +173,7 @@ export default function RegisterScreen() {
 
             <TouchableOpacity 
               style={styles.secondaryButton}
-              onPress={() => router.push('/(auth)/login')}
+              onPress={() => router.push('/login')}
             >
               <Text style={styles.secondaryButtonText}>Already have an account? Sign In</Text>
             </TouchableOpacity>
@@ -241,9 +241,6 @@ const styles = StyleSheet.create({
   primaryButton: {
     borderRadius: 16,
     height: 56,
-    backgroundColor: '#F59E0B',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   secondaryButton: {
     alignItems: 'center',

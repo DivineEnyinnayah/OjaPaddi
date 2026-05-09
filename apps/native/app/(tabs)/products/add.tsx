@@ -26,7 +26,8 @@ interface FormErrors {
 
 export default function AddProductScreen() {
   const router = useRouter();
-  const { addProduct, isLoading } = useProducts();
+  const { addProduct, isLoading: isAddingProduct } = useProducts();
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -62,7 +63,7 @@ export default function AddProductScreen() {
   const handleSave = async () => {
     if (!validateForm()) return;
     
-    setIsLoading(true);
+    setIsSaving(true);
     
     try {
       const payload = {
@@ -81,7 +82,7 @@ export default function AddProductScreen() {
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to add product');
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -149,9 +150,8 @@ export default function AddProductScreen() {
                   keyboardType="decimal-pad"
                 />
                 {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
-                </View>
+              </View>
               <View style={styles.halfWidth}>
-
                 <Text style={styles.label}>Cost Price (₦)</Text>
                 <TextInput
                   style={styles.input}
@@ -218,9 +218,9 @@ export default function AddProductScreen() {
               size="lg"
               style={styles.primaryButton}
               onPress={handleSave}
-              isDisabled={isLoading}
+              isDisabled={isAddingProduct || isSaving}
             >
-              {isLoading ? 'Saving...' : 'Save Product'}
+              {isSaving ? 'Saving...' : 'Save Product'}
             </Button>
           </View>
         </ScrollView>
