@@ -47,20 +47,20 @@
 | Concern | Tool |
 |---|---|
 | Framework | **HonoJS** |
-| Runtime | Cloudflare Workers |
+| Runtime | Node.js (local dev) / Cloudflare Workers (prod — not yet deployed) |
 | ORM | Drizzle ORM |
-| Database | Neon PostgreSQL (serverless) |
-| Auth | Custom JWT — `jose` (access: 15min, refresh: 30 days) |
-| Password hashing | bcryptjs (salt rounds: 12) |
-| Validation | Zod |
-| File storage | Cloudflare R2 (private, signed URLs) |
-| Email | Resend |
+| Database | Supabase PostgreSQL |
+| Auth | **Supabase Auth** (deviation from original spec — was custom JWT/jose) |
+| Password hashing | Supabase built-in (not bcryptjs) |
+| Validation | ⬜ Zod (planned, not yet implemented) |
+| File storage | Supabase Storage (private, signed URLs) |
+| Email | ⬜ Resend (planned, not yet integrated) |
 | Language | TypeScript (strict mode) |
 
 ### Web (Phase 2)
 | Concern | Tool |
 |---|---|
-| Framework | Next.js 14 (App Router) |
+| Framework | Next.js 15 (App Router) |
 | Hosting | Vercel |
 | Purpose | Public per-product share pages |
 
@@ -111,7 +111,7 @@ ojapaddi/
 
 ## 5. DATABASE SCHEMA REFERENCE
 
-All tables live in Neon PostgreSQL, managed by Drizzle ORM.
+All tables live in Supabase PostgreSQL, managed by Drizzle ORM.
 
 | Table | Purpose |
 |---|---|
@@ -280,7 +280,7 @@ Every agent must follow these without exception:
 1. **Business scoping** — every DB query must filter by the authenticated user's `business_id`. An IDOR vulnerability here is catastrophic.
 2. **No stack traces in production** — `errorHandler.ts` must strip them before responding
 3. **Rate limiting** — all auth endpoints: 10 req/min per IP. All public endpoints: 30 req/min per IP.
-4. **Signed URLs only** — R2 bucket is private. Never expose direct R2 URLs.
+4. **Signed URLs only** — Supabase Storage bucket is private. Never expose direct Supabase Storage URLs.
 5. **Refresh token rotation** — invalidate old token immediately on refresh. One-time use only.
 6. **Password reset tokens** — single-use, expire in 15 minutes, hashed before DB storage
 7. **CORS** — only allow known origins (app domain + Expo Go during dev)

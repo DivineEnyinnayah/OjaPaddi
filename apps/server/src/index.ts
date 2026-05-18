@@ -18,7 +18,7 @@ app.use(logger());
 app.use(
   "/*",
   cors({
-    origin: "*",
+    origin: env.CORS_ORIGIN,
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   }),
 );

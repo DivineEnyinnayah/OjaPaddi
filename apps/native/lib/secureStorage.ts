@@ -1,0 +1,44 @@
+import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+
+// Check if SecureStore is available (not available on web)
+const isSecureStoreAvailable = Platform.OS !== 'web';
+
+export const secureStorage = {
+  async getItem(key: string): Promise<string | null> {
+    try {
+      if (isSecureStoreAvailable) {
+        return await SecureStore.getItemAsync(key);
+      }
+      return await AsyncStorage.getItem(key);
+    } catch (error) {
+      console.warn('Secure storage getItem failed:', error);
+      return null;
+    }
+  },
+
+  async setItem(key: string, value: string): Promise<void> {
+    try {
+      if (isSecureStoreAvailable) {
+        await SecureStore.setItemAsync(key, value);
+      } else {
+        await AsyncStorage.setItem(key, value);
+      }
+    } catch (error) {
+      console.warn('Secure storage setItem failed:', error);
+    }
+  },
+
+  async deleteItem(key: string): Promise<void> {
+    try {
+      if (isSecureStoreAvailable) {
+        await SecureStore.deleteItemAsync(key);
+      } else {
+        await AsyncStorage.removeItem(key);
+      }
+    } catch (error) {
+      console.warn('Secure storage deleteItem failed:', error);
+    }
+  },
+};

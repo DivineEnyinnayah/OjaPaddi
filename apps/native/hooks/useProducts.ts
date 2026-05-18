@@ -1,35 +1,37 @@
-import { useState, useEffect } from 'react';
-import { apiRequest } from '../lib/api';
+import { useState } from 'react';
+import { apiRequest, apiFormDataRequest } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 
 export interface Product {
   id: string;
+  businessId: string;
   name: string;
   description?: string;
   sku?: string;
   category?: string;
-  price: number;
-  costPrice?: number;
+  price: string;
+  costPrice?: string;
   quantity: number;
-  lowStockThreshold?: number;
+  lowStockThreshold: number;
   imageUrl?: string;
   isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProductsResponse {
-  data: {
-    products: Product[];
-    pagination: {
-      total: number;
-      page: number;
-      limit: number;
-    };
+  products: Product[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
   };
 }
 
 export function useProducts() {
   const { accessToken } = useAuthStore();
   const [products, setProducts] = useState<Product[]>([]);
+  const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +40,7 @@ export function useProducts() {
     setError(null);
     try {
       const queryString = new URLSearchParams(query).toString();
-      const result = await apiRequest<{ products: Product[], pagination: any }>(
+      const result = await apiRequest<ProductsResponse>(
         `/products${queryString ? `?${queryString}` : ''}`,
         {
           method: 'GET',
@@ -49,18 +51,53 @@ export function useProducts() {
       );
 
       if (result.success && result.data) {
-        setProducts(result.data.products);
+        setProducts(result.data.products || []);
       } else {
         setError(result.error?.message || 'Failed to fetch products');
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const addProduct = async (productData: Partial<Product>) => {
+  const fetchProductById = async (productId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await apiRequest<Product>(`/products/${productId}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (result.success && result.data) {
+        setCurrentProduct(result.data);
+        return result.data;
+      } else {
+        setError(result.error?.message || 'Failed to fetch product');
+        return null;
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addProduct = async (productData: {
+    name: string;
+    description?: string;
+    sku?: string;
+    category?: string;
+    price: number;
+    costPrice?: number;
+    quantity: number;
+    lowStockThreshold?: number;
+  }) => {
     setIsLoading(true);
     try {
       const result = await apiRequest<Product>('/products', {
@@ -77,8 +114,8 @@ export function useProducts() {
       } else {
         throw new Error(result.error?.message || 'Failed to add product');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);
@@ -102,8 +139,8 @@ export function useProducts() {
       } else {
         throw new Error(result.error?.message || 'Failed to update product');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);
@@ -113,7 +150,7 @@ export function useProducts() {
   const deleteProduct = async (productId: string) => {
     setIsLoading(true);
     try {
-      const result = await apiRequest<any>(`/products/${productId}`, {
+      const result = await apiRequest<null>(`/products/${productId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -126,8 +163,42 @@ export function useProducts() {
       } else {
         throw new Error(result.error?.message || 'Failed to delete product');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const uploadProductImage = async (productId: string, imageUri: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fileName = imageUri.split('/').pop() || 'image.jpg';
+      const match = /\.(\w+)$/.exec(fileName);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      const formData = new FormData();
+      formData.append('image', {
+        uri: imageUri,
+        name: fileName,
+        type,
+      } as unknown as Blob);
+
+      const result = await apiFormDataRequest<Product>(
+        `/products/${productId}/image`,
+        formData
+      );
+
+      if (result.success && result.data) {
+        await fetchProducts();
+        return result.data;
+      } else {
+        throw new Error(result.error?.message || 'Failed to upload image');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);
@@ -151,8 +222,8 @@ export function useProducts() {
       } else {
         throw new Error(result.error?.message || 'Failed to adjust stock');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);
@@ -161,12 +232,15 @@ export function useProducts() {
 
   return {
     products,
+    currentProduct,
     isLoading,
     error,
     fetchProducts,
+    fetchProductById,
     addProduct,
     updateProduct,
     deleteProduct,
     adjustStock,
+    uploadProductImage,
   };
 }

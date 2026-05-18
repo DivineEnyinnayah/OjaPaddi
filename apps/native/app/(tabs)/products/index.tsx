@@ -10,7 +10,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useProducts } from '../../../hooks/useProducts';
+import { useProducts, type Product } from '../../../hooks/useProducts';
 import { Button } from 'heroui-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -22,34 +22,39 @@ export default function ProductsScreen() {
     fetchProducts();
   }, []);
 
-  const renderProduct = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={styles.productCard}
-      onPress={() => router.push({ pathname: '/products/[id]', params: { id: item.id } })}
-    >
-      <View style={styles.productInfo}>
-        <Text style={styles.productName}>{item.name}</Text>
-        <Text style={styles.productCategory}>{item.category || 'General'}</Text>
-        <View style={styles.productDetails}>
-          <Text style={styles.productPrice}>₦{item.price.toLocaleString()}</Text>
-          <Text style={[styles.productStock, item.quantity <= item.lowStockThreshold ? styles.lowStock : null]}>
-            {item.quantity} in stock
-          </Text>
-        </View>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color="#A3A3A3" />
-    </TouchableOpacity>
-  );
+  const renderProduct = ({ item }: { item: Product }) => {
+    const price = parseFloat(item.price);
+    const lowStockThreshold = item.lowStockThreshold ?? 5;
 
-  if (isLoading && products.length === 0) {
+    return (
+      <TouchableOpacity
+        style={styles.productCard}
+        onPress={() => router.push({ pathname: '/products/[id]', params: { id: item.id } })}
+      >
+        <View style={styles.productInfo}>
+          <Text style={styles.productName}>{item.name}</Text>
+          <Text style={styles.productCategory}>{item.category || 'General'}</Text>
+          <View style={styles.productDetails}>
+            <Text style={styles.productPrice}>₦{price.toLocaleString()}</Text>
+            <Text style={[styles.productStock, item.quantity <= lowStockThreshold ? styles.lowStock : null]}>
+              {item.quantity} in stock
+            </Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color="#A3A3A3" />
+      </TouchableOpacity>
+    );
+  };
+
+  if (isLoading && products?.length === 0) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#F59E0B" />
+        <ActivityIndicator size="large" color="#1A6B3C" />
       </View>
     );
   }
 
-  if (error && products.length === 0) {
+  if (error && products?.length === 0) {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{error}</Text>
@@ -65,7 +70,7 @@ export default function ProductsScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Products</Text>
         <TouchableOpacity onPress={() => router.push('/products/add')}>
-          <Ionicons name="add-circle" size={32} color="#F59E0B" />
+          <Ionicons name="add-circle" size={32} color="#1A6B3C" />
         </TouchableOpacity>
       </View>
 
@@ -75,7 +80,7 @@ export default function ProductsScreen() {
         renderItem={renderProduct}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={fetchProducts} tintColor="#F59E0B" />
+          <RefreshControl refreshing={isLoading} onRefresh={fetchProducts} tintColor="#1A6B3C" />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -158,7 +163,7 @@ const styles = StyleSheet.create({
   productPrice: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#F59E0B',
+    color: '#1A6B3C',
   },
   productStock: {
     fontSize: 14,
@@ -194,7 +199,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#1A6B3C',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,

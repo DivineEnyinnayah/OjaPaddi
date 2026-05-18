@@ -23,7 +23,7 @@ export default function WelcomeScreen() {
             style={styles.primaryButton}
             onPress={() => router.push('/register')}
           >
-            Get Started
+            <Text style={styles.primaryButtonText}>Get Started</Text>
           </Button>
 
           <TouchableOpacity 
@@ -41,11 +41,11 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFBF5',
+    backgroundColor: '#F7FAF3', // Updated to Market Core background
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16, // Changed to 16px to match standard margin
     justifyContent: 'space-between',
     paddingVertical: 40,
   },
@@ -56,8 +56,8 @@ const styles = StyleSheet.create({
   logoPlaceholder: {
     width: 120,
     height: 120,
-    borderRadius: 30,
-    backgroundColor: '#F59E0B',
+    borderRadius: 30, // Could be adjusted but leaving for logo
+    backgroundColor: '#1A6B3C', // Primary Green
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
@@ -70,13 +70,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#1A1A1A',
+    color: '#181D19', // on-surface
     textAlign: 'center',
     marginBottom: 8,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 18,
-    color: '#737373',
+    color: '#404940', // on-surface-variant
     textAlign: 'center',
   },
   actions: {
@@ -84,8 +85,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   primaryButton: {
-    borderRadius: 16,
+    borderRadius: 12, // Changed from 16px to 12px
     height: 56,
+    backgroundColor: '#1A6B3C',
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    alignSelf: 'center',
   },
   secondaryButton: {
     paddingVertical: 16,  
@@ -93,7 +101,7 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     fontSize: 16,
-    color: '#F59E0B',
+    color: '#1A6B3C', // Primary Green
     fontWeight: '600',
   },
 });

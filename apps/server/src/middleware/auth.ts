@@ -1,14 +1,13 @@
 import { createMiddleware } from "hono/factory";
-import { createClient } from "@supabase/supabase-js";
-import { env } from "@ojapaddi/env/server";
-
-const supabase = createClient(
-  env.EXPO_PUBLIC_SUPABASE_URL!,
-  env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { supabase } from "../lib/supabase";
+import { db } from "@ojapaddi/db";
+import { businesses } from "@ojapaddi/db/schema";
+import { eq } from "drizzle-orm";
+import type { User } from "@supabase/supabase-js";
 
 export type AuthContext = {
-  user: any; // We'll refine this later
+  user: User;
+  businessId: string;
 };
 
 export const authMiddleware = createMiddleware<{ Variables: AuthContext }>(async (c, next) => {
@@ -26,8 +25,18 @@ export const authMiddleware = createMiddleware<{ Variables: AuthContext }>(async
     return c.json({ success: false, error: { code: "UNAUTHORIZED", message: "Invalid or expired token" } }, 401);
   }
 
-  // Attach user to context
+  // Look up the user's business
+  const [business] = await db.select({ id: businesses.id })
+    .from(businesses)
+    .where(eq(businesses.userId, user.id));
+
+  if (!business) {
+    return c.json({ success: false, error: { code: "FORBIDDEN", message: "No business found for user" } }, 403);
+  }
+
+  // Attach user and businessId to context
   c.set("user", user);
+  c.set("businessId", business.id);
 
   await next();
 });

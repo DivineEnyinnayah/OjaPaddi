@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from 'heroui-native';
-import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/authStore';
 
 interface FormErrors {
@@ -25,7 +24,7 @@ interface FormErrors {
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const setUser = useAuthStore(state => state.setUser);
+  const setPendingRegistration = useAuthStore(state => state.setPendingRegistration);
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -65,17 +64,16 @@ export default function RegisterScreen() {
     setIsLoading(true);
     
     try {
-      const result = await apiRequest<{ user: any; access_token: string; refresh_token: string }>('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(formData),
+      // Store registration info locally for now
+      setPendingRegistration({
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        password: formData.password,
       });
-
-      if (result.success && result.data) {
-        await setUser(result.data.user, result.data.access_token, result.data.refresh_token);
-        router.replace('/');
-      } else {
-        Alert.alert('Registration Failed', result.error?.message || 'An error occurred');
-      }
+      
+      // Redirect to onboarding
+      router.replace('/onboarding');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'An error occurred');
     } finally {
@@ -168,7 +166,7 @@ export default function RegisterScreen() {
               onPress={handleRegister}
               isDisabled={isLoading}
             >
-              {isLoading ? 'Creating account...' : 'Register'}
+              <Text style={styles.primaryButtonText}>{isLoading ? 'Creating account...' : 'Next'}</Text>
             </Button>
 
             <TouchableOpacity 
@@ -187,60 +185,77 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFBF5',
+    backgroundColor: '#F7FAF3', // Updated to Market Core background
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16, // Changed to 16px to match standard margin
     paddingVertical: 24,
   },
   header: {
     marginBottom: 32,
+    marginTop: 40,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#181D19', // on-surface
     marginBottom: 8,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#737373',
+    color: '#404940', // on-surface-variant
+    lineHeight: 24,
   },
   form: {
     gap: 20,
+    marginTop: 10,
   },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#404040',
+    color: '#404940',
     marginBottom: 8,
+    letterSpacing: 0.5,
   },
   input: {
     height: 56,
-    borderRadius: 12,
+    borderRadius: 10, // Changed from 12px to 10px
     paddingHorizontal: 16,
     fontSize: 16,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    color: '#1A1A1A',
+    borderColor: '#E5E7EB',
+    color: '#181D19',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 4,
+    elevation: 1,
   },
   errorText: {
     fontSize: 12,
-    color: '#EF4444',
+    color: '#BA1A1A', // Error color
     marginTop: 4,
   },
   actions: {
     marginTop: 32,
-    gap: 16,
+    gap: 24,
+    paddingBottom: 40,
   },
   primaryButton: {
-    borderRadius: 16,
+    borderRadius: 12, // Changed from 16px to 12px
     height: 56,
+    backgroundColor: '#1A6B3C',
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   secondaryButton: {
     alignItems: 'center',
@@ -248,7 +263,7 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     fontSize: 14,
-    color: '#F59E0B',
+    color: '#1A6B3C', // Primary green for the link
     fontWeight: '600',
   },
 });

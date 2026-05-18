@@ -8,12 +8,12 @@ analyticsRoutes.use("*", authMiddleware);
 
 analyticsRoutes.get("/summary", async (c) => {
   try {
-    const user = c.get("user");
+    const businessId = c.get("businessId");
     const query = {
       from: c.req.query("from"),
       to: c.req.query("to"),
     };
-    const result = await getAnalyticsSummary(user.id, query);
+    const result = await getAnalyticsSummary(businessId, query);
     return c.json({ success: true, data: result }, 200);
   } catch (error: any) {
     return c.json({ success: false, error: { code: "ANALYTICS_FETCH_FAILED", message: error.message } }, 400);

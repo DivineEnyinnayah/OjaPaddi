@@ -12,7 +12,7 @@ export async function getProducts(businessId: string, query: {
   const { page = 1, limit = 20, category, search, lowStock } = query;
   const offset = (page - 1) * limit;
 
-  let filters = [eq(products.businessId, businessId)];
+  let filters = [eq(products.businessId, businessId), eq(products.isActive, true)];
 
   if (category) {
     filters.push(eq(products.category, category));
@@ -30,7 +30,7 @@ export async function getProducts(businessId: string, query: {
   const total = await db.select({ count: sql<number>`count(*)` }).from(products).where(and(...filters));
 
   return {
-    data: result,
+    products: result,
     pagination: {
       total: Number(total[0]?.count ?? 0),
       page,
@@ -40,7 +40,7 @@ export async function getProducts(businessId: string, query: {
 }
 
 export async function getProductById(businessId: string, productId: string) {
-  const productList = await db.select().from(products).where(and(eq(products.id, productId), eq(products.businessId, businessId)));
+  const productList = await db.select().from(products).where(and(eq(products.id, productId), eq(products.businessId, businessId), eq(products.isActive, true)));
   return productList[0] || null;
 }
 

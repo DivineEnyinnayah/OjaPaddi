@@ -1,17 +1,22 @@
 import { Hono } from "hono";
-import { registerUser, loginUser, logoutUser, refreshAccessToken, forgotPassword, resetPassword } from "../services/authService";
+import { loginUser, logoutUser, refreshAccessToken, forgotPassword, resetPassword, completeRegistration } from "../services/authService";
 
 export const authRoutes = new Hono();
 
-authRoutes.post("/register", async (c) => {
+authRoutes.post("/complete-registration", async (c) => {
   try {
     const body = await c.req.json();
-    console.log("[AUTH] Register attempt for:", body.email);
-    const result = await registerUser(body);
+    const { registration, onboarding } = body;
+    
+    if (!registration || !onboarding) {
+      return c.json({ success: false, error: { code: "MISSING_DATA", message: "Both registration and onboarding data are required" } }, 400);
+    }
+    
+    const result = await completeRegistration(registration, onboarding);
     return c.json({ success: true, data: result }, 201);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[AUTH] Registration failed:", message);
+    console.error("[AUTH] Complete registration failed:", message);
     return c.json({ success: false, error: { code: "REGISTRATION_FAILED", message } }, 400);
   }
 });

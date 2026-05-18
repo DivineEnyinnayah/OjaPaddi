@@ -8,54 +8,59 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from 'heroui-native';
-import { useProducts } from '../../../hooks/useProducts';
+import { useProducts, type Product } from '../../../hooks/useProducts';
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { products, fetchProducts, adjustStock, deleteProduct } = useProducts();
-  const [product, setProduct] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { fetchProductById, currentProduct, adjustStock, deleteProduct, isLoading } = useProducts();
+  const [product, setProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     const loadProduct = async () => {
-      await fetchProducts();
-      const found = products.find(p => p.id === id);
-      if (found) {
-        setProduct(found);
-      } else {
-        // If not found in local list (maybe due to pagination), 
-        // we should ideally have a fetchById in useProducts.
-        // For now, let's assume it's in the list.
+      if (id) {
+        const fetched = await fetchProductById(id as string);
+        if (fetched) {
+          setProduct(fetched);
+        }
       }
-      setIsLoading(false);
     };
     loadProduct();
   }, [id]);
 
+  useEffect(() => {
+    if (currentProduct && id) {
+      setProduct(currentProduct);
+    }
+  }, [currentProduct, id]);
+
   const handleStockAdd = async () => {
     try {
       await adjustStock(id as string, 1);
-      // Refresh list and product
-      await fetchProducts();
-      setProduct((prev: any) => ({ ...prev, quantity: prev.quantity + 1 }));
-    } catch (err: any) {
-      Alert.alert('Error', err.message);
+      const updated = await fetchProductById(id as string);
+      if (updated) {
+        setProduct(updated);
+      }
+    } catch (err: unknown) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to adjust stock');
     }
   };
 
   const handleStockRemove = async () => {
-    if (product?.quantity <= 0) return;
+    if (!product || product.quantity <= 0) return;
     try {
       await adjustStock(id as string, -1);
-      await fetchProducts();
-      setProduct((prev: any) => ({ ...prev, quantity: prev.quantity - 1 }));
-    } catch (err: any) {
-      Alert.alert('Error', err.message);
+      const updated = await fetchProductById(id as string);
+      if (updated) {
+        setProduct(updated);
+      }
+    } catch (err: unknown) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to adjust stock');
     }
   };
 
@@ -65,22 +70,26 @@ export default function ProductDetailScreen() {
       'Are you sure you want to delete this product?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive', 
+        {
+          text: 'Delete',
+          style: 'destructive',
           onPress: async () => {
-            await deleteProduct(id as string);
-            router.back();
-          } 
+            try {
+              await deleteProduct(id as string);
+              router.back();
+            } catch (err: unknown) {
+              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to delete product');
+            }
+          }
         },
       ]
     );
   };
 
-  if (isLoading) {
+  if (isLoading && !product) {
     return (
       <View style={styles.center}>
-        <Text>Loading...</Text>
+        <ActivityIndicator size="large" color="#1A6B3C" />
       </View>
     );
   }
@@ -88,10 +97,16 @@ export default function ProductDetailScreen() {
   if (!product) {
     return (
       <View style={styles.center}>
-        <Text>Product not found</Text>
+        <Text style={styles.errorText}>Product not found</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Text style={styles.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
       </View>
     );
   }
+
+  const price = parseFloat(product.price);
+  const lowStockThreshold = product.lowStockThreshold ?? 5;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -109,11 +124,11 @@ export default function ProductDetailScreen() {
         <View style={styles.infoContainer}>
           <View style={styles.row}>
             <Text style={styles.name}>{product.name}</Text>
-            <Text style={styles.price}>₦{product.price.toLocaleString()}</Text>
+            <Text style={styles.price}>₦{price.toLocaleString()}</Text>
           </View>
           <Text style={styles.category}>{product.category || 'General'}</Text>
           <Text style={styles.sku}>{product.sku ? `SKU: ${product.sku}` : ''}</Text>
-          
+
           <View style={styles.divider} />
 
           <Text style={styles.sectionTitle}>Description</Text>
@@ -130,8 +145,8 @@ export default function ProductDetailScreen() {
                 <Ionicons name="add" size={24} color="#FFF" />
               </TouchableOpacity>
             </View>
-            {product.quantity <= product.lowStockThreshold && (
-              <Text style={styles.lowStockText}>⚠️ Low stock alert!</Text>
+            {product.quantity <= lowStockThreshold && (
+              <Text style={styles.lowStockText}>Running Low!</Text>
             )}
           </View>
         </View>
@@ -145,11 +160,9 @@ export default function ProductDetailScreen() {
           size="lg"
           style={styles.shareButton}
           onPress={() => {
-             // Implement WhatsApp sharing
-             const msg = `*${product.name}* 🛍️\nPrice: ₦${product.price.toLocaleString()}\n\nTap to view & order 👇\nstore.ojapaddi.com/${product.id}`;
-             const url = `whatsapp://send?text=${encodeURIComponent(msg)}`;
-             // In a real app, use Linking.openURL(url)
-             alert('WhatsApp share link copied to clipboard (simulation)');
+            const msg = `*${product.name}* 🛍️\nPrice: ₦${price.toLocaleString()}\n\nTap to view & order 👇\nstore.ojapaddi.com/${product.id}`;
+            const url = `whatsapp://send?text=${encodeURIComponent(msg)}`;
+            alert('WhatsApp share link copied to clipboard (simulation)');
           }}
         >
           Share Product
@@ -204,7 +217,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#F59E0B',
+    color: '#1A6B3C',
   },
   category: {
     fontSize: 16,
@@ -295,8 +308,24 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 16,
     height: 56,
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#1A6B3C',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#737373',
+    marginBottom: 16,
+  },
+  backButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: '#1A6B3C',
+    borderRadius: 12,
+  },
+  backButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });

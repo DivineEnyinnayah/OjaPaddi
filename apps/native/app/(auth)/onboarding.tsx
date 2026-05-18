@@ -43,6 +43,9 @@ const BUSINESS_CATEGORIES = [
 export default function OnboardingScreen() {
   const router = useRouter();
   const setUser = useAuthStore(state => state.setUser);
+  const setPendingOnboarding = useAuthStore(state => state.setPendingOnboarding);
+  const clearPendingData = useAuthStore(state => state.clearPendingData);
+  const pendingRegistration = useAuthStore(state => state.pendingRegistration);
   
   const [formData, setFormData] = useState({
     businessName: '',
@@ -91,15 +94,43 @@ export default function OnboardingScreen() {
     setIsLoading(true);
     
     try {
-      // In a real app, we would call the business creation API here.
-      // For now, we'll just simulate it and then navigate.
-      // The user is already logged in after registration.
-      
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      router.replace('/');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to set up your business. Please try again.');
+      // Save onboarding data to store
+      setPendingOnboarding({
+        businessName: formData.businessName,
+        category: formData.category,
+        whatsappNumber: formData.whatsappNumber,
+        city: formData.city,
+        state: formData.state,
+      });
+
+      if (!pendingRegistration) {
+        throw new Error('Missing registration information. Please go back and register first.');
+      }
+
+      // Call the combined registration endpoint
+      const result = await apiRequest<{ user: any; access_token: string; refresh_token: string }>('/auth/complete-registration', {
+        method: 'POST',
+        body: JSON.stringify({
+          registration: pendingRegistration,
+          onboarding: {
+            businessName: formData.businessName,
+            category: formData.category,
+            whatsappNumber: formData.whatsappNumber,
+            city: formData.city,
+            state: formData.state,
+          },
+        }),
+      });
+
+      if (result.success && result.data) {
+        await setUser(result.data.user, result.data.access_token, result.data.refresh_token);
+        clearPendingData();
+        router.replace('/');
+      } else {
+        Alert.alert('Setup Failed', result.error?.message || 'Failed to complete business setup.');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to set up your business. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -393,7 +424,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     borderRadius: 16,
     height: 56,
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#1A6B3C',
     justifyContent: 'center',
     alignItems: 'center',
   },

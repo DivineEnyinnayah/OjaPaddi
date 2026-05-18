@@ -25,3 +25,5 @@ export const products = pgTable(
     skuBusinessIdx: uniqueIndex("sku_business_idx").on(table.businessId, table.sku),
   })
 );
+
+export const activeProducts = products;
