@@ -12,10 +12,6 @@ export interface Expense {
   updatedAt: string;
 }
 
-export interface ExpensesResponse {
-  data: Expense[];
-}
-
 export function useExpenses() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +22,7 @@ export function useExpenses() {
     setError(null);
     try {
       const queryString = new URLSearchParams(query).toString();
-      const result = await apiRequest<ExpensesResponse>(
+      const result = await apiRequest<Expense[]>(
         `/expenses${queryString ? `?${queryString}` : ''}`,
         {
           method: 'GET',

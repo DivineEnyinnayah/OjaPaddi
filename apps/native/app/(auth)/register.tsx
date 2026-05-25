@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, Alert, View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button } from 'heroui-native';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Container } from '@/components/container';
 import { useAuthStore } from '../../stores/authStore';
+import { withUniwind } from 'uniwind';
+
+const StyledView = withUniwind(View);
+const StyledText = withUniwind(Text);
+const StyledKeyboardAvoidingView = withUniwind(KeyboardAvoidingView);
 
 interface FormErrors {
   fullName?: string;
@@ -64,15 +60,12 @@ export default function RegisterScreen() {
     setIsLoading(true);
     
     try {
-      // Store registration info locally for now
       setPendingRegistration({
         fullName: formData.fullName,
         email: formData.email,
         phone: formData.phone || undefined,
         password: formData.password,
       });
-      
-      // Redirect to onboarding
       router.replace('/onboarding');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'An error occurred');
@@ -89,181 +82,81 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+    <Container isScrollable={false} className="bg-background">
+      <StyledKeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+        className="flex-1"
       >
         <ScrollView 
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingVertical: 24 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join OjaPaddi and start growing your business</Text>
-          </View>
+          <StyledView className="mb-8 mt-10">
+            <StyledText className="text-[28px] font-bold text-on-surface mb-2 tracking-tight">Create Account</StyledText>
+            <StyledText className="text-body-lg text-on-surface-variant">Join OjaPaddi and start growing your business</StyledText>
+          </StyledView>
 
-          <View style={styles.form}>
-            <View>
-              <Text style={styles.label}>Full Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., Tope Adeyemi"
-                placeholderTextColor={'#A3A3A3'}
-                value={formData.fullName}
-                onChangeText={(value) => updateField('fullName', value)}
-                autoCapitalize="words"
-              />
-              {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
-            </View>
+          <StyledView className="gap-2 mt-2">
+            <Input
+              label="Full Name"
+              placeholder="e.g., Tope Adeyemi"
+              value={formData.fullName}
+              onChangeText={(value) => updateField('fullName', value)}
+              autoCapitalize="words"
+              error={errors.fullName}
+            />
 
-            <View>
-              <Text style={styles.label}>Email Address</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="tope@gmail.com"
-                placeholderTextColor={'#A3A3A3'}
-                value={formData.email}
-                onChangeText={(value) => updateField('email', value)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-            </View>
+            <Input
+              label="Email Address"
+              placeholder="tope@gmail.com"
+              value={formData.email}
+              onChangeText={(value) => updateField('email', value)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              error={errors.email}
+            />
 
-            <View>
-              <Text style={styles.label}>Phone Number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="08012345678"
-                placeholderTextColor={'#A3A3A3'}
-                value={formData.phone}
-                onChangeText={(value) => updateField('phone', value)}
-                keyboardType="phone-pad"
-              />
-            </View>
+            <Input
+              label="Phone Number"
+              placeholder="08012345678"
+              value={formData.phone}
+              onChangeText={(value) => updateField('phone', value)}
+              keyboardType="phone-pad"
+              error={errors.phone}
+            />
 
-            <View>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor={'#A3A3A3'}
-                value={formData.password}
-                onChangeText={(value) => updateField('password', value)}
-                secureTextEntry
-              />
-              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
-            </View>
-          </View>
+            <Input
+              label="Password"
+              placeholder="••••••••"
+              value={formData.password}
+              onChangeText={(value) => updateField('password', value)}
+              secureTextEntry
+              error={errors.password}
+            />
+          </StyledView>
 
-          <View style={styles.actions}>
+          <StyledView className="mt-8 gap-6 pb-10">
             <Button
               size="lg"
-              style={styles.primaryButton}
+              variant="primary"
               onPress={handleRegister}
               isDisabled={isLoading}
             >
-              <Text style={styles.primaryButtonText}>{isLoading ? 'Creating account...' : 'Next'}</Text>
+              {isLoading ? 'Creating account...' : 'Next'}
             </Button>
 
-            <TouchableOpacity 
-              style={styles.secondaryButton}
+            <Button
+              variant="secondary"
+              className="border-0"
               onPress={() => router.push('/login')}
             >
-              <Text style={styles.secondaryButtonText}>Already have an account? Sign In</Text>
-            </TouchableOpacity>
-          </View>
+              Already have an account? Sign In
+            </Button>
+          </StyledView>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </StyledKeyboardAvoidingView>
+    </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F7FAF3', // Updated to Market Core background
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 16, // Changed to 16px to match standard margin
-    paddingVertical: 24,
-  },
-  header: {
-    marginBottom: 32,
-    marginTop: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#181D19', // on-surface
-    marginBottom: 8,
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#404940', // on-surface-variant
-    lineHeight: 24,
-  },
-  form: {
-    gap: 20,
-    marginTop: 10,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#404940',
-    marginBottom: 8,
-    letterSpacing: 0.5,
-  },
-  input: {
-    height: 56,
-    borderRadius: 10, // Changed from 12px to 10px
-    paddingHorizontal: 16,
-    fontSize: 16,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    color: '#181D19',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#BA1A1A', // Error color
-    marginTop: 4,
-  },
-  actions: {
-    marginTop: 32,
-    gap: 24,
-    paddingBottom: 40,
-  },
-  primaryButton: {
-    borderRadius: 12, // Changed from 16px to 12px
-    height: 56,
-    backgroundColor: '#1A6B3C',
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    color: '#1A6B3C', // Primary green for the link
-    fontWeight: '600',
-  },
-});

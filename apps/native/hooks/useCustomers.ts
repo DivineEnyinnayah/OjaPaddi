@@ -14,13 +14,11 @@ export interface Customer {
 }
 
 export interface CustomersResponse {
-  data: {
-    customers: Customer[];
-    pagination: {
-      total: number;
-      page: number;
-      limit: number;
-    };
+  customers: Customer[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
   };
 }
 

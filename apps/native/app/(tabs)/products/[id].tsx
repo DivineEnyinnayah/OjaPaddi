@@ -1,43 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Button } from 'heroui-native';
+import { Button } from '@/components/ui/button';
+import { Container } from '@/components/container';
 import { useProducts, type Product } from '../../../hooks/useProducts';
+import { withUniwind } from 'uniwind';
+
+const StyledView = withUniwind(View);
+const StyledText = withUniwind(Text);
+const StyledTouchableOpacity = withUniwind(TouchableOpacity);
+const StyledImage = withUniwind(Image);
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { fetchProductById, currentProduct, adjustStock, deleteProduct, isLoading } = useProducts();
+  const { fetchProductById, adjustStock, deleteProduct, isLoading } = useProducts();
   const [product, setProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    const loadProduct = async () => {
-      if (id) {
-        const fetched = await fetchProductById(id as string);
-        if (fetched) {
-          setProduct(fetched);
-        }
-      }
-    };
-    loadProduct();
+    if (!id) return;
+    fetchProductById(id as string).then((fetched) => {
+      if (fetched) setProduct(fetched);
+    });
   }, [id]);
-
-  useEffect(() => {
-    if (currentProduct && id) {
-      setProduct(currentProduct);
-    }
-  }, [currentProduct, id]);
 
   const handleStockAdd = async () => {
     try {
@@ -88,20 +74,20 @@ export default function ProductDetailScreen() {
 
   if (isLoading && !product) {
     return (
-      <View style={styles.center}>
+      <Container isScrollable={false} className="bg-background pt-12 items-center justify-center">
         <ActivityIndicator size="large" color="#1A6B3C" />
-      </View>
+      </Container>
     );
   }
 
   if (!product) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>Product not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Go Back</Text>
-        </TouchableOpacity>
-      </View>
+      <Container isScrollable={false} className="bg-background pt-12 items-center justify-center">
+        <StyledText className="text-[16px] text-on-surface-variant mb-4">Product not found</StyledText>
+        <Button onPress={() => router.back()}>
+          Go Back
+        </Button>
+      </Container>
     );
   }
 
@@ -109,56 +95,60 @@ export default function ProductDetailScreen() {
   const lowStockThreshold = product.lowStockThreshold ?? 5;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollContent}>
-        <View style={styles.imageContainer}>
+    <Container isScrollable={false} className="bg-background relative">
+      <StyledView className="absolute top-12 left-6 z-10 w-12 h-12 bg-surface rounded-full justify-center items-center shadow-sm shadow-black/10 elevation-2">
+        <StyledTouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#181D19" />
+        </StyledTouchableOpacity>
+      </StyledView>
+
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+        <StyledView className="w-full h-[300px] bg-surface-variant items-center justify-center">
           {product.imageUrl ? (
-            <Image source={{ uri: product.imageUrl }} style={styles.image} />
+            <StyledImage source={{ uri: product.imageUrl }} className="w-full h-full" resizeMode="cover" />
           ) : (
-            <View style={styles.placeholderImage}>
-              <Ionicons name="image-outline" size={64} color="#D4D4D4" />
-            </View>
+            <Ionicons name="image-outline" size={64} color="#8a9389" />
           )}
-        </View>
+        </StyledView>
 
-        <View style={styles.infoContainer}>
-          <View style={styles.row}>
-            <Text style={styles.name}>{product.name}</Text>
-            <Text style={styles.price}>₦{price.toLocaleString()}</Text>
-          </View>
-          <Text style={styles.category}>{product.category || 'General'}</Text>
-          <Text style={styles.sku}>{product.sku ? `SKU: ${product.sku}` : ''}</Text>
+        <StyledView className="px-6 py-6">
+          <StyledView className="flex-row justify-between items-start mb-2">
+            <StyledText className="text-[24px] font-bold text-on-surface flex-1">{product.name}</StyledText>
+            <StyledText className="text-[24px] font-bold text-primary">₦{price.toLocaleString()}</StyledText>
+          </StyledView>
+          <StyledText className="text-[16px] text-on-surface-variant mb-1">{product.category || 'General'}</StyledText>
+          {product.sku ? <StyledText className="text-body-sm text-outline mb-4">SKU: {product.sku}</StyledText> : null}
 
-          <View style={styles.divider} />
+          <StyledView className="h-[1px] bg-outline-variant/30 my-6" />
 
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.description}>{product.description || 'No description provided.'}</Text>
+          <StyledText className="text-[18px] font-bold text-on-surface mb-3">Description</StyledText>
+          <StyledText className="text-[16px] text-on-surface-variant leading-6 mb-8">{product.description || 'No description provided.'}</StyledText>
 
-          <View style={styles.stockContainer}>
-            <Text style={styles.stockLabel}>Current Stock</Text>
-            <View style={styles.stockControls}>
-              <TouchableOpacity style={styles.stockButton} onPress={handleStockRemove}>
-                <Ionicons name="remove" size={24} color="#FFF" />
-              </TouchableOpacity>
-              <Text style={styles.stockValue}>{product.quantity}</Text>
-              <TouchableOpacity style={styles.stockButton} onPress={handleStockAdd}>
+          <StyledView className="bg-surface-container rounded-card p-4">
+            <StyledText className="text-body-sm text-on-surface font-semibold mb-3">Current Stock</StyledText>
+            <StyledView className="flex-row items-center justify-center gap-6">
+              <StyledTouchableOpacity className="w-12 h-12 rounded-full bg-surface justify-center items-center border border-outline-variant/50" onPress={handleStockRemove}>
+                <Ionicons name="remove" size={24} color="#181D19" />
+              </StyledTouchableOpacity>
+              <StyledText className="text-[28px] font-extrabold text-on-surface min-w-[50px] text-center">{product.quantity}</StyledText>
+              <StyledTouchableOpacity className="w-12 h-12 rounded-full bg-primary justify-center items-center" onPress={handleStockAdd}>
                 <Ionicons name="add" size={24} color="#FFF" />
-              </TouchableOpacity>
-            </View>
+              </StyledTouchableOpacity>
+            </StyledView>
             {product.quantity <= lowStockThreshold && (
-              <Text style={styles.lowStockText}>Running Low!</Text>
+              <StyledText className="text-error text-center mt-3 font-semibold text-body-sm">Running Low!</StyledText>
             )}
-          </View>
-        </View>
+          </StyledView>
+        </StyledView>
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+      <StyledView className="absolute bottom-0 left-0 right-0 flex-row px-5 py-4 bg-background border-t border-outline-variant/20 items-center gap-4">
+        <StyledTouchableOpacity className="w-14 h-14 rounded-full justify-center items-center border-2 border-error" onPress={handleDelete}>
           <Ionicons name="trash-outline" size={24} color="#EF4444" />
-        </TouchableOpacity>
+        </StyledTouchableOpacity>
         <Button
           size="lg"
-          style={styles.shareButton}
+          className="flex-1"
           onPress={() => {
             const msg = `*${product.name}* 🛍️\nPrice: ₦${price.toLocaleString()}\n\nTap to view & order 👇\nstore.ojapaddi.com/${product.id}`;
             const url = `whatsapp://send?text=${encodeURIComponent(msg)}`;
@@ -167,165 +157,7 @@ export default function ProductDetailScreen() {
         >
           Share Product
         </Button>
-      </View>
-    </SafeAreaView>
+      </StyledView>
+    </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scrollContent: {
-    paddingBottom: 100,
-  },
-  imageContainer: {
-    width: '100%',
-    height: 300,
-    backgroundColor: '#F5F5F5',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  placeholderImage: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoContainer: {
-    padding: 24,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    flex: 1,
-  },
-  price: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1A6B3C',
-  },
-  category: {
-    fontSize: 16,
-    color: '#737373',
-    marginBottom: 4,
-  },
-  sku: {
-    fontSize: 14,
-    color: '#A3A3A3',
-    marginBottom: 16,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E5E5',
-    marginVertical: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 12,
-  },
-  description: {
-    fontSize: 16,
-    color: '#404040',
-    lineHeight: 24,
-    marginBottom: 32,
-  },
-  stockContainer: {
-    backgroundColor: '#F5F5F5',
-    padding: 16,
-    borderRadius: 16,
-  },
-  stockLabel: {
-    fontSize: 14,
-    color: '#737373',
-    marginBottom: 12,
-  },
-  stockControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 24,
-  },
-  stockButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#1A1A1A',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  stockValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    minWidth: 40,
-    textAlign: 'center',
-  },
-  lowStockText: {
-    color: '#EF4444',
-    textAlign: 'center',
-    marginTop: 12,
-    fontWeight: '600',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    padding: 20,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
-    alignItems: 'center',
-    gap: 16,
-  },
-  deleteButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#EF4444',
-  },
-  shareButton: {
-    flex: 1,
-    borderRadius: 16,
-    height: 56,
-    backgroundColor: '#1A6B3C',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#737373',
-    marginBottom: 16,
-  },
-  backButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: '#1A6B3C',
-    borderRadius: 12,
-  },
-  backButtonText: {
-    color: '#FFF',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-});

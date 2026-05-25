@@ -1,32 +1,38 @@
-import { useEffect } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuthStore } from '../stores/authStore';
-import { HeroUINativeProvider } from 'heroui-native';
 import { AppThemeProvider } from '@/contexts/app-theme-context';
+
 
 export default function RootLayout() {
   const segments = useSegments();
   const router = useRouter();
+  const navigationState = useRootNavigationState();
   const { isInitialized, accessToken } = useAuthStore();
+  const hasRedirected = useRef(false);
+
 
   useEffect(() => {
     useAuthStore.getState().initialize();
   }, []);
 
+
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized || !navigationState?.key) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!accessToken && !inAuthGroup) {
-      // Not logged in, redirect to welcome
+      if (hasRedirected.current) return;
+      hasRedirected.current = true;
       router.replace('/welcome');
     } else if (accessToken && inAuthGroup) {
-      // Logged in, redirect to tabs
+      if (hasRedirected.current) return;
+      hasRedirected.current = true;
       router.replace('/');
     }
-  }, [isInitialized, accessToken, segments]);
+  }, [isInitialized, accessToken, navigationState?.key, segments?.[0]]);
 
   if (!isInitialized) {
     return (
@@ -37,13 +43,11 @@ export default function RootLayout() {
   }
 
   return (
-    <HeroUINativeProvider>
-      <AppThemeProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-        </Stack>
-      </AppThemeProvider>
-    </HeroUINativeProvider>
+    <AppThemeProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+    </AppThemeProvider>
   );
 }

@@ -1,18 +1,16 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useProducts, type Product } from '../../../hooks/useProducts';
-import { Button } from 'heroui-native';
+import { Button } from '@/components/ui/button';
+import { Container } from '@/components/container';
+import { Surface } from '@/components/ui/surface';
 import { Ionicons } from '@expo/vector-icons';
+import { withUniwind } from 'uniwind';
+
+const StyledView = withUniwind(View);
+const StyledText = withUniwind(Text);
+const StyledTouchableOpacity = withUniwind(TouchableOpacity);
 
 export default function ProductsScreen() {
   const router = useRouter();
@@ -25,187 +23,84 @@ export default function ProductsScreen() {
   const renderProduct = ({ item }: { item: Product }) => {
     const price = parseFloat(item.price);
     const lowStockThreshold = item.lowStockThreshold ?? 5;
+    const isLowStock = item.quantity <= lowStockThreshold;
 
     return (
-      <TouchableOpacity
-        style={styles.productCard}
-        onPress={() => router.push({ pathname: '/products/[id]', params: { id: item.id } })}
-      >
-        <View style={styles.productInfo}>
-          <Text style={styles.productName}>{item.name}</Text>
-          <Text style={styles.productCategory}>{item.category || 'General'}</Text>
-          <View style={styles.productDetails}>
-            <Text style={styles.productPrice}>₦{price.toLocaleString()}</Text>
-            <Text style={[styles.productStock, item.quantity <= lowStockThreshold ? styles.lowStock : null]}>
-              {item.quantity} in stock
-            </Text>
-          </View>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color="#A3A3A3" />
-      </TouchableOpacity>
+      <StyledTouchableOpacity onPress={() => router.push({ pathname: '/products/[id]', params: { id: item.id } })}>
+        <Surface variant="outline" className="flex-row items-center p-4 mb-3">
+          <StyledView className="flex-1">
+            <StyledText className="text-[18px] font-semibold text-on-surface mb-1">{item.name}</StyledText>
+            <StyledText className="text-body-sm text-on-surface-variant mb-2">{item.category || 'General'}</StyledText>
+            <StyledView className="flex-row items-center gap-3">
+              <StyledText className="text-[16px] font-bold text-primary">₦{price.toLocaleString()}</StyledText>
+              <StyledText className={`text-body-sm ${isLowStock ? 'text-error font-semibold' : 'text-on-surface-variant'}`}>
+                {item.quantity} in stock
+              </StyledText>
+            </StyledView>
+          </StyledView>
+          <Ionicons name="chevron-forward" size={20} color="#8a9389" />
+        </Surface>
+      </StyledTouchableOpacity>
     );
   };
 
   if (isLoading && products?.length === 0) {
     return (
-      <View style={styles.center}>
+      <Container isScrollable={false} className="bg-background pt-12 items-center justify-center">
         <ActivityIndicator size="large" color="#1A6B3C" />
-      </View>
+      </Container>
     );
   }
 
   if (error && products?.length === 0) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>{error}</Text>
-        <Button onPress={() => fetchProducts()} style={{ marginTop: 16 }}>
+      <Container isScrollable={false} className="bg-background pt-12 items-center justify-center p-6">
+        <StyledText className="text-error text-center mb-4 text-body-lg">{error}</StyledText>
+        <Button onPress={() => fetchProducts()}>
           Retry
         </Button>
-      </View>
+      </Container>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Products</Text>
-        <TouchableOpacity onPress={() => router.push('/products/add')}>
+    <Container isScrollable={false} className="bg-background pt-12">
+      <StyledView className="flex-row justify-between items-center px-6 py-4 mt-2">
+        <StyledText className="text-[36px] font-black text-on-surface tracking-tight">Products</StyledText>
+        <StyledTouchableOpacity onPress={() => router.push('/products/add')}>
           <Ionicons name="add-circle" size={32} color="#1A6B3C" />
-        </TouchableOpacity>
-      </View>
+        </StyledTouchableOpacity>
+      </StyledView>
 
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
         renderItem={renderProduct}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={fetchProducts} tintColor="#1A6B3C" />
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
+          <StyledView className="items-center mt-24">
             <Ionicons name="cube-outline" size={64} color="#D4D4D4" />
-            <Text style={styles.emptyText}>No products found. Add your first product!</Text>
+            <StyledText className="text-[16px] text-on-surface-variant mt-4 text-center">No products found. Add your first product!</StyledText>
             <Button
               size="lg"
-              style={{ marginTop: 16 }}
+              className="mt-6"
               onPress={() => router.push('/products/add')}
             >
               Add Product
             </Button>
-          </View>
+          </StyledView>
         }
       />
 
-      <TouchableOpacity
-        style={styles.fab}
+      <StyledTouchableOpacity
+        className="absolute bottom-8 right-6 w-14 h-14 rounded-full bg-primary justify-center items-center shadow-md shadow-black/30 elevation-5"
         onPress={() => router.push('/products/add')}
       >
         <Ionicons name="add" size={30} color="#FFF" />
-      </TouchableOpacity>
-    </SafeAreaView>
+      </StyledTouchableOpacity>
+    </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFBF5',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1A1A1A',
-  },
-  listContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 100,
-  },
-  productCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  productInfo: {
-    flex: 1,
-  },
-  productName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 4,
-  },
-  productCategory: {
-    fontSize: 14,
-    color: '#737373',
-    marginBottom: 8,
-  },
-  productDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  productPrice: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1A6B3C',
-  },
-  productStock: {
-    fontSize: 14,
-    color: '#737373',
-  },
-  lowStock: {
-    color: '#EF4444',
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    marginTop: 100,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#737373',
-    marginTop: 16,
-    textAlign: 'center',
-  },
-  errorText: {
-    color: '#EF4444',
-    textAlign: 'center',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 30,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#1A6B3C',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-});

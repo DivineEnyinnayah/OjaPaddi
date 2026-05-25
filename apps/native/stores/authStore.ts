@@ -1,10 +1,13 @@
 import { create } from 'zustand';
 import { secureStorage } from '@/lib/secureStorage';
+import { env } from '@/lib/env';
+import { MOCK_USER } from '@/lib/mockData';
 
 interface User {
   id: string;
   email: string;
   fullName: string;
+  businessName?: string;
 }
 
 interface RegistrationData {
@@ -31,6 +34,7 @@ interface AuthState {
   pendingOnboarding: OnboardingData | null;
   setUser: (user: User | null, accessToken: string | null, refreshToken: string | null) => Promise<void>;
   clearAuth: () => Promise<void>;
+  logout: () => Promise<void>;
   initialize: () => Promise<void>;
   setPendingRegistration: (data: RegistrationData | null) => void;
   setPendingOnboarding: (data: OnboardingData | null) => void;
@@ -64,7 +68,26 @@ export const useAuthStore = create<AuthState>((set) => ({
     await secureStorage.deleteItem(USER_KEY);
     set({ user: null, accessToken: null, refreshToken: null, isInitialized: true });
   },
+  logout: async () => {
+    await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
+    await secureStorage.deleteItem(USER_KEY);
+    set({ user: null, accessToken: null, refreshToken: null, pendingRegistration: null, pendingOnboarding: null, isInitialized: true });
+  },
   initialize: async () => {
+    // ── Dev Mode Bypass ──────────────────────────────────────────────
+    // When EXPO_PUBLIC_DEV_MODE=true, inject mock user and token
+    // directly into state. No SecureStore reads, no network calls.
+    // The root _layout.tsx sees accessToken and routes to (tabs).
+    if (env.IS_DEV_MODE) {
+      set({
+        user: MOCK_USER,
+        accessToken: 'mock-access-token-dev',
+        refreshToken: 'mock-refresh-token-dev',
+        isInitialized: true,
+      });
+      return;
+    }
+    // ── Production Flow ──────────────────────────────────────────────
     const refreshToken = await secureStorage.getItem(REFRESH_TOKEN_KEY);
     const userStr = await secureStorage.getItem(USER_KEY);
 
@@ -86,7 +109,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     // If we have a refresh token, try to get a new access token
     if (refreshToken && user) {
       try {
-        const BASE_URL = process.env.EXPO_PUBLIC_SERVER_URL || 'http://localhost:3001';
+        const BASE_URL = env.SERVER_URL;
         const response = await fetch(`${BASE_URL}/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -111,6 +134,11 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
       } catch (error) {
         console.error("Failed to refresh token during initialization", error);
+        if (error instanceof TypeError && error.message.includes('Network request failed')) {
+          await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
+          await secureStorage.deleteItem(USER_KEY);
+          set({ user: null, accessToken: null, refreshToken: null });
+        }
       }
     }
   },

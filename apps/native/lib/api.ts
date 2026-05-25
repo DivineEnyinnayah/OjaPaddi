@@ -1,11 +1,18 @@
 import { useAuthStore } from '../stores/authStore';
+import { env } from './env';
+import { getMockResponse, getMockFormDataResponse } from './mockApi';
 
-const BASE_URL = process.env.EXPO_PUBLIC_SERVER_URL || 'http://192.168.1.7:3001';
+const BASE_URL = env.SERVER_URL;
 
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<{ success: boolean; data?: T; error?: { code: string; message: string } }> {
+  // ── Dev Mode Interception ────────────────────────────────────────
+  if (env.IS_DEV_MODE) {
+    return getMockResponse<T>(endpoint, options);
+  }
+  // ── Production Path ──────────────────────────────────────────────
   const url = `${BASE_URL}${endpoint}`;
 
   const { accessToken, refreshToken } = useAuthStore.getState();
@@ -92,6 +99,11 @@ export async function apiFormDataRequest<T>(
   formData: FormData,
   method: string = 'POST'
 ): Promise<{ success: boolean; data?: T; error?: { code: string; message: string } }> {
+  // ── Dev Mode Interception ────────────────────────────────────────
+  if (env.IS_DEV_MODE) {
+    return getMockFormDataResponse<T>(endpoint, formData, method);
+  }
+  // ── Production Path ──────────────────────────────────────────────
   const url = `${BASE_URL}${endpoint}`;
   const { accessToken } = useAuthStore.getState();
 

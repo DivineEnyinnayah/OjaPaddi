@@ -3,8 +3,13 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      ['react-native-reanimated/plugin', {}, 'reanimated'],
-      ['react-native-worklets/plugin', {}, 'worklets'],
+      [
+        'uniwind/babel',
+        {
+          config: './uniwind.config.ts',
+        },
+      ],
+      'react-native-reanimated',
     ],
   };
 };

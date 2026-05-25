@@ -2,11 +2,9 @@
   "expo": {
     "scheme": "ojapaddi",
     "userInterfaceStyle": "automatic",
-    "orientation": "default",
-    "icon": "./assets/icon.png",
-    "splash": {
-      "backgroundColor": "#FFFBF5"
-    },
+    "orientation": "portrait",
+    "icon": "./assets/images/iconi.png",
+    "newArchEnabled": false,
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -18,13 +16,15 @@
       "adaptiveIcon": {
         "backgroundColor": "#FFFBF5"
       },
-      "package": "com.ojapaddi.app"
+      "package": "com.ojapaddi.app",
+      "permissions": ["android.permission.ACCESS_NETWORK_STATE"]
     },
     "web": {
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
     },
-    "name": "ojapaddi",
+    "name": "OjaPaddi",
+    "owner": "Divine Enyinnayah",
     "slug": "ojapaddi",
     "plugins": [
       "expo-font",

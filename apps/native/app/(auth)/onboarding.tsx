@@ -1,22 +1,18 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  Image,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, Alert, View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button } from 'heroui-native';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Container } from '@/components/container';
 import { Ionicons } from '@expo/vector-icons';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/authStore';
+import { withUniwind } from 'uniwind';
+
+const StyledView = withUniwind(View);
+const StyledText = withUniwind(Text);
+const StyledKeyboardAvoidingView = withUniwind(KeyboardAvoidingView);
+const StyledTouchableOpacity = withUniwind(TouchableOpacity);
 
 interface FormErrors {
   businessName?: string;
@@ -94,7 +90,6 @@ export default function OnboardingScreen() {
     setIsLoading(true);
     
     try {
-      // Save onboarding data to store
       setPendingOnboarding({
         businessName: formData.businessName,
         category: formData.category,
@@ -107,7 +102,6 @@ export default function OnboardingScreen() {
         throw new Error('Missing registration information. Please go back and register first.');
       }
 
-      // Call the combined registration endpoint
       const result = await apiRequest<{ user: any; access_token: string; refresh_token: string }>('/auth/complete-registration', {
         method: 'POST',
         body: JSON.stringify({
@@ -144,297 +138,123 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+    <Container isScrollable={false} className="bg-background">
+      <StyledKeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+        className="flex-1"
       >
         <ScrollView 
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 24 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
-            <Text style={styles.title}>Business Setup</Text>
-            <Text style={styles.subtitle}>Tell us about your business</Text>
-          </View>
+          <StyledView className="mb-8 mt-10">
+            <StyledText className="text-[28px] font-bold text-on-surface mb-2 tracking-tight">Business Setup</StyledText>
+            <StyledText className="text-body-lg text-on-surface-variant">Tell us about your business</StyledText>
+          </StyledView>
 
-          <View style={styles.form}>
-            {/* Logo Upload */}
-            <View style={styles.logoSection}>
-              <TouchableOpacity style={styles.logoUpload}>
-                <View style={styles.logoPlaceholder}>
-                  <Ionicons name="camera-outline" size={32} color={'#A3A3A3'} />
-                </View>
-              </TouchableOpacity>
-              <Text style={styles.logoHint}>Upload your business logo (optional)</Text>
-            </View>
+          <StyledView className="gap-2 mb-8">
+            <StyledView className="items-center mb-4">
+              <StyledTouchableOpacity className="w-[100px] h-[100px] rounded-[20px] justify-center items-center border-2 border-dashed border-outline-variant bg-surface">
+                <Ionicons name="camera-outline" size={32} color="#8a9389" />
+              </StyledTouchableOpacity>
+              <StyledText className="text-body-sm mt-2 text-outline">Upload your business logo (optional)</StyledText>
+            </StyledView>
 
-            {/* Business Name */}
-            <View>
-              <Text style={styles.label}>Business Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., Tope's Fashion Hub"
-                placeholderTextColor={'#A3A3A3'}
-                value={formData.businessName}
-                onChangeText={(value) => updateField('businessName', value)}
-                autoCapitalize="words"
-              />
-              {errors.businessName && <Text style={styles.errorText}>{errors.businessName}</Text>}
-            </View>
+            <Input
+              label="Business Name"
+              placeholder="e.g., Tope's Fashion Hub"
+              value={formData.businessName}
+              onChangeText={(value) => updateField('businessName', value)}
+              autoCapitalize="words"
+              error={errors.businessName}
+            />
 
-            {/* Category */}
-            <View>
-              <Text style={styles.label}>Business Category</Text>
-              <TouchableOpacity
-                style={[styles.input, styles.selectInput]}
+            <StyledView className="w-full mb-4">
+              <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">Business Category</StyledText>
+              <StyledTouchableOpacity
+                className="w-full rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12 flex-row justify-between items-center"
                 onPress={() => setShowCategoryPicker(!showCategoryPicker)}
               >
-                <Text style={[
-                  styles.selectText,
-                  !formData.category && styles.selectPlaceholder,
-                ]}>
+                <StyledText className={formData.category ? "text-body-lg text-on-surface" : "text-body-lg text-[#8a9389]"}>
                   {formData.category || 'Select a category'}
-                </Text>
-                <Ionicons name={showCategoryPicker ? 'chevron-up' : 'chevron-down'} size={20} color={'#737373'} />
-              </TouchableOpacity>
+                </StyledText>
+                <Ionicons name={showCategoryPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#707a70" />
+              </StyledTouchableOpacity>
               {showCategoryPicker && (
-                <View style={styles.categoryList}>
-                  {BUSINESS_CATEGORIES.map((category) => (
-                    <TouchableOpacity
-                      key={category}
-                      style={[
-                        styles.categoryItem,
-                        formData.category === category && styles.categoryItemSelected,
-                      ]}
-                      onPress={() => {
-                        updateField('category', category);
-                        setShowCategoryPicker(false);
-                      }}
-                    >
-                      <Text style={[
-                        styles.categoryText,
-                        formData.category === category && styles.categoryTextSelected,
-                      ]}>
-                        {category}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                <StyledView className="mt-2 rounded-xl bg-surface border border-outline-variant max-h-[200px] overflow-hidden">
+                  <ScrollView nestedScrollEnabled>
+                    {BUSINESS_CATEGORIES.map((category) => (
+                      <StyledTouchableOpacity
+                        key={category}
+                        className={`px-4 py-3 border-b border-surface-variant ${formData.category === category ? 'bg-secondary-container' : ''}`}
+                        onPress={() => {
+                          updateField('category', category);
+                          setShowCategoryPicker(false);
+                        }}
+                      >
+                        <StyledText className={`text-body-lg text-on-surface ${formData.category === category ? 'font-semibold text-on-secondary-container' : ''}`}>
+                          {category}
+                        </StyledText>
+                      </StyledTouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </StyledView>
               )}
-              {errors.category && <Text style={styles.errorText}>{errors.category}</Text>}
-            </View>
+              {errors.category && <StyledText className="text-body-sm text-error mt-1 ml-1">{errors.category}</StyledText>}
+            </StyledView>
 
-            {/* WhatsApp Number */}
-            <View>
-              <Text style={styles.label}>WhatsApp Number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="08012345678"
-                placeholderTextColor={'#A3A3A3'}
-                value={formData.whatsappNumber}
-                onChangeText={(value) => updateField('whatsappNumber', value)}
-                keyboardType="phone-pad"
-              />
-              <Text style={styles.fieldHint}>Customers can reach you via WhatsApp</Text>
-              {errors.whatsappNumber && <Text style={styles.errorText}>{errors.whatsappNumber}</Text>}
-            </View>
+            <Input
+              label="WhatsApp Number"
+              placeholder="08012345678"
+              value={formData.whatsappNumber}
+              onChangeText={(value) => updateField('whatsappNumber', value)}
+              keyboardType="phone-pad"
+              error={errors.whatsappNumber}
+            />
 
-            {/* City & State */}
-            <View style={styles.row}>
-              <View style={styles.halfWidth}>
-                <Text style={styles.label}>City</Text>
-                <TextInput
-                  style={styles.input}
+            <StyledView className="flex-row gap-4 w-full">
+              <StyledView className="flex-1">
+                <Input
+                  label="City"
                   placeholder="e.g., Lagos"
-                  placeholderTextColor={'#A3A3A3'}
                   value={formData.city}
                   onChangeText={(value) => updateField('city', value)}
+                  error={errors.city}
                 />
-                {errors.city && <Text style={styles.errorText}>{errors.city}</Text>}
-              </View>
-              <View style={styles.halfWidth}>
-                <Text style={styles.label}>State</Text>
-                <TextInput
-                  style={styles.input}
+              </StyledView>
+              <StyledView className="flex-1">
+                <Input
+                  label="State"
                   placeholder="e.g., Lagos"
-                  placeholderTextColor={'#A3A3A3'}
                   value={formData.state}
                   onChangeText={(value) => updateField('state', value)}
+                  error={errors.state}
                 />
-                {errors.state && <Text style={styles.errorText}>{errors.state}</Text>}
-              </View>
-            </View>
-          </View>
+              </StyledView>
+            </StyledView>
+          </StyledView>
 
-          <View style={styles.actions}>
+          <StyledView className="mt-auto gap-4 pb-10">
             <Button
               size="lg"
-              style={styles.primaryButton}
+              variant="primary"
               onPress={handleComplete}
               isDisabled={isLoading}
             >
               {isLoading ? 'Setting up...' : 'Complete Setup'}
             </Button>
 
-            <TouchableOpacity 
-              style={styles.skipButton}
+            <Button
+              variant="secondary"
+              className="border-0"
               onPress={() => router.replace('/')}
             >
-              <Text style={styles.skipText}>Skip for now</Text>
-            </TouchableOpacity>
-          </View>
+              Skip for now
+            </Button>
+          </StyledView>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </StyledKeyboardAvoidingView>
+    </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFBF5',
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 24,
-  },
-  header: {
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#737373',
-  },
-  form: {
-    marginBottom: 32,
-  },
-  logoSection: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  logoUpload: {
-    width: 100,
-    height: 100,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: '#D4D4D4',
-    backgroundColor: '#FAFAFA',
-  },
-  logoPlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#737373',
-  },
-  logoHint: {
-    fontSize: 12,
-    marginTop: 8,
-    color: '#A3A3A3',
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#404040',
-    marginBottom: 8,
-  },
-  input: {
-    height: 56,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    color: '#1A1A1A',
-  },
-  selectInput: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  selectText: {
-    fontSize: 16,
-    color: '#1A1A1A',
-  },
-  selectPlaceholder: {
-    color: '#A3A3A3',
-  },
-  categoryList: {
-    marginTop: 8,
-    borderRadius: 12,
-    maxHeight: 200,
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-  },
-  categoryItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  categoryItemSelected: {
-    backgroundColor: '#FEF3C7',
-  },
-  categoryText: {
-    fontSize: 15,
-    color: '#404040',
-  },
-  categoryTextSelected: {
-    fontWeight: '600',
-  },
-  fieldHint: {
-    fontSize: 12,
-    marginTop: 4,
-    marginBottom: 4,
-    color: '#A3A3A3',
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#EF4444',
-    marginTop: 4,
-  },
-  row: {
-    flexDirection: 'row',
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  actions: {
-    marginTop: 'auto',
-    gap: 16,
-  },
-  primaryButton: {
-    borderRadius: 16,
-    height: 56,
-    backgroundColor: '#1A6B3C',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  skipButton: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  skipText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#737373',
-  },
-});

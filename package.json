@@ -27,8 +27,17 @@
   "dependencies": {
     "@ojapaddi/env": "workspace:*",
     "dotenv": "catalog:",
-    "expo": "^55.0.24",
     "zod": "catalog:"
+  },
+  "overrides": {
+    "expo": "^55.0.26",
+    "@expo/metro-runtime": "~55.0.11",
+    "@expo/vector-icons": "^15.1.1",
+    "expo-constants": "~55.0.16",
+    "expo-font": "~55.0.8",
+    "expo-linking": "~55.0.15",
+    "@expo/log-box": "~55.0.12",
+    "@expo/dom-webview": "~55.0.6"
   },
   "devDependencies": {
     "@ojapaddi/config": "workspace:*",

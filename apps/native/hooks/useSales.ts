@@ -27,13 +27,11 @@ export interface Sale {
 }
 
 export interface SalesResponse {
-  data: {
-    sales: Sale[];
-    pagination: {
-      total: number;
-      page: number;
-      limit: number;
-    };
+  sales: Sale[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
   };
 }
 

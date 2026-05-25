@@ -1,12 +1,12 @@
-import { cn } from "heroui-native";
 import { type PropsWithChildren } from "react";
 import { ScrollView, View, type ScrollViewProps, type ViewProps } from "react-native";
-import Animated, { type AnimatedProps } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { withUniwind } from "uniwind";
+import { cn } from "../lib/utils";
 
-const AnimatedView = Animated.createAnimatedComponent(View);
+const StyledView = withUniwind(View);
 
-type Props = AnimatedProps<ViewProps> & {
+type Props = ViewProps & {
   className?: string;
   isScrollable?: boolean;
   scrollViewProps?: Omit<ScrollViewProps, "contentContainerStyle">;
@@ -22,7 +22,7 @@ export function Container({
   const insets = useSafeAreaInsets();
 
   return (
-    <AnimatedView
+    <StyledView
       className={cn("flex-1 bg-background", className)}
       style={{
         paddingBottom: insets.bottom,
@@ -41,6 +41,6 @@ export function Container({
       ) : (
         <View className="flex-1">{children}</View>
       )}
-    </AnimatedView>
+    </StyledView>
   );
 }
