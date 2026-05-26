@@ -7,6 +7,8 @@ import { Surface } from '@/components/ui/surface';
 import { Button } from '@/components/ui/button';
 import { Ionicons } from '@expo/vector-icons';
 import { withUniwind } from 'uniwind';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -15,6 +17,7 @@ const StyledTouchableOpacity = withUniwind(TouchableOpacity);
 export default function MoreScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const colors = useThemeColor();
 
   const handleLogout = () => {
     Alert.alert(
@@ -40,76 +43,77 @@ export default function MoreScreen() {
 
   return (
     <Container isScrollable={true} className="bg-background pt-12">
-      <StyledView className="flex-row items-center px-6 py-4 mt-2 mb-4">
-        <StyledText className="text-[36px] font-black text-on-surface tracking-tight">More</StyledText>
+      <StyledView className="flex-row justify-between items-center px-6 py-4 mt-2 mb-4">
+        <StyledText className="text-3xl font-black text-on-surface tracking-tight">More</StyledText>
+        <ThemeToggle />
       </StyledView>
 
       <StyledView className="px-6 pb-24">
         <Surface variant="outline" className="flex-row items-center p-4 mb-6">
           <StyledView className="w-16 h-16 rounded-full bg-primary justify-center items-center mr-4">
-            <StyledText className="text-on-primary font-bold text-[24px]">{getInitials(user?.fullName || '')}</StyledText>
+            <StyledText className="text-on-primary font-bold text-xl">{getInitials(user?.fullName || '')}</StyledText>
           </StyledView>
           <StyledView className="flex-1">
-            <StyledText className="text-[20px] font-bold text-on-surface mb-1">{user?.fullName || 'Seller'}</StyledText>
+            <StyledText className="text-xl font-bold text-on-surface mb-1">{user?.fullName || 'Seller'}</StyledText>
             <StyledText className="text-body-sm text-on-surface-variant mb-1">{user?.email || ''}</StyledText>
             {user?.businessName && (
               <StyledView className="bg-secondary-container self-start px-2 py-1 rounded-md mt-1">
-                <StyledText className="text-[12px] font-semibold text-on-secondary-container">{user.businessName}</StyledText>
+                <StyledText className="text-label-caps font-semibold text-on-secondary-container">{user.businessName}</StyledText>
               </StyledView>
             )}
           </StyledView>
         </Surface>
 
-        <StyledText className="text-[18px] font-bold text-on-surface mb-3 mt-2">Business</StyledText>
+        <StyledText className="text-lg font-bold text-on-surface mb-3 mt-2">Business</StyledText>
         <Surface variant="outline" className="p-0 overflow-hidden mb-6">
           <StyledTouchableOpacity className="flex-row items-center p-4 border-b border-surface-variant" onPress={() => {/* router.push('/settings/business') */}}>
             <StyledView className="w-10 h-10 rounded-full bg-surface-variant justify-center items-center mr-4">
-              <Ionicons name="briefcase-outline" size={20} color="#181D19" />
+              <Ionicons name="briefcase-outline" size={20} color={colors.onSurface} />
             </StyledView>
-            <StyledText className="flex-1 text-[16px] font-semibold text-on-surface">Business Profile</StyledText>
-            <Ionicons name="chevron-forward" size={20} color="#8a9389" />
+            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface">Business Profile</StyledText>
+            <Ionicons name="chevron-forward" size={20} color={colors.outline} />
           </StyledTouchableOpacity>
           <StyledTouchableOpacity className="flex-row items-center p-4 border-b border-surface-variant" onPress={() => {/* router.push('/settings/staff') */}}>
             <StyledView className="w-10 h-10 rounded-full bg-surface-variant justify-center items-center mr-4">
-              <Ionicons name="people-outline" size={20} color="#181D19" />
+              <Ionicons name="people-outline" size={20} color={colors.onSurface} />
             </StyledView>
-            <StyledText className="flex-1 text-[16px] font-semibold text-on-surface">Staff Accounts</StyledText>
-            <Ionicons name="chevron-forward" size={20} color="#8a9389" />
+            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface">Staff Accounts</StyledText>
+            <Ionicons name="chevron-forward" size={20} color={colors.outline} />
           </StyledTouchableOpacity>
           <StyledTouchableOpacity className="flex-row items-center p-4 border-b border-surface-variant" onPress={() => {/* router.push('/analytics') */}}>
             <StyledView className="w-10 h-10 rounded-full bg-surface-variant justify-center items-center mr-4">
-              <Ionicons name="stats-chart-outline" size={20} color="#181D19" />
+              <Ionicons name="stats-chart-outline" size={20} color={colors.onSurface} />
             </StyledView>
-            <StyledText className="flex-1 text-[16px] font-semibold text-on-surface">Analytics</StyledText>
-            <Ionicons name="chevron-forward" size={20} color="#8a9389" />
+            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface">Analytics</StyledText>
+            <Ionicons name="chevron-forward" size={20} color={colors.outline} />
           </StyledTouchableOpacity>
           <StyledTouchableOpacity className="flex-row items-center p-4" onPress={() => {/* router.push('/settings/plan') */}}>
-            <StyledView className="w-10 h-10 rounded-full bg-[#FFF8E1] justify-center items-center mr-4">
-              <Ionicons name="star-outline" size={20} color="#B28C09" />
+            <StyledView className="w-10 h-10 rounded-full bg-secondary-container/20 justify-center items-center mr-4">
+              <Ionicons name="star-outline" size={20} color={colors.secondary} />
             </StyledView>
-            <StyledText className="flex-1 text-[16px] font-semibold text-on-surface">Subscription Plan</StyledText>
-            <StyledView className="bg-[#FFF8E1] border border-[#FFE082] px-2 py-1 rounded-md mr-2">
-              <StyledText className="text-[12px] font-bold text-[#B28C09]">PRO</StyledText>
+            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface">Subscription Plan</StyledText>
+            <StyledView className="bg-secondary-container/20 border border-secondary-container px-2 py-1 rounded-md mr-2">
+              <StyledText className="text-label-caps font-bold text-secondary">PRO</StyledText>
             </StyledView>
-            <Ionicons name="chevron-forward" size={20} color="#8a9389" />
+            <Ionicons name="chevron-forward" size={20} color={colors.outline} />
           </StyledTouchableOpacity>
         </Surface>
 
-        <StyledText className="text-[18px] font-bold text-on-surface mb-3">Support & Settings</StyledText>
+        <StyledText className="text-lg font-bold text-on-surface mb-3">Support & Settings</StyledText>
         <Surface variant="outline" className="p-0 overflow-hidden mb-8">
           <StyledTouchableOpacity className="flex-row items-center p-4 border-b border-surface-variant">
             <StyledView className="w-10 h-10 rounded-full bg-surface-variant justify-center items-center mr-4">
-              <Ionicons name="help-circle-outline" size={20} color="#181D19" />
+              <Ionicons name="help-circle-outline" size={20} color={colors.onSurface} />
             </StyledView>
-            <StyledText className="flex-1 text-[16px] font-semibold text-on-surface">Help & Support</StyledText>
-            <Ionicons name="chevron-forward" size={20} color="#8a9389" />
+            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface">Help & Support</StyledText>
+            <Ionicons name="chevron-forward" size={20} color={colors.outline} />
           </StyledTouchableOpacity>
           <StyledTouchableOpacity className="flex-row items-center p-4">
             <StyledView className="w-10 h-10 rounded-full bg-surface-variant justify-center items-center mr-4">
-              <Ionicons name="document-text-outline" size={20} color="#181D19" />
+              <Ionicons name="document-text-outline" size={20} color={colors.onSurface} />
             </StyledView>
-            <StyledText className="flex-1 text-[16px] font-semibold text-on-surface">Terms & Privacy</StyledText>
-            <Ionicons name="chevron-forward" size={20} color="#8a9389" />
+            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface">Terms & Privacy</StyledText>
+            <Ionicons name="chevron-forward" size={20} color={colors.outline} />
           </StyledTouchableOpacity>
         </Surface>
 

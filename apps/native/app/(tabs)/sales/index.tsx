@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSales, type Sale } from '../../../hooks/useSales';
+import { useThemeColor } from '@/hooks/useThemeColor';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
@@ -16,6 +17,7 @@ const StyledTouchableOpacity = withUniwind(TouchableOpacity);
 export default function SalesScreen() {
   const router = useRouter();
   const { sales, isLoading, error, fetchSales } = useSales();
+  const colors = useThemeColor();
 
   useEffect(() => {
     fetchSales();
@@ -43,10 +45,10 @@ export default function SalesScreen() {
         <Surface variant="outline" className="flex-col p-4 mb-3">
           <StyledView className="flex-row justify-between items-center mb-2">
             <StyledView>
-              <StyledText className="text-[16px] font-semibold text-on-surface">{item.customerId ? 'Customer Sale' : 'Walk-in Customer'}</StyledText>
+              <StyledText className="text-base font-semibold text-on-surface">{item.customerId ? 'Customer Sale' : 'Walk-in Customer'}</StyledText>
               <StyledText className="text-body-sm text-on-surface-variant">{item.reference} • {formatDate(item.soldAt)}</StyledText>
             </StyledView>
-            <StyledText className="text-[18px] font-bold text-primary">₦{total.toLocaleString()}</StyledText>
+            <StyledText className="text-lg font-bold text-primary">₦{total.toLocaleString()}</StyledText>
           </StyledView>
           
           <StyledView className="flex-row justify-between items-center mt-2">
@@ -63,7 +65,7 @@ export default function SalesScreen() {
   if (isLoading && sales?.length === 0) {
     return (
       <Container isScrollable={false} className="bg-background pt-12 items-center justify-center">
-        <ActivityIndicator size="large" color="#1A6B3C" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </Container>
     );
   }
@@ -82,7 +84,7 @@ export default function SalesScreen() {
   return (
     <Container isScrollable={false} className="bg-background pt-12">
       <StyledView className="flex-row justify-between items-center px-6 py-4 mt-2">
-        <StyledText className="text-[36px] font-black text-on-surface tracking-tight">Sales</StyledText>
+        <StyledText className="text-4xl font-black text-on-surface tracking-tight">Sales</StyledText>
       </StyledView>
 
       <FlatList
@@ -91,12 +93,12 @@ export default function SalesScreen() {
         renderItem={renderSale}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={fetchSales} tintColor="#1A6B3C" />
+          <RefreshControl refreshing={isLoading} onRefresh={fetchSales} tintColor={colors.primary} colors={[colors.primary]} />
         }
         ListEmptyComponent={
           <StyledView className="items-center mt-24">
-            <Ionicons name="receipt-outline" size={64} color="#D4D4D4" />
-            <StyledText className="text-[16px] text-on-surface-variant mt-4 text-center">No sales recorded yet. Record your first sale!</StyledText>
+            <Ionicons name="receipt-outline" size={64} color={colors.emptyStateIcon} />
+            <StyledText className="text-base text-on-surface-variant mt-4 text-center">No sales recorded yet. Record your first sale!</StyledText>
             <Button
               size="lg"
               className="mt-6"
@@ -112,7 +114,7 @@ export default function SalesScreen() {
         className="absolute bottom-8 right-6 w-14 h-14 rounded-full bg-primary justify-center items-center shadow-md shadow-black/30 elevation-5"
         onPress={() => {/* router.push('/sales/add') */}}
       >
-        <Ionicons name="add" size={30} color="#FFF" />
+        <Ionicons name="add" size={30} color={colors.onPrimary} />
       </StyledTouchableOpacity>
     </Container>
   );

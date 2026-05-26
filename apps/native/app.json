@@ -17,14 +17,16 @@
         "backgroundColor": "#FFFBF5"
       },
       "package": "com.ojapaddi.app",
-      "permissions": ["android.permission.ACCESS_NETWORK_STATE"]
+      "permissions": [
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "bundler": "metro",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/images/favicon.png"
     },
     "name": "OjaPaddi",
-    "owner": "Divine Enyinnayah",
+    "owner": "iamdivine",
     "slug": "ojapaddi",
     "plugins": [
       "expo-font",
@@ -34,6 +36,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "01e04008-fa62-4bf6-ab0d-15726beab31f"
+      }
     }
   }
 }

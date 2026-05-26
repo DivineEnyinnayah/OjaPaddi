@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Container } from '@/components/container';
 import { Ionicons } from '@expo/vector-icons';
+import { useThemeColor } from '@/hooks/useThemeColor';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/authStore';
 import { withUniwind } from 'uniwind';
@@ -42,6 +43,7 @@ export default function OnboardingScreen() {
   const setPendingOnboarding = useAuthStore(state => state.setPendingOnboarding);
   const clearPendingData = useAuthStore(state => state.clearPendingData);
   const pendingRegistration = useAuthStore(state => state.pendingRegistration);
+  const colors = useThemeColor();
   
   const [formData, setFormData] = useState({
     businessName: '',
@@ -156,7 +158,7 @@ export default function OnboardingScreen() {
           <StyledView className="gap-2 mb-8">
             <StyledView className="items-center mb-4">
               <StyledTouchableOpacity className="w-[100px] h-[100px] rounded-[20px] justify-center items-center border-2 border-dashed border-outline-variant bg-surface">
-                <Ionicons name="camera-outline" size={32} color="#8a9389" />
+                <Ionicons name="camera-outline" size={32} color={colors.outline} />
               </StyledTouchableOpacity>
               <StyledText className="text-body-sm mt-2 text-outline">Upload your business logo (optional)</StyledText>
             </StyledView>
@@ -176,10 +178,10 @@ export default function OnboardingScreen() {
                 className="w-full rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12 flex-row justify-between items-center"
                 onPress={() => setShowCategoryPicker(!showCategoryPicker)}
               >
-                <StyledText className={formData.category ? "text-body-lg text-on-surface" : "text-body-lg text-[#8a9389]"}>
+                <StyledText className={formData.category ? "text-body-lg text-on-surface" : "text-body-lg text-on-surface-variant"}>
                   {formData.category || 'Select a category'}
                 </StyledText>
-                <Ionicons name={showCategoryPicker ? 'chevron-up' : 'chevron-down'} size={20} color="#707a70" />
+                <Ionicons name={showCategoryPicker ? 'chevron-up' : 'chevron-down'} size={20} color={colors.outline} />
               </StyledTouchableOpacity>
               {showCategoryPicker && (
                 <StyledView className="mt-2 rounded-xl bg-surface border border-outline-variant max-h-[200px] overflow-hidden">

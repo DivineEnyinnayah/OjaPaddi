@@ -3,6 +3,7 @@ import { TouchableOpacity, Animated, useWindowDimensions, Platform, View, Text }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 type TabIcon = keyof typeof Ionicons.glyphMap;
 
@@ -28,6 +29,7 @@ const TAB_CONFIG: Record<string, { label: string; activeIcon: TabIcon; inactiveI
 
 export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
   const { width: screenWidth } = useWindowDimensions();
+  const colors = useThemeColor();
   const margin = 16;
 
   const routes = useMemo(
@@ -77,18 +79,18 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
           flexDirection: 'row',
           alignItems: 'center',
           borderRadius: 28,
-          backgroundColor: 'white',
+          backgroundColor: colors.tabBarBg,
           paddingHorizontal: 8,
           paddingVertical: 8,
           ...Platform.select({
             ios: {
-              shadowColor: '#000',
+              shadowColor: colors.tabBarShadowColor,
               shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.12,
+              shadowOpacity: colors.tabBarShadowOpacity,
               shadowRadius: 16,
             },
             android: {
-              elevation: 10,
+              elevation: colors.tabBarElevation,
             },
           }),
         }}
@@ -99,7 +101,7 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
             borderRadius: 22,
             width: tabWidth,
             height: 44,
-            backgroundColor: 'rgba(26, 107, 60, 0.1)',
+            backgroundColor: colors.tabIndicatorBg,
             transform: [{ translateX: indicatorAnim }],
           }}
         />
@@ -117,13 +119,13 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
               <Ionicons
                 name={isFocused ? config.activeIcon : config.inactiveIcon}
                 size={24}
-                color={isFocused ? '#1A6B3C' : '#9CA3AF'}
+                color={isFocused ? colors.tabActiveIcon : colors.tabInactiveIcon}
               />
               <Text
                 style={{
                   fontSize: 10,
                   fontWeight: isFocused ? '700' : '500',
-                  color: isFocused ? '#1A6B3C' : '#9CA3AF',
+                  color: isFocused ? colors.tabActiveIcon : colors.tabInactiveIcon,
                 }}
               >
                 {config.label}

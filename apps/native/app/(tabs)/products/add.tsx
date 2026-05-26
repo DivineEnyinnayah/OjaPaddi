@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Alert, View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useThemeColor } from '@/hooks/useThemeColor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Container } from '@/components/container';
@@ -24,6 +25,7 @@ interface FormErrors {
 export default function AddProductScreen() {
   const router = useRouter();
   const { addProduct, isLoading: isAddingProduct } = useProducts();
+  const colors = useThemeColor();
   const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -98,9 +100,9 @@ export default function AddProductScreen() {
       >
         <StyledView className="flex-row justify-between items-center px-6 py-4">
           <StyledTouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="close" size={28} color="#181D19" />
+            <Ionicons name="close" size={28} color={colors.onSurface} />
           </StyledTouchableOpacity>
-          <StyledText className="text-[20px] font-bold text-on-surface tracking-tight">Add Product</StyledText>
+          <StyledText className="text-xl font-bold text-on-surface tracking-tight">Add Product</StyledText>
           <StyledView className="w-7" /> 
         </StyledView>
 

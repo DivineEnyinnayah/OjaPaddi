@@ -17,19 +17,18 @@ export function Chip({
   ...props
 }: ChipProps) {
   const variantStyles = {
-    success: "bg-[#e8f5e9] border-[#c8e6c9]", // Using custom semantic literal or standard green if mapped
+    success: "bg-success-container border-success",
     warning: "bg-secondary-container border-secondary",
     error: "bg-error-container border-error",
     default: "bg-surface-container border-outline-variant",
   };
 
   const textStyles = {
-    success: "text-[#2e7d32]",
+    success: "text-primary",
     warning: "text-on-secondary-container",
     error: "text-on-error-container",
     default: "text-on-surface-variant",
   };
-
   return (
     <StyledView
       className={cn(
