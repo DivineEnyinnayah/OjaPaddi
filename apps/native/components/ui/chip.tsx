@@ -4,6 +4,7 @@ import { withUniwind } from "uniwind";
 import { cn } from "../../lib/utils";
 
 const StyledView = withUniwind(View);
+const StyledText = withUniwind(Text);
 
 export interface ChipProps extends ViewProps {
   variant?: "success" | "warning" | "error" | "default";
@@ -38,9 +39,9 @@ export function Chip({
       )}
       {...props}
     >
-      <Text className={cn("text-label-caps", textStyles[variant])}>
+      <StyledText className={cn("text-label-caps", textStyles[variant])}>
         {children}
-      </Text>
+      </StyledText>
     </StyledView>
   );
 }

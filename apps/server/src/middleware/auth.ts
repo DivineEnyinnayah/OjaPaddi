@@ -8,6 +8,7 @@ import type { User } from "@supabase/supabase-js";
 export type AuthContext = {
   user: User;
   businessId: string;
+  validatedBody: any;
 };
 
 export const authMiddleware = createMiddleware<{ Variables: AuthContext }>(async (c, next) => {

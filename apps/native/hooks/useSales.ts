@@ -58,8 +58,8 @@ export function useSales() {
       } else {
         setError(result.error?.message || 'Failed to fetch sales');
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -91,8 +91,8 @@ export function useSales() {
       } else {
         throw new Error(result.error?.message || 'Failed to create sale');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);
@@ -111,8 +111,8 @@ export function useSales() {
       } else {
         throw new Error(result.error?.message || 'Failed to fetch sale');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);
@@ -122,7 +122,7 @@ export function useSales() {
   const voidSale = async (saleId: string) => {
     setIsLoading(true);
     try {
-      const result = await apiRequest<any>(`/sales/${saleId}`, {
+      const result = await apiRequest<null>(`/sales/${saleId}`, {
         method: 'DELETE',
       });
 
@@ -132,8 +132,8 @@ export function useSales() {
       } else {
         throw new Error(result.error?.message || 'Failed to void sale');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);

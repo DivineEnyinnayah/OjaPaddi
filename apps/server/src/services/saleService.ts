@@ -101,7 +101,7 @@ export async function getSales(businessId: string, query: {
   const total = await db.select({ count: sql<number>`count(*)` }).from(sales).where(and(...filters));
 
   return {
-    data: result,
+    sales: result,
     pagination: {
       total: Number(total[0]?.count ?? 0),
       page,

@@ -105,18 +105,52 @@ export async function apiFormDataRequest<T>(
   }
   // ── Production Path ──────────────────────────────────────────────
   const url = `${BASE_URL}${endpoint}`;
-  const { accessToken } = useAuthStore.getState();
+  const { accessToken, refreshToken } = useAuthStore.getState();
 
   const headers: Record<string, string> = {};
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
-  const response = await fetch(url, {
+  let response = await fetch(url, {
     method,
     headers,
     body: formData,
   });
+
+  // Handle 401 Unauthorized - attempt token refresh
+  if (response.status === 401 && refreshToken) {
+    try {
+      const refreshResponse = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (refreshResponse.ok) {
+        const result = await refreshResponse.json();
+        if (result.success && result.data) {
+          const { user, access_token, refresh_token: new_refresh_token } = result.data;
+          await useAuthStore.getState().setUser(user, access_token, new_refresh_token);
+
+          const newHeaders = {
+            ...headers,
+            'Authorization': `Bearer ${access_token}`,
+          };
+
+          response = await fetch(url, {
+            method,
+            headers: newHeaders,
+            body: formData,
+          });
+        }
+      } else {
+        await useAuthStore.getState().clearAuth();
+      }
+    } catch (error) {
+      console.error("Token refresh error during apiFormDataRequest:", error);
+    }
+  }
 
   const contentType = response.headers.get('content-type');
   if (!contentType || !contentType.includes('application/json')) {

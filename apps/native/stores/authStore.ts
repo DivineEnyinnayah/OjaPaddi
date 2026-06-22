@@ -3,11 +3,12 @@ import { secureStorage } from '@/lib/secureStorage';
 import { env } from '@/lib/env';
 import { MOCK_USER } from '@/lib/mockData';
 
-interface User {
+export interface User {
   id: string;
   email: string;
   fullName: string;
   businessName?: string;
+  whatsappNumber?: string;
 }
 
 interface RegistrationData {
@@ -69,6 +70,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: null, accessToken: null, refreshToken: null, isInitialized: true });
   },
   logout: async () => {
+    try {
+      const { refreshToken } = useAuthStore.getState();
+      if (refreshToken && !env.IS_DEV_MODE) {
+        await fetch(`${env.SERVER_URL}/auth/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+      }
+    } catch {
+      // Logout API call is best-effort; always clear local state
+    }
     await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
     await secureStorage.deleteItem(USER_KEY);
     set({ user: null, accessToken: null, refreshToken: null, pendingRegistration: null, pendingOnboarding: null, isInitialized: true });

@@ -4,6 +4,7 @@ import { withUniwind } from "uniwind";
 import { cn } from "../../lib/utils";
 
 const StyledPressable = withUniwind(Pressable);
+const StyledText = withUniwind(Text);
 
 export interface ButtonProps extends Omit<PressableProps, "style"> {
   size?: "sm" | "md" | "lg";
@@ -51,19 +52,25 @@ export function Button({
     <StyledPressable
       disabled={isDisabled}
       className={cn(
-        "justify-center items-center active:opacity-80 flex-row rounded-button",
+        "justify-center items-center flex-row rounded-button",
         sizeStyles[size],
         variantStyles[variant],
         isDisabled && "opacity-50",
         className
       )}
-      style={style}
+      style={({ pressed }) => [
+        {
+          transform: [{ scale: pressed && !isDisabled ? 0.97 : 1 }],
+          opacity: pressed && !isDisabled ? 0.9 : 1,
+        },
+        style as ViewStyle,
+      ]}
       {...props}
     >
       {typeof children === "string" || typeof children === "number" ? (
-        <Text className={cn(textSizeStyles[size], textVariantStyles[variant])}>
+        <StyledText className={cn(textSizeStyles[size], textVariantStyles[variant])}>
           {children}
-        </Text>
+        </StyledText>
       ) : (
         children
       )}

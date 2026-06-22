@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, adjustStock, getCategories } from "../services/productService";
-import { uploadFile } from "../services/storageService";
+import { uploadFile, validateImageFile, getPublicUrl } from "../services/storageService";
 import { type AuthContext } from "../middleware/auth";
-import { env } from "@ojapaddi/env/server";
+import { validate } from "../middleware/validate";
+import { CreateProductSchema, UpdateProductSchema, AdjustStockSchema } from "../validators/products";
 
 export const productRoutes = new Hono<{ Variables: AuthContext }>();
 
@@ -18,19 +19,19 @@ productRoutes.get("/", async (c) => {
     };
     const result = await getProducts(businessId, query);
     return c.json({ success: true, data: result }, 200);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "PRODUCTS_FETCH_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "PRODUCTS_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 
-productRoutes.post("/", async (c) => {
+productRoutes.post("/", validate(CreateProductSchema), async (c) => {
   try {
     const businessId = c.get("businessId");
-    const body = await c.req.json();
+    const body = c.get("validatedBody");
     const product = await createProduct(businessId, body);
     return c.json({ success: true, data: product }, 201);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "PRODUCT_CREATION_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "PRODUCT_CREATION_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 
@@ -43,20 +44,20 @@ productRoutes.get("/:id", async (c) => {
       return c.json({ success: false, error: { code: "PRODUCT_NOT_FOUND", message: "Product not found" } }, 404);
     }
     return c.json({ success: true, data: product }, 200);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "PRODUCT_FETCH_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "PRODUCT_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 
-productRoutes.put("/:id", async (c) => {
+productRoutes.put("/:id", validate(UpdateProductSchema), async (c) => {
   try {
     const businessId = c.get("businessId");
     const productId = c.req.param("id");
-    const body = await c.req.json();
+    const body = c.get("validatedBody");
     const product = await updateProduct(businessId, productId, body);
     return c.json({ success: true, data: product }, 200);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "PRODUCT_UPDATE_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "PRODUCT_UPDATE_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 
@@ -66,8 +67,8 @@ productRoutes.delete("/:id", async (c) => {
     const productId = c.req.param("id");
     await deleteProduct(businessId, productId);
     return c.json({ success: true, data: { message: "Product deleted" } }, 200);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "PRODUCT_DELETE_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "PRODUCT_DELETE_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 
@@ -88,6 +89,8 @@ productRoutes.post("/:id/image", async (c) => {
       return c.json({ success: false, error: { code: "VALIDATION_ERROR", message: "Image file is required" } }, 400);
     }
 
+    validateImageFile(file);
+
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const contentType = file.type;
@@ -97,25 +100,25 @@ productRoutes.post("/:id/image", async (c) => {
 
     await uploadFile("products", filePath, buffer, contentType);
 
-    const imageUrl = `${env.SUPABASE_STORAGE_URL}/storage/v1/object/public/products/${filePath}`;
+    const imageUrl = await getPublicUrl("products", filePath);
 
     const updatedProduct = await updateProduct(businessId, productId, { imageUrl });
 
     return c.json({ success: true, data: updatedProduct }, 200);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "IMAGE_UPLOAD_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "IMAGE_UPLOAD_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 
-productRoutes.patch("/:id/stock", async (c) => {
+productRoutes.patch("/:id/stock", validate(AdjustStockSchema), async (c) => {
   try {
     const businessId = c.get("businessId");
     const productId = c.req.param("id");
-    const body = await c.req.json();
+    const body = c.get("validatedBody");
     const product = await adjustStock(businessId, productId, body.quantity);
     return c.json({ success: true, data: product }, 200);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "STOCK_ADJUST_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "STOCK_ADJUST_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 
@@ -124,7 +127,7 @@ productRoutes.get("/categories", async (c) => {
     const businessId = c.get("businessId");
     const categories = await getCategories(businessId);
     return c.json({ success: true, data: { categories } }, 200);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "CATEGORIES_FETCH_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "CATEGORIES_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });

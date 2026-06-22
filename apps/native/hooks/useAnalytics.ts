@@ -13,6 +13,7 @@ export interface AnalyticsSummary {
     quantitySold: number;
   }[];
   lowStockCount: number;
+  totalProducts: number;
 }
 
 export function useAnalytics() {
@@ -41,8 +42,8 @@ export function useAnalytics() {
       } else {
         setError(result.error?.message || 'Failed to fetch analytics summary');
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }

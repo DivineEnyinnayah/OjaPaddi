@@ -2,9 +2,9 @@
 @import "uniwind";
 
 @theme {
-  --font-family-headline: "Hanken Grotesk", sans-serif;
-  --font-family-body: "Hanken Grotesk", sans-serif;
-  --font-family-label: "Hanken Grotesk", sans-serif;
+  --font-family-headline: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-label: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   --radius-none: 0;
   --radius-sm: 0.25rem;
@@ -24,50 +24,6 @@
   --spacing-gutter: 16px;
   --spacing-margin: 16px;
 
-  --color-background: initial;
-  --color-on-background: initial;
-  --color-surface: initial;
-  --color-surface-dim: initial;
-  --color-surface-bright: initial;
-  --color-surface-container-lowest: initial;
-  --color-surface-container-low: initial;
-  --color-surface-container: initial;
-  --color-surface-container-high: initial;
-  --color-surface-container-highest: initial;
-  --color-on-surface: initial;
-  --color-on-surface-variant: initial;
-  --color-surface-variant: initial;
-  --color-inverse-surface: initial;
-  --color-inverse-on-surface: initial;
-  --color-outline: initial;
-  --color-outline-variant: initial;
-  --color-surface-tint: initial;
-  --color-primary: initial;
-  --color-on-primary: initial;
-  --color-primary-container: initial;
-  --color-on-primary-container: initial;
-  --color-inverse-primary: initial;
-  --color-secondary: initial;
-  --color-on-secondary: initial;
-  --color-secondary-container: initial;
-  --color-on-secondary-container: initial;
-  --color-tertiary: initial;
-  --color-on-tertiary: initial;
-  --color-tertiary-container: initial;
-  --color-on-tertiary-container: initial;
-  --color-error: initial;
-  --color-on-error: initial;
-  --color-error-container: initial;
-  --color-on-error-container: initial;
-
-  /* Semantic success tokens for chips/badges */
-  --color-success: initial;
-  --color-on-success: initial;
-  --color-success-container: initial;
-  --color-on-success-container: initial;
-}
-
-@variant light {
   --color-background: #f7faf3;
   --color-on-background: #181d19;
   --color-surface: #f7faf3;
@@ -103,7 +59,6 @@
   --color-on-error: #ffffff;
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
-
   --color-success: #2e7d32;
   --color-on-success: #ffffff;
   --color-success-container: #e8f5e9;
@@ -146,7 +101,6 @@
   --color-on-error: #690005;
   --color-error-container: #93000a;
   --color-on-error-container: #ffdad6;
-
   --color-success: #66bb6a;
   --color-on-success: #1b5e20;
   --color-success-container: #1b5e20;

@@ -58,11 +58,11 @@ export async function createProduct(businessId: string, data: {
   const [newProduct] = await db.insert(products).values({
     businessId,
     name: data.name,
-    description: data.description,
-    sku: data.sku,
-    category: data.category,
+    description: data.description || null,
+    sku: (data.sku && data.sku.trim() !== "") ? data.sku.trim() : null,
+    category: data.category || null,
     price: data.price.toString(),
-    costPrice: data.costPrice?.toString(),
+    costPrice: data.costPrice?.toString() || null,
     quantity: data.quantity,
     lowStockThreshold: data.lowStockThreshold,
     imageUrl: data.imageUrl,
@@ -78,9 +78,20 @@ export async function updateProduct(businessId: string, productId: string, data:
     throw new Error("Product not found");
   }
 
+  const updateData = { ...data };
+  if (updateData.sku !== undefined) {
+    updateData.sku = (updateData.sku && updateData.sku.trim() !== "") ? updateData.sku.trim() : null;
+  }
+  if (updateData.description !== undefined) {
+    updateData.description = updateData.description || null;
+  }
+  if (updateData.category !== undefined) {
+    updateData.category = updateData.category || null;
+  }
+
   await db.update(products)
     .set({
-      ...data,
+      ...updateData,
       updatedAt: new Date(),
     })
     .where(eq(products.id, productId));

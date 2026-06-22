@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { createSale, getSales, getSaleById, voidSale } from "../services/saleService";
 import { authMiddleware, type AuthContext } from "../middleware/auth";
+import { validate } from "../middleware/validate";
+import { CreateSaleSchema } from "../validators/sales";
 
 export const saleRoutes = new Hono<{ Variables: AuthContext }>();
 
@@ -18,19 +20,19 @@ saleRoutes.get("/", async (c) => {
     };
     const result = await getSales(businessId, query);
     return c.json({ success: true, data: result }, 200);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "SALES_FETCH_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "SALES_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 
-saleRoutes.post("/", async (c) => {
+saleRoutes.post("/", validate(CreateSaleSchema), async (c) => {
   try {
     const businessId = c.get("businessId");
-    const body = await c.req.json();
+    const body = c.get("validatedBody");
     const sale = await createSale(businessId, body);
     return c.json({ success: true, data: sale }, 201);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "SALE_CREATION_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "SALE_CREATION_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 
@@ -43,8 +45,8 @@ saleRoutes.get("/:id", async (c) => {
       return c.json({ success: false, error: { code: "SALE_NOT_FOUND", message: "Sale not found" } }, 404);
     }
     return c.json({ success: true, data: sale }, 200);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "SALE_FETCH_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "SALE_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 
@@ -54,12 +56,21 @@ saleRoutes.delete("/:id", async (c) => {
     const saleId = c.req.param("id");
     await voidSale(businessId, saleId);
     return c.json({ success: true, data: { message: "Sale voided" } }, 200);
-  } catch (error: any) {
-    return c.json({ success: false, error: { code: "SALE_VOID_FAILED", message: error.message } }, 400);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "SALE_VOID_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 
 saleRoutes.get("/:id/receipt", async (c) => {
-  // This will be implemented with PDF generation
-  return c.json({ success: true, data: { message: "Receipt data" } }, 200);
+  try {
+    const businessId = c.get("businessId");
+    const saleId = c.req.param("id");
+    const sale = await getSaleById(businessId, saleId);
+    if (!sale) {
+      return c.json({ success: false, error: { code: "SALE_NOT_FOUND", message: "Sale not found" } }, 404);
+    }
+    return c.json({ success: true, data: sale }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "RECEIPT_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
 });

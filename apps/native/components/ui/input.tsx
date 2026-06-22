@@ -5,6 +5,8 @@ import { cn } from "../../lib/utils";
 import { useThemeColor } from "@/hooks/useThemeColor";
 
 const StyledTextInput = withUniwind(TextInput);
+const StyledView = withUniwind(View);
+const StyledText = withUniwind(Text);
 
 export interface InputProps extends TextInputProps {
   label?: string;
@@ -18,13 +20,13 @@ export const Input = React.forwardRef<TextInput, InputProps>(
     const colors = useThemeColor();
 
     return (
-      <View className={cn("w-full mb-4", containerClassName)}>
+      <StyledView className={cn("w-full mb-4", containerClassName)}>
         {label && (
-          <Text className="text-body-sm text-on-surface font-semibold mb-2 ml-1">
+          <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">
             {label}
-          </Text>
+          </StyledText>
         )}
-        <View
+        <StyledView
           className={cn(
             "w-full rounded-input border bg-surface-container-lowest px-4 h-12 justify-center",
             error ? "border-error" : "border-outline-variant",
@@ -37,13 +39,13 @@ export const Input = React.forwardRef<TextInput, InputProps>(
             placeholderTextColor={colors.outline}
             {...props}
           />
-        </View>
+        </StyledView>
         {error && (
-          <Text className="text-body-sm text-error mt-1 ml-1">
+          <StyledText className="text-body-sm text-error mt-1 ml-1">
             {error}
-          </Text>
+          </StyledText>
         )}
-      </View>
+      </StyledView>
     );
   }
 );

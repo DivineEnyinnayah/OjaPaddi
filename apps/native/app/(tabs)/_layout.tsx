@@ -5,7 +5,10 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{ headerShown: false }}
-      tabBar={(props) => <FloatingTabBar {...props} />}
+      tabBar={(props) => {
+        const { state, descriptors, navigation, insets } = props;
+        return <FloatingTabBar state={state} navigation={navigation} descriptors={descriptors as Record<string, unknown>} insets={insets} />;
+      }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="products" options={{ title: 'Products' }} />

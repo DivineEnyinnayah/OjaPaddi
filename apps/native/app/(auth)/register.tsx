@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Container } from '@/components/container';
 import { useAuthStore } from '../../stores/authStore';
 import { withUniwind } from 'uniwind';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
 const StyledKeyboardAvoidingView = withUniwind(KeyboardAvoidingView);
+const StyledTouchableOpacity = withUniwind(TouchableOpacity);
 
 interface FormErrors {
   fullName?: string;
@@ -30,6 +32,7 @@ export default function RegisterScreen() {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const validateForm = () => {
     const newErrors: FormErrors = {};
@@ -46,8 +49,8 @@ export default function RegisterScreen() {
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
     }
     
     setErrors(newErrors);
@@ -56,6 +59,11 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!validateForm()) return;
+    
+    if (!agreedToTerms) {
+      Alert.alert('Agreement Required', 'Please agree to the terms and conditions to continue.');
+      return;
+    }
     
     setIsLoading(true);
     
@@ -67,8 +75,8 @@ export default function RegisterScreen() {
         password: formData.password,
       });
       router.replace('/onboarding');
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'An error occurred');
+    } catch (error: unknown) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -82,22 +90,22 @@ export default function RegisterScreen() {
   };
 
   return (
-    <Container isScrollable={false} className="bg-background">
+    <Container isScrollable={false} withSafeAreaTop={true} className="bg-background">
       <StyledKeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <ScrollView 
-          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingVertical: 24 }}
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 24 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <StyledView className="mb-8 mt-10">
+          <StyledView className="mb-8 mt-4">
             <StyledText className="text-[28px] font-bold text-on-surface mb-2 tracking-tight">Create Account</StyledText>
             <StyledText className="text-body-lg text-on-surface-variant">Join OjaPaddi and start growing your business</StyledText>
           </StyledView>
 
-          <StyledView className="gap-2 mt-2">
+          <StyledView className="gap-4 mt-2">
             <Input
               label="Full Name"
               placeholder="e.g., Tope Adeyemi"
@@ -137,7 +145,19 @@ export default function RegisterScreen() {
             />
           </StyledView>
 
-          <StyledView className="mt-8 gap-6 pb-10">
+          <StyledTouchableOpacity 
+            className="flex-row items-center gap-3 mt-6 mb-8" 
+            onPress={() => setAgreedToTerms(!agreedToTerms)}
+          >
+            <StyledView className={`w-6 h-6 rounded-md border flex-row items-center justify-center ${agreedToTerms ? 'bg-primary border-primary' : 'border-outline-variant bg-surface'}`}>
+              {agreedToTerms && <MaterialIcons name="check" size={16} color="#FFFFFF" />}
+            </StyledView>
+            <StyledText className="text-body-sm text-on-surface-variant flex-1">
+              I agree to the <StyledText className="text-primary font-semibold">Terms of Service</StyledText> and <StyledText className="text-primary font-semibold">Privacy Policy</StyledText>
+            </StyledText>
+          </StyledTouchableOpacity>
+
+          <StyledView className="mt-auto gap-6 pb-10">
             <Button
               size="lg"
               variant="primary"

@@ -472,6 +472,7 @@ function handleGetAnalytics(): ApiResponse<AnalyticsSummary> {
       netProfit: totalRevenue - totalExpensesAmount,
       topProducts,
       lowStockCount,
+      totalProducts: mockProducts.filter(p => p.isActive).length,
     },
   };
 }
@@ -575,6 +576,37 @@ export async function getMockResponse<T>(
   // ── Analytics ──
   if (path === '/analytics/summary' && method === 'GET') {
     return handleGetAnalytics() as ApiResponse<T>;
+  }
+
+  if (path === '/analytics/revenue-chart' && method === 'GET') {
+    const summary = handleGetAnalytics();
+    const data = summary.data as AnalyticsSummary;
+    const revenueData = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return {
+        date: d.toISOString().slice(0, 10),
+        revenue: Math.round((data.totalRevenue / 7) * (0.7 + Math.random() * 0.6)),
+        count: Math.max(1, Math.round(data.totalSalesCount / 7)),
+      };
+    });
+    return { success: true, data: revenueData } as ApiResponse<T>;
+  }
+
+  if (path === '/analytics/top-customers' && method === 'GET') {
+    const topCustomers = mockCustomers.slice(0, 5).map((c) => ({
+      customerId: c.id,
+      name: c.name,
+      phone: c.phone,
+      totalSpent: Math.round(Math.random() * 500000 + 50000),
+      orderCount: Math.floor(Math.random() * 15 + 2),
+    }));
+    return { success: true, data: topCustomers } as ApiResponse<T>;
+  }
+
+  // ── Business ──
+  if (path === '/business/logo' && method === 'POST') {
+    return { success: true, data: { logoUrl: 'https://placehold.co/200x200/1A6B3C/FFFFFF?text=Logo' } } as ApiResponse<T>;
   }
 
   // ── Fallback ──

@@ -20,7 +20,7 @@ export async function getCustomers(businessId: string, query: {
   const total = await db.select({ count: sql<number>`count(*)` }).from(customers).where(and(...filters));
 
   return {
-    data: result,
+    customers: result,
     pagination: {
       total: Number(total[0]?.count ?? 0),
       page,

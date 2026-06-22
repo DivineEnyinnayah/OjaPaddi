@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuthStore } from '../stores/authStore';
 import { AppThemeProvider, useAppTheme } from '@/contexts/app-theme-context';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -54,6 +55,8 @@ function RootLayoutInner() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="analytics" />
+        <Stack.Screen name="receipt" />
       </Stack>
     </>
   );
@@ -61,8 +64,10 @@ function RootLayoutInner() {
 
 export default function RootLayout() {
   return (
-    <AppThemeProvider>
-      <RootLayoutInner />
-    </AppThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AppThemeProvider>
+        <RootLayoutInner />
+      </AppThemeProvider>
+    </GestureHandlerRootView>
   );
 }

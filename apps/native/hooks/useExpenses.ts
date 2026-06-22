@@ -34,8 +34,8 @@ export function useExpenses() {
       } else {
         setError(result.error?.message || 'Failed to fetch expenses');
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -60,8 +60,8 @@ export function useExpenses() {
       } else {
         throw new Error(result.error?.message || 'Failed to create expense');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);
@@ -80,8 +80,8 @@ export function useExpenses() {
       } else {
         throw new Error(result.error?.message || 'Failed to fetch expense');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);
@@ -102,8 +102,8 @@ export function useExpenses() {
       } else {
         throw new Error(result.error?.message || 'Failed to update expense');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);
@@ -113,7 +113,7 @@ export function useExpenses() {
   const deleteExpense = async (expenseId: string) => {
     setIsLoading(true);
     try {
-      const result = await apiRequest<any>(`/expenses/${expenseId}`, {
+      const result = await apiRequest<null>(`/expenses/${expenseId}`, {
         method: 'DELETE',
       });
 
@@ -123,8 +123,8 @@ export function useExpenses() {
       } else {
         throw new Error(result.error?.message || 'Failed to delete expense');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);

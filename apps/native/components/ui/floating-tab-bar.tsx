@@ -1,22 +1,16 @@
 import React, { useRef, useEffect, useMemo } from 'react';
 import { TouchableOpacity, Animated, useWindowDimensions, Platform, View, Text } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useThemeColor } from '@/hooks/useThemeColor';
 
 type TabIcon = keyof typeof Ionicons.glyphMap;
 
-interface NavigationRoute {
-  key: string;
-  name: string;
-}
-
-interface TabBarProps {
-  state: any;
-  navigation: any;
-  descriptors: any;
-  insets: any;
+export interface TabBarProps {
+  state: { index: number; routes: { key: string; name: string }[]; key: string; routeNames: string[]; stale: boolean; type: string };
+  navigation: { navigate: (name: string, params?: Record<string, unknown>) => void };
+  descriptors: Record<string, unknown>;
+  insets: { top: number; right: number; bottom: number; left: number };
 }
 
 const TAB_CONFIG: Record<string, { label: string; activeIcon: TabIcon; inactiveIcon: TabIcon }> = {
@@ -33,12 +27,12 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
   const margin = 16;
 
   const routes = useMemo(
-    () => state.routes.filter((r: NavigationRoute) => TAB_CONFIG[r.name]),
+    () => state.routes.filter((r): r is (typeof state.routes)[number] => r.name in TAB_CONFIG),
     [state.routes],
   );
-  
+
   const tabCount = routes.length;
-  const tabWidth = (screenWidth - margin * 2) / tabCount;
+  const tabWidth = (screenWidth - margin * 2 - 16) / tabCount;
 
   const indicatorAnim = useRef(new Animated.Value(0)).current;
 
@@ -55,14 +49,7 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    const event = navigation.emit({
-      type: 'tabPress',
-      target: routeName,
-      canPreventDefault: true,
-    });
-    if (!event.defaultPrevented) {
-      navigation.navigate(routeName);
-    }
+    navigation.navigate(routeName);
   };
 
   return (
@@ -105,9 +92,9 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
             transform: [{ translateX: indicatorAnim }],
           }}
         />
-        {routes.map((route: NavigationRoute, index: number) => {
+        {routes.map((route, index) => {
           const isFocused = state.index === index;
-          const config = TAB_CONFIG[route.name];
+          const config = TAB_CONFIG[route.name]!;
 
           return (
             <TouchableOpacity

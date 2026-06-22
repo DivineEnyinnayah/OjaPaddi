@@ -11,6 +11,8 @@ export interface Customer {
   businessId: string;
   createdAt: string;
   updatedAt: string;
+  totalSpent?: string;
+  orderCount?: number;
 }
 
 export interface CustomersResponse {
@@ -44,8 +46,8 @@ export function useCustomers() {
       } else {
         setError(result.error?.message || 'Failed to fetch customers');
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -71,8 +73,8 @@ export function useCustomers() {
       } else {
         throw new Error(result.error?.message || 'Failed to create customer');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);
@@ -91,8 +93,8 @@ export function useCustomers() {
       } else {
         throw new Error(result.error?.message || 'Failed to fetch customer');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);
@@ -113,8 +115,8 @@ export function useCustomers() {
       } else {
         throw new Error(result.error?.message || 'Failed to update customer');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);
@@ -124,7 +126,7 @@ export function useCustomers() {
   const deleteCustomer = async (customerId: string) => {
     setIsLoading(true);
     try {
-      const result = await apiRequest<any>(`/customers/${customerId}`, {
+      const result = await apiRequest<null>(`/customers/${customerId}`, {
         method: 'DELETE',
       });
 
@@ -134,8 +136,8 @@ export function useCustomers() {
       } else {
         throw new Error(result.error?.message || 'Failed to delete customer');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       throw err;
     } finally {
       setIsLoading(false);

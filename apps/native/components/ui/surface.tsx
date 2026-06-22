@@ -17,9 +17,9 @@ export function Surface({
   ...props
 }: SurfaceProps) {
   const variantStyles = {
-    primary: "bg-surface-container-lowest shadow-sm shadow-black/5 border border-outline-variant/30",
-    secondary: "bg-surface-container",
-    outline: "bg-surface-container-lowest border border-outline-variant",
+    primary: "bg-surface-container-lowest shadow-sm shadow-black/5",
+    secondary: "bg-surface-container-lowest shadow-md",
+    outline: "bg-surface-container-lowest shadow-md ",
     "primary-solid": "bg-primary",
     "secondary-solid": "bg-secondary-container",
     warning: "bg-error-container border border-error/30",
