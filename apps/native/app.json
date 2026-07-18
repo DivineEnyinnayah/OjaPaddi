@@ -2,21 +2,46 @@
   "expo": {
     "scheme": "ojapaddi",
     "userInterfaceStyle": "automatic",
-    "orientation": "default",
-    "web": {
-      "bundler": "metro"
+    "orientation": "portrait",
+    "icon": "./assets/images/iconi.png",
+    "newArchEnabled": false,
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ojapaddi.app"
     },
-    "name": "ojapaddi",
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFBF5"
+      },
+      "package": "com.ojapaddi.app",
+      "permissions": [
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "name": "OjaPaddi",
+    "owner": "iamdivine",
     "slug": "ojapaddi",
     "plugins": [
       "expo-font",
       "expo-router",
-      "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-secure-store"
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "01e04008-fa62-4bf6-ab0d-15726beab31f"
+      }
     }
   }
 }

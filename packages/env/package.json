@@ -8,13 +8,12 @@
     "./native": "./src/native.ts"
   },
   "dependencies": {
-    "dotenv": "catalog:",
-    "zod": "catalog:",
-    "@t3-oss/env-core": "^0.13.1"
+    "@t3-oss/env-core": "^0.13.1",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "typescript": "^6",
-    "@types/node": "^22.13.14",
-    "@ojapaddi/config": "workspace:*"
+    "@ojapaddi/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "^6"
   }
 }

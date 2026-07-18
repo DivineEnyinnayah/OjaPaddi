@@ -1,45 +1,73 @@
-
-import "@/global.css";
-
-
-import { Stack } from "expo-router";
-import { HeroUINativeProvider } from "heroui-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
-import { AppThemeProvider } from "@/contexts/app-theme-context";
-
-
-export const unstable_settings = {
-  initialRouteName: "(drawer)",
-};
+import "../global.css"
+import { useEffect, useRef } from 'react';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
+import { ActivityIndicator, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useAuthStore } from '../stores/authStore';
+import { AppThemeProvider, useAppTheme } from '@/contexts/app-theme-context';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 
+function RootLayoutInner() {
+  const segments = useSegments();
+  const router = useRouter();
+  const navigationState = useRootNavigationState();
+  const { isInitialized, accessToken } = useAuthStore();
+  const hasRedirected = useRef(false);
+  const { isDark } = useAppTheme();
+  const colors = useThemeColor();
 
-function StackLayout() {
+
+  useEffect(() => {
+    useAuthStore.getState().initialize();
+  }, []);
+
+
+  useEffect(() => {
+    if (!isInitialized || !navigationState?.key) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!accessToken && !inAuthGroup) {
+      if (hasRedirected.current) return;
+      hasRedirected.current = true;
+      router.replace('/welcome');
+    } else if (accessToken && inAuthGroup) {
+      if (hasRedirected.current) return;
+      hasRedirected.current = true;
+      router.replace('/');
+    }
+  }, [isInitialized, accessToken, navigationState?.key, segments?.[0]]);
+
+  if (!isInitialized) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+      </View>
+    );
+  }
+
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="modal" options={{ title: "Modal", presentation: "modal", headerShown: true }} />
-    </Stack>
+    <>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="analytics" />
+        <Stack.Screen name="receipt" />
+      </Stack>
+    </>
   );
 }
 
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
-
-export default function Layout() {
+export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <KeyboardProvider>
-        <AppThemeProvider>
-          <HeroUINativeProvider>
-            <QueryClientProvider client={queryClient}>
-              <StackLayout />
-            </QueryClientProvider>
-          </HeroUINativeProvider>
-        </AppThemeProvider>
-      </KeyboardProvider>
+      <AppThemeProvider>
+        <RootLayoutInner />
+      </AppThemeProvider>
     </GestureHandlerRootView>
   );
 }

@@ -1,188 +1,269 @@
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, TextInput } from "react-native";
-import { useThemeColor } from "heroui-native";
-import { useProducts } from "@/hooks/useProducts";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+  TextInput,
+  ScrollView,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { useProducts, type Product } from '../../../hooks/useProducts';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import { Button } from '@/components/ui/button';
+import { Container } from '@/components/container';
+import { Surface } from '@/components/ui/surface';
+import { MaterialIcons } from '@expo/vector-icons';
+import { withUniwind } from 'uniwind';
+import { ILLUSTRATIONS } from '@/constants/illustrations';
+
+const StyledView = withUniwind(View);
+const StyledText = withUniwind(Text);
+const StyledTouchableOpacity = withUniwind(TouchableOpacity);
+const StyledTextInput = withUniwind(TextInput);
+const StyledScrollView = withUniwind(ScrollView);
+const StyledImage = withUniwind(Image);
+
+
+const CATEGORIES = ['All', 'General', 'Clothing', 'Food', 'Electronics', 'Beauty'];
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 export default function ProductsScreen() {
   const router = useRouter();
-  const bgColor = useThemeColor("background");
-  const primaryColor = "#005129";
-  const { data: products, isLoading } = useProducts();
+  const { products, isLoading, error, fetchProducts } = useProducts();
+  const colors = useThemeColor();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const renderItem = ({ item }: { item: any }) => (
-    <TouchableOpacity 
-      style={styles.productCard}
-      onPress={() => router.push(`/(tabs)/products/${item.id}`)}
-    >
-      <View style={styles.productImagePlaceholder}>
-        <Ionicons name="image-outline" size={32} color="#bfc9be" />
-      </View>
-      <View style={styles.productInfo}>
-        <Text style={styles.productName}>{item.name}</Text>
-        <Text style={styles.productCategory}>{item.category || "No Category"}</Text>
-        <View style={styles.priceRow}>
-          <Text style={styles.productPrice}>₦{parseFloat(item.price).toLocaleString()}</Text>
-          <View style={[styles.stockBadge, { backgroundColor: item.quantity <= item.lowStockThreshold ? "#ffdad6" : "#eef2eb" }]}>
-            <Text style={[styles.stockText, { color: item.quantity <= item.lowStockThreshold ? "#ba1a1a" : "#005129" }]}>
-              {item.quantity} in stock
-            </Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch = product.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchesCategory =
+        selectedCategory === 'All' || product.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchQuery, selectedCategory]);
+
+  const totalValue = useMemo(() => {
+    return products.reduce((sum, product) => {
+      return sum + parseFloat(product.price) * product.quantity;
+    }, 0);
+  }, [products]);
+
+  const renderProductCard = useCallback(
+    ({ item }: { item: Product }) => {
+      const price = parseFloat(item.price);
+      const lowStockThreshold = item.lowStockThreshold ?? 5;
+      const isLowStock = item.quantity <= lowStockThreshold;
+
+      return (
+        <StyledTouchableOpacity
+          className="flex-1 m-1.5"
+          activeOpacity={0.7}
+          onPress={() =>
+            router.push({
+              pathname: '/products/[id]',
+              params: { id: item.id },
+            })
+          }
+        >
+          <Surface variant="primary" className="p-0 overflow-hidden">
+            <StyledView className="h-28 bg-surface-container items-center justify-center">
+              {item.imageUrl ? (
+                <StyledImage source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
+              ) : (
+                <StyledText className="text-2xl font-bold text-outline">
+                  {getInitials(item.name)}
+                </StyledText>
+              )}
+            </StyledView>
+            <StyledView className="p-3 gap-1">
+              <StyledText
+                className="text-sm font-semibold text-on-surface leading-tight"
+                numberOfLines={1}
+              >
+                {item.name}
+              </StyledText>
+              <StyledView className="bg-surface-container self-start rounded-full px-2 py-0.5">
+                <StyledText className="text-xs text-on-surface-variant">
+                  {item.category || 'General'}
+                </StyledText>
+              </StyledView>
+              <StyledText className="text-base font-bold text-primary mt-1">
+                ₦{price.toLocaleString()}
+              </StyledText>
+              <StyledView className="flex-row items-center gap-1">
+                <StyledText
+                  className={`text-xs ${isLowStock ? 'text-error font-semibold' : 'text-on-surface-variant'}`}
+                >
+                  {item.quantity} in stock
+                </StyledText>
+                {isLowStock && (
+                  <StyledView className="bg-error/10 rounded-full px-1.5 py-0.5">
+                    <StyledText className="text-xs text-error font-semibold">
+                      Low
+                    </StyledText>
+                  </StyledView>
+                )}
+              </StyledView>
+            </StyledView>
+          </Surface>
+        </StyledTouchableOpacity>
+      );
+    },
+    [router, colors],
   );
 
+  if (isLoading && products.length === 0) {
+    return (
+      <Container isScrollable={false} withTabBar className="items-center justify-center">
+        <ActivityIndicator size="large" color={colors.primary} />
+      </Container>
+    );
+  }
+
+  if (error && products.length === 0) {
+    return (
+      <Container isScrollable={false} withTabBar className="items-center justify-center p-6">
+        <StyledText className="text-error text-center mb-4 text-body-lg">
+          {error}
+        </StyledText>
+        <Button onPress={() => fetchProducts()}>Retry</Button>
+      </Container>
+    );
+  }
+
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}>
-      <View style={styles.header}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#404940" />
-          <TextInput
-            style={styles.searchInput}
+    <Container isScrollable={false} withTabBar>
+      <StyledView className="flex-row justify-between items-center px-6 pt-14 pb-2">
+        <StyledText className="text-3xl font-black text-on-surface tracking-tight">
+          Products
+        </StyledText>
+        <StyledTouchableOpacity
+          className="w-10 h-10 rounded-full bg-primary items-center justify-center"
+          onPress={() => router.push('/products/add')}
+        >
+          <MaterialIcons name="add" size={24} color="#FFFFFF" />
+        </StyledTouchableOpacity>
+      </StyledView>
+
+      <StyledView className="px-6 pb-2">
+        <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-input px-4 h-11">
+          <MaterialIcons name="search" size={20} color={colors.outline} />
+          <StyledTextInput
+            className="flex-1 ml-2 text-body-md text-on-surface"
             placeholder="Search products..."
-            placeholderTextColor="#404940"
+            placeholderTextColor={colors.outline}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
           />
-        </View>
-      </View>
+        </StyledView>
+      </StyledView>
+
+      <StyledScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="px-6"
+        contentContainerStyle={{ gap: 6 }}
+      >
+        {CATEGORIES.map((category) => {
+          const isSelected = selectedCategory === category;
+          return (
+            <StyledTouchableOpacity
+              key={category}
+              className={`items-center justify-center rounded-md px-4 h-8 ${isSelected ? 'bg-primary' : 'border border-outline-variant'}`}
+              onPress={() => setSelectedCategory(category)}
+            >
+              <StyledText
+                className={`justify-center items-center flex text-sm font-medium ${isSelected ? 'text-on-primary' : 'text-on-surface-variant'}`}
+              >
+                {category}
+              </StyledText>
+            </StyledTouchableOpacity>
+          );
+        })}
+      </StyledScrollView>
+
+      <StyledView className="px-6 pb-3">
+        <Surface variant="primary" className="flex-row justify-between items-center">
+          <StyledView className="flex-1 items-center">
+            <StyledText className="text-xs text-on-surface-variant">
+              Total Products
+            </StyledText>
+            <StyledText className="text-xl font-bold text-on-surface">
+              {products.length}
+            </StyledText>
+          </StyledView>
+          <StyledView className="w-px h-10 bg-outline-variant/50" />
+          <StyledView className="flex-1 items-center">
+            <StyledText className="text-xs text-on-surface-variant">
+              Total Value
+            </StyledText>
+            <StyledText className="text-xl font-bold text-primary">
+              ₦{totalValue.toLocaleString()}
+            </StyledText>
+          </StyledView>
+        </Surface>
+      </StyledView>
 
       <FlatList
-        data={products}
-        renderItem={renderItem}
+        data={filteredProducts}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        renderItem={renderProductCard}
+        numColumns={2}
+        contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 16 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={fetchProducts}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
         ListEmptyComponent={
-          !isLoading ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="cube-outline" size={64} color="#bfc9be" />
-              <Text style={styles.emptyStateTitle}>No Products Yet</Text>
-              <Text style={styles.emptyStateSubtitle}>Add your first product to start selling.</Text>
-            </View>
-          ) : null
+          <StyledView className="items-center mt-16 px-6">
+            <Image
+              source={{ uri: ILLUSTRATIONS.emptyProducts }}
+              style={{ width: 80, height: 80 }}
+              resizeMode="contain"
+            />
+            <StyledText className="text-base text-on-surface-variant mt-4 text-center">
+              No products yet
+            </StyledText>
+            <Button
+              size="lg"
+              className="mt-6"
+              onPress={() => router.push('/products/add')}
+            >
+              Add your first product
+            </Button>
+          </StyledView>
         }
       />
 
-      <TouchableOpacity 
-        style={[styles.fab, { backgroundColor: primaryColor }]}
-        onPress={() => router.push("/(tabs)/products/add")}
+      <StyledTouchableOpacity
+        className="absolute bottom-8 right-6 w-14 h-14 rounded-full bg-primary justify-center items-center shadow-lg shadow-black/30 elevation-5"
+        onPress={() => router.push('/products/add')}
       >
-        <Ionicons name="add" size={30} color="white" />
-      </TouchableOpacity>
-    </View>
+        <MaterialIcons name="add" size={28} color="#FFFFFF" />
+      </StyledTouchableOpacity>
+    </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: 16,
-  },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ebefe8",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 48,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
-    color: "#181d19",
-  },
-  listContent: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  productCard: {
-    flexDirection: "row",
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  productImagePlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    backgroundColor: "#f7faf3",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  productInfo: {
-    flex: 1,
-    marginLeft: 16,
-    justifyContent: "center",
-  },
-  productName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#181d19",
-  },
-  productCategory: {
-    fontSize: 14,
-    color: "#404940",
-    marginBottom: 8,
-  },
-  priceRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  productPrice: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#005129",
-  },
-  stockBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  stockText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  fab: {
-    position: "absolute",
-    right: 24,
-    bottom: 24,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 100,
-  },
-  emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#181d19",
-    marginTop: 16,
-  },
-  emptyStateSubtitle: {
-    fontSize: 16,
-    color: "#404940",
-    textAlign: "center",
-    marginTop: 8,
-    paddingHorizontal: 40,
-  },
-});

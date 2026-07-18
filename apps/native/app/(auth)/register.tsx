@@ -1,189 +1,182 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
-import { useRouter } from "expo-router";
-import { useThemeColor } from "heroui-native";
-import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from 'react';
+import { KeyboardAvoidingView, Platform, Alert, View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Container } from '@/components/container';
+import { useAuthStore } from '../../stores/authStore';
+import { withUniwind } from 'uniwind';
+import { MaterialIcons } from '@expo/vector-icons';
+
+const StyledView = withUniwind(View);
+const StyledText = withUniwind(Text);
+const StyledKeyboardAvoidingView = withUniwind(KeyboardAvoidingView);
+const StyledTouchableOpacity = withUniwind(TouchableOpacity);
+
+interface FormErrors {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
+}
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const bgColor = useThemeColor("background");
-  const primaryColor = "#005129";
-
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
+  const setPendingRegistration = useAuthStore(state => state.setPendingRegistration);
+  
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    password: '',
+  });
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  const validateForm = () => {
+    const newErrors: FormErrors = {};
+    
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
+    }
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Enter a valid email address';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleRegister = async () => {
-    if (!fullName || !email || !password) {
-      Alert.alert("Error", "Please fill in all required fields");
+    if (!validateForm()) return;
+    
+    if (!agreedToTerms) {
+      Alert.alert('Agreement Required', 'Please agree to the terms and conditions to continue.');
       return;
     }
-
+    
     setIsLoading(true);
+    
     try {
-      const { data, error } = await authClient.signUp.email({
-        email,
-        password,
-        name: fullName,
-        phone,
-      } as any);
-
-      if (error) {
-        Alert.alert("Error", error.message || "Failed to register");
-      } else {
-        router.push("/(auth)/onboarding");
-      }
-    } catch (err) {
-      Alert.alert("Error", "An unexpected error occurred");
+      setPendingRegistration({
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        password: formData.password,
+      });
+      router.replace('/onboarding');
+    } catch (error: unknown) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const updateField = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
   return (
-    <ScrollView style={[styles.container, { backgroundColor: bgColor }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#181d19" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Join OjaPaddi and grow your business.</Text>
-      </View>
-
-      <View style={styles.form}>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Full Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Tope Adeyemi"
-            value={fullName}
-            onChangeText={setFullName}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Phone Number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. 08012345678"
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={setPhone}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Email Address</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. tope@gmail.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Minimum 8 characters"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-        </View>
-
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: primaryColor, opacity: isLoading ? 0.7 : 1 }]}
-          onPress={handleRegister}
-          disabled={isLoading}
+    <Container isScrollable={false} withSafeAreaTop={true} className="bg-background">
+      <StyledKeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+      >
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 24 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.buttonText}>{isLoading ? "Creating Account..." : "Continue"}</Text>
-        </TouchableOpacity>
+          <StyledView className="mb-8 mt-4">
+            <StyledText className="text-[28px] font-bold text-on-surface mb-2 tracking-tight">Create Account</StyledText>
+            <StyledText className="text-body-lg text-on-surface-variant">Join OjaPaddi and start growing your business</StyledText>
+          </StyledView>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
-            <Text style={[styles.footerLink, { color: primaryColor }]}>Log In</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </ScrollView>
+          <StyledView className="gap-4 mt-2">
+            <Input
+              label="Full Name"
+              placeholder="e.g., Tope Adeyemi"
+              value={formData.fullName}
+              onChangeText={(value) => updateField('fullName', value)}
+              autoCapitalize="words"
+              error={errors.fullName}
+            />
+
+            <Input
+              label="Email Address"
+              placeholder="tope@gmail.com"
+              value={formData.email}
+              onChangeText={(value) => updateField('email', value)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              error={errors.email}
+            />
+
+            <Input
+              label="Phone Number"
+              placeholder="08012345678"
+              value={formData.phone}
+              onChangeText={(value) => updateField('phone', value)}
+              keyboardType="phone-pad"
+              error={errors.phone}
+            />
+
+            <Input
+              label="Password"
+              placeholder="••••••••"
+              value={formData.password}
+              onChangeText={(value) => updateField('password', value)}
+              secureTextEntry
+              error={errors.password}
+            />
+          </StyledView>
+
+          <StyledTouchableOpacity 
+            className="flex-row items-center gap-3 mt-6 mb-8" 
+            onPress={() => setAgreedToTerms(!agreedToTerms)}
+          >
+            <StyledView className={`w-6 h-6 rounded-md border flex-row items-center justify-center ${agreedToTerms ? 'bg-primary border-primary' : 'border-outline-variant bg-surface'}`}>
+              {agreedToTerms && <MaterialIcons name="check" size={16} color="#FFFFFF" />}
+            </StyledView>
+            <StyledText className="text-body-sm text-on-surface-variant flex-1">
+              I agree to the <StyledText className="text-primary font-semibold">Terms of Service</StyledText> and <StyledText className="text-primary font-semibold">Privacy Policy</StyledText>
+            </StyledText>
+          </StyledTouchableOpacity>
+
+          <StyledView className="mt-auto gap-6 pb-10">
+            <Button
+              size="lg"
+              variant="primary"
+              onPress={handleRegister}
+              isDisabled={isLoading}
+            >
+              {isLoading ? 'Creating account...' : 'Next'}
+            </Button>
+
+            <Button
+              variant="secondary"
+              className="border-0"
+              onPress={() => router.push('/login')}
+            >
+              Already have an account? Sign In
+            </Button>
+          </StyledView>
+        </ScrollView>
+      </StyledKeyboardAvoidingView>
+    </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: 24,
-    paddingTop: 60,
-  },
-  backButton: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#181d19",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#404940",
-  },
-  form: {
-    padding: 24,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#181d19",
-    marginBottom: 8,
-  },
-  input: {
-    height: 56,
-    backgroundColor: "#f1f5ee",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: "#181d19",
-    borderWidth: 1,
-    borderColor: "#bfc9be",
-  },
-  button: {
-    height: 56,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 12,
-    marginBottom: 24,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  footerText: {
-    fontSize: 14,
-    color: "#404940",
-  },
-  footerLink: {
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-});

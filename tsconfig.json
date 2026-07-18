@@ -1,14 +1,3 @@
 {
-  "extends": "@ojapaddi/config/tsconfig.base.json",
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@ojapaddi/db": ["./packages/db/src/index.ts"],
-      "@ojapaddi/db/*": ["./packages/db/src/*.ts"],
-      "@ojapaddi/db/schema": ["./packages/db/src/schema/index.ts"],
-      "@ojapaddi/auth": ["./packages/auth/src/index.ts"],
-      "@ojapaddi/auth/*": ["./packages/auth/src/*.ts"],
-      "@ojapaddi/env/*": ["./packages/env/src/*.ts"]
-    }
-  }
+  "extends": "@ojapaddi/config/tsconfig.base.json"
 }

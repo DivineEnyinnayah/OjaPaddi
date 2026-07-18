@@ -1,0 +1,14 @@
+import { Stack } from 'expo-router';
+
+export default function SalesLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen name="index" options={{ title: 'Sales' }} />
+      <Stack.Screen name="record" options={{ title: 'Record Sale' }} />
+    </Stack>
+  );
+}

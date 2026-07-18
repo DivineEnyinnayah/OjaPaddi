@@ -1,182 +1,142 @@
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput } from "react-native";
-import { useThemeColor } from "heroui-native";
-import { useCustomers } from "@/hooks/useCustomers";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import React, { useEffect, useState, useMemo } from 'react';
+import { View, Text, Image, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, TextInput } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useCustomers, type Customer } from '../../../hooks/useCustomers';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import { Button } from '@/components/ui/button';
+import { Container } from '@/components/container';
+import { Surface } from '@/components/ui/surface';
+import { MaterialIcons } from '@expo/vector-icons';
+import { withUniwind } from 'uniwind';
+import { ILLUSTRATIONS } from '@/constants/illustrations';
+
+const StyledView = withUniwind(View);
+const StyledText = withUniwind(Text);
+const StyledTouchableOpacity = withUniwind(TouchableOpacity);
+const StyledTextInput = withUniwind(TextInput);
 
 export default function CustomersScreen() {
   const router = useRouter();
-  const bgColor = useThemeColor("background");
-  const primaryColor = "#005129";
-  const { data: customers, isLoading } = useCustomers();
+  const { customers, isLoading, error, fetchCustomers } = useCustomers();
+  const colors = useThemeColor();
+  const [search, setSearch] = useState('');
 
-  const renderItem = ({ item }: { item: any }) => (
-    <TouchableOpacity 
-      style={styles.customerCard}
-      onPress={() => router.push(`/(tabs)/customers/${item.id}` as any)}
-    >
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{item.name.charAt(0).toUpperCase()}</Text>
-      </View>
-      <View style={styles.customerInfo}>
-        <Text style={styles.customerName}>{item.name}</Text>
-        <Text style={styles.customerPhone}>{item.phone || "No phone number"}</Text>
-      </View>
-      <View style={styles.customerStats}>
-        <Text style={styles.totalSpent}>₦{parseFloat(item.totalSpent).toLocaleString()}</Text>
-        <Text style={styles.orderCount}>{item.orderCount} orders</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const filteredCustomers = useMemo(() => {
+    if (!search.trim()) return customers;
+    const q = search.toLowerCase();
+    return customers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.phone && c.phone.includes(q)) ||
+        (c.email && c.email.toLowerCase().includes(q))
+    );
+  }, [customers, search]);
+
+  const renderCustomer = ({ item }: { item: Customer }) => {
+    return (
+      <StyledTouchableOpacity onPress={() => {}}>
+        <Surface variant="outline" className="flex-row items-center p-4 mb-3">
+          <StyledView className="w-12 h-12 rounded-full bg-primary-container justify-center items-center mr-4">
+            <StyledText className="text-white font-bold text-body-lg">{getInitials(item.name)}</StyledText>
+          </StyledView>
+          <StyledView className="flex-1">
+            <StyledText className="text-base font-semibold text-on-surface mb-0.5">{item.name}</StyledText>
+            {item.phone && <StyledText className="text-body-sm text-on-surface-variant">{item.phone}</StyledText>}
+          </StyledView>
+          <StyledView className="items-end">
+            {item.totalSpent && (
+              <StyledText className="text-sm font-semibold text-primary">
+                ₦{parseFloat(item.totalSpent).toLocaleString()}
+              </StyledText>
+            )}
+            <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
+          </StyledView>
+        </Surface>
+      </StyledTouchableOpacity>
+    );
+  };
+
+  if (isLoading && customers?.length === 0) {
+    return (
+      <Container isScrollable={false} withTabBar className="bg-background pt-12 items-center justify-center">
+        <ActivityIndicator size="large" color={colors.primary} />
+      </Container>
+    );
+  }
+
+  if (error && customers?.length === 0) {
+    return (
+      <Container isScrollable={false} withTabBar className="bg-background pt-12 items-center justify-center p-6">
+        <StyledText className="text-error text-center mb-4 text-body-lg">{error}</StyledText>
+        <Button onPress={() => fetchCustomers()}>Retry</Button>
+      </Container>
+    );
+  }
 
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}>
-      <View style={styles.header}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#404940" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search customers..."
-            placeholderTextColor="#404940"
-          />
-        </View>
-      </View>
+    <Container isScrollable={false} withTabBar className="bg-background pt-12">
+      <StyledView className="px-6 py-4 mt-2">
+        <StyledText className="text-4xl font-black text-on-surface tracking-tight">Customers</StyledText>
+      </StyledView>
+
+      <StyledView className="mx-6 mb-4 flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-input px-4 h-12">
+        <MaterialIcons name="search" size={20} color={colors.outline} style={{ marginRight: 8 }} />
+        <StyledTextInput
+          className="flex-1 text-body-lg text-on-surface"
+          placeholderTextColor={colors.outline}
+          placeholder="Search customers..."
+          value={search}
+          onChangeText={setSearch}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+      </StyledView>
 
       <FlatList
-        data={customers}
-        renderItem={renderItem}
+        data={filteredCustomers}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        renderItem={renderCustomer}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 16 }}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={fetchCustomers} tintColor={colors.primary} colors={[colors.primary]} />
+        }
         ListEmptyComponent={
-          !isLoading ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="people-outline" size={64} color="#bfc9be" />
-              <Text style={styles.emptyStateTitle}>No Customers Yet</Text>
-              <Text style={styles.emptyStateSubtitle}>Keep track of your regular buyers here.</Text>
-            </View>
-          ) : null
+          <StyledView className="items-center mt-24">
+            <Image
+              source={{ uri: ILLUSTRATIONS.emptyCustomers }}
+              style={{ width: 80, height: 80 }}
+              resizeMode="contain"
+            />
+            <StyledText className="text-base text-on-surface-variant mt-4 text-center">
+              {search.trim() ? 'No customers match your search.' : 'No customers yet. Add your first customer!'}
+            </StyledText>
+            {!search.trim() && (
+              <Button size="lg" className="mt-6" onPress={() => {}}>
+                Add Customer
+              </Button>
+            )}
+          </StyledView>
         }
       />
 
-      <TouchableOpacity style={[styles.fab, { backgroundColor: primaryColor }]}>
-        <Ionicons name="person-add" size={24} color="white" />
-      </TouchableOpacity>
-    </View>
+      <StyledTouchableOpacity
+        className="absolute bottom-8 right-6 w-14 h-14 rounded-full bg-primary justify-center items-center shadow-md shadow-black/30 elevation-5"
+        onPress={() => {}}
+      >
+        <MaterialIcons name="add" size={28} color={colors.onPrimary} />
+      </StyledTouchableOpacity>
+    </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: 16,
-  },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ebefe8",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 48,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
-    color: "#181d19",
-  },
-  listContent: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  customerCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "white",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#f7faf3",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ebefe8",
-  },
-  avatarText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#005129",
-  },
-  customerInfo: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  customerName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#181d19",
-  },
-  customerPhone: {
-    fontSize: 14,
-    color: "#404940",
-    marginTop: 2,
-  },
-  customerStats: {
-    alignItems: "flex-end",
-  },
-  totalSpent: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#181d19",
-  },
-  orderCount: {
-    fontSize: 12,
-    color: "#404940",
-    marginTop: 2,
-  },
-  fab: {
-    position: "absolute",
-    right: 24,
-    bottom: 24,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 100,
-  },
-  emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#181d19",
-    marginTop: 16,
-  },
-  emptyStateSubtitle: {
-    fontSize: 16,
-    color: "#404940",
-    textAlign: "center",
-    marginTop: 8,
-    paddingHorizontal: 40,
-  },
-});

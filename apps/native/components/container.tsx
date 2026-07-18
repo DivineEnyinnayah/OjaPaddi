@@ -1,14 +1,17 @@
-import { cn } from "heroui-native";
 import { type PropsWithChildren } from "react";
 import { ScrollView, View, type ScrollViewProps, type ViewProps } from "react-native";
-import Animated, { type AnimatedProps } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { withUniwind } from "uniwind";
+import { cn } from "../lib/utils";
+import { TAB_BAR_OFFSET } from "../lib/tab-bar";
 
-const AnimatedView = Animated.createAnimatedComponent(View);
+const StyledView = withUniwind(View);
 
-type Props = AnimatedProps<ViewProps> & {
+type Props = ViewProps & {
   className?: string;
   isScrollable?: boolean;
+  withTabBar?: boolean;
+  withSafeAreaTop?: boolean;
   scrollViewProps?: Omit<ScrollViewProps, "contentContainerStyle">;
 };
 
@@ -16,31 +19,39 @@ export function Container({
   children,
   className,
   isScrollable = true,
+  withTabBar = false,
+  withSafeAreaTop = false,
   scrollViewProps,
   ...props
 }: PropsWithChildren<Props>) {
   const insets = useSafeAreaInsets();
 
+  const extraBottom = withTabBar ? TAB_BAR_OFFSET : 0;
+
   return (
-    <AnimatedView
+    <StyledView
       className={cn("flex-1 bg-background", className)}
       style={{
-        paddingBottom: insets.bottom,
+        paddingTop: withSafeAreaTop ? insets.top : 8,
+        paddingBottom: isScrollable ? insets.bottom : insets.bottom + extraBottom,
       }}
       {...props}
     >
       {isScrollable ? (
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            ...(withTabBar ? { paddingBottom: TAB_BAR_OFFSET } : {}),
+          }}
           keyboardShouldPersistTaps="handled"
-          contentInsetAdjustmentBehavior="automatic"
+          contentInsetAdjustmentBehavior="never"
           {...scrollViewProps}
         >
           {children}
         </ScrollView>
       ) : (
-        <View className="flex-1">{children}</View>
+        <StyledView className="flex-1">{children}</StyledView>
       )}
-    </AnimatedView>
+    </StyledView>
   );
 }

@@ -1,142 +1,72 @@
 import { Hono } from "hono";
-import { authMiddleware } from "../middleware/auth";
-import { createDb } from "@ojapaddi/db";
-import { customers, businesses } from "@ojapaddi/db/schema";
-import { eq, and } from "drizzle-orm";
-import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
-import type { HonoEnv } from "../types";
-import type { Context } from "hono";
+import { getCustomers, createCustomer, getCustomerById, updateCustomer, deleteCustomer } from "../services/customerService";
+import { authMiddleware, type AuthContext } from "../middleware/auth";
+import { validate } from "../middleware/validate";
+import { CreateCustomerSchema, UpdateCustomerSchema } from "../validators/customers";
 
-const customerRoutes = new Hono<HonoEnv>();
+export const customerRoutes = new Hono<{ Variables: AuthContext }>();
 
-customerRoutes.use("/*", authMiddleware);
-
-const getBusiness = async (c: Context<HonoEnv>) => {
-  const user = c.get("user");
-  const db = createDb();
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.userId, user.id),
-  });
-  return business;
-};
+customerRoutes.use("*", authMiddleware);
 
 customerRoutes.get("/", async (c) => {
-  const business = await getBusiness(c);
-  if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-  const db = createDb();
-  const query = c.req.query();
-  const page = parseInt(query.page || "1");
-  const limit = parseInt(query.limit || "20");
-  const offset = (page - 1) * limit;
-
-  const result = await db.query.customers.findMany({
-    where: eq(customers.businessId, business.id),
-    limit,
-    offset,
-    orderBy: (customers, { desc }) => [desc(customers.createdAt)],
-  });
-
-  return c.json({ success: true, data: result });
+  try {
+    const businessId = c.get("businessId");
+    const query = {
+      page: c.req.query("page") ? parseInt(c.req.query("page")!) : undefined,
+      limit: c.req.query("limit") ? parseInt(c.req.query("limit")!) : undefined,
+      search: c.req.query("search"),
+    };
+    const result = await getCustomers(businessId, query);
+    return c.json({ success: true, data: result }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "CUSTOMERS_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
 });
 
-customerRoutes.post(
-  "/",
-  zValidator(
-    "json",
-    z.object({
-      name: z.string().min(1),
-      phone: z.string().optional(),
-      email: z.string().email().optional().or(z.literal("")),
-      address: z.string().optional(),
-      notes: z.string().optional(),
-    })
-  ),
-  async (c) => {
-    const business = await getBusiness(c);
-    if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-    const data = c.req.valid("json");
-    const db = createDb();
-
-    const [newCustomer] = await db.insert(customers).values({
-      ...data,
-      businessId: business.id,
-    }).returning();
-
-    if (!newCustomer) {
-      return c.json({ success: false, error: { code: "SERVER_ERROR", message: "Failed to create customer" } }, 500);
-    }
-
-    return c.json({ success: true, data: newCustomer }, 201);
+customerRoutes.post("/", validate(CreateCustomerSchema), async (c) => {
+  try {
+    const businessId = c.get("businessId");
+    const body = c.get("validatedBody");
+    const customer = await createCustomer(businessId, body);
+    return c.json({ success: true, data: customer }, 201);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "CUSTOMER_CREATION_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
-);
+});
 
 customerRoutes.get("/:id", async (c) => {
-  const business = await getBusiness(c);
-  if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-  const id = c.req.param("id");
-  const db = createDb();
-  const customer = await db.query.customers.findFirst({
-    where: and(
-      eq(customers.id, id),
-      eq(customers.businessId, business.id)
-    ),
-    with: {
-      sales: true,
+  try {
+    const businessId = c.get("businessId");
+    const customerId = c.req.param("id");
+    const customer = await getCustomerById(businessId, customerId);
+    if (!customer) {
+      return c.json({ success: false, error: { code: "CUSTOMER_NOT_FOUND", message: "Customer not found" } }, 404);
     }
-  });
-
-  if (!customer) return c.json({ success: false, error: { code: "NOT_FOUND", message: "Customer not found" } }, 404);
-
-  return c.json({ success: true, data: customer });
+    return c.json({ success: true, data: customer }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "CUSTOMER_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
 });
 
-customerRoutes.put(
-  "/:id",
-  zValidator(
-    "json",
-    z.object({
-      name: z.string().min(1),
-      phone: z.string().optional(),
-      email: z.string().email().optional().or(z.literal("")),
-      address: z.string().optional(),
-      notes: z.string().optional(),
-    })
-  ),
-  async (c) => {
-    const business = await getBusiness(c);
-    if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-    const id = c.req.param("id");
-    const data = c.req.valid("json");
-    const db = createDb();
-
-    const [updatedCustomer] = await db.update(customers).set(data).where(and(
-      eq(customers.id, id),
-      eq(customers.businessId, business.id)
-    )).returning();
-
-    if (!updatedCustomer) return c.json({ success: false, error: { code: "NOT_FOUND", message: "Customer not found" } }, 404);
-
-    return c.json({ success: true, data: updatedCustomer });
+customerRoutes.put("/:id", validate(UpdateCustomerSchema), async (c) => {
+  try {
+    const businessId = c.get("businessId");
+    const customerId = c.req.param("id");
+    const body = c.get("validatedBody");
+    const customer = await updateCustomer(businessId, customerId, body);
+    return c.json({ success: true, data: customer }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "CUSTOMER_UPDATE_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
-);
+});
 
 customerRoutes.delete("/:id", async (c) => {
-  const business = await getBusiness(c);
-  if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-  const id = c.req.param("id");
-  const db = createDb();
-  await db.delete(customers).where(and(
-    eq(customers.id, id),
-    eq(customers.businessId, business.id)
-  ));
-
-  return c.json({ success: true, data: { message: "Customer deleted" } });
+  try {
+    const businessId = c.get("businessId");
+    const customerId = c.req.param("id");
+    await deleteCustomer(businessId, customerId);
+    return c.json({ success: true, data: { message: "Customer deleted" } }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "CUSTOMER_DELETE_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
 });
-
-export default customerRoutes;

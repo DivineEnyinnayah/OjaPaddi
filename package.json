@@ -1,32 +1,49 @@
 {
   "name": "ojapaddi",
   "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "dotenv": "^17.2.2",
+      "zod": "^4.1.13",
+      "@types/bun": "^1.3.4"
+    }
+  },
   "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
     "check-types": "turbo check-types",
     "dev:native": "turbo -F native dev",
-    "dev:server": "turbo -F server dev",
+    "dev:server": "bun --env-file=apps/server/.env run --hot apps/server/src/server.ts",
     "db:push": "turbo -F @ojapaddi/db db:push",
     "db:studio": "turbo -F @ojapaddi/db db:studio",
     "db:generate": "turbo -F @ojapaddi/db db:generate",
     "db:migrate": "turbo -F @ojapaddi/db db:migrate"
   },
-  "packageManager": "pnpm@10.30.3",
   "dependencies": {
+    "@ojapaddi/env": "workspace:*",
     "dotenv": "catalog:",
-    "zod": "catalog:",
-    "@ojapaddi/env": "workspace:*"
+    "zod": "catalog:"
+  },
+  "overrides": {
+    "expo": "^55.0.26",
+    "@expo/metro-runtime": "~55.0.11",
+    "@expo/vector-icons": "^15.1.1",
+    "expo-constants": "~55.0.16",
+    "expo-font": "~55.0.8",
+    "expo-linking": "~55.0.15",
+    "@expo/log-box": "~55.0.12",
+    "@expo/dom-webview": "~55.0.6"
   },
   "devDependencies": {
-    "typescript": "^6",
-    "@types/node": "^22.13.14",
     "@ojapaddi/config": "workspace:*",
-    "turbo": "^2.8.12"
-  }
+    "@types/bun": "^1.3.14",
+    "turbo": "^2.8.12",
+    "typescript": "~5.9.2"
+  },
+  "packageManager": "bun@1.3.10"
 }

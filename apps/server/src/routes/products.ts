@@ -1,155 +1,133 @@
 import { Hono } from "hono";
-import { authMiddleware } from "../middleware/auth";
-import { createDb } from "@ojapaddi/db";
-import { products, businesses } from "@ojapaddi/db/schema";
-import { eq, and } from "drizzle-orm";
-import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
-import type { HonoEnv } from "../types";
-import type { Context } from "hono";
+import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, adjustStock, getCategories } from "../services/productService";
+import { uploadFile, validateImageFile, getPublicUrl } from "../services/storageService";
+import { type AuthContext } from "../middleware/auth";
+import { validate } from "../middleware/validate";
+import { CreateProductSchema, UpdateProductSchema, AdjustStockSchema } from "../validators/products";
 
-const productRoutes = new Hono<HonoEnv>();
-
-productRoutes.use("/*", authMiddleware);
-
-const getBusiness = async (c: Context<HonoEnv>) => {
-  const user = c.get("user");
-  const db = createDb();
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.userId, user.id),
-  });
-  return business;
-};
+export const productRoutes = new Hono<{ Variables: AuthContext }>();
 
 productRoutes.get("/", async (c) => {
-  const business = await getBusiness(c);
-  if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-  const db = createDb();
-  const query = c.req.query();
-  const page = parseInt(query.page || "1");
-  const limit = parseInt(query.limit || "20");
-  const offset = (page - 1) * limit;
-
-  const result = await db.query.products.findMany({
-    where: and(
-      eq(products.businessId, business.id),
-      eq(products.isActive, true)
-    ),
-    limit,
-    offset,
-    orderBy: (products, { desc }) => [desc(products.createdAt)],
-  });
-
-  return c.json({ success: true, data: result });
+  try {
+    const businessId = c.get("businessId");
+    const query = {
+      page: c.req.query("page") ? parseInt(c.req.query("page")!) : undefined,
+      limit: c.req.query("limit") ? parseInt(c.req.query("limit")!) : undefined,
+      category: c.req.query("category"),
+      search: c.req.query("search"),
+      lowStock: c.req.query("low_stock") === "true",
+    };
+    const result = await getProducts(businessId, query);
+    return c.json({ success: true, data: result }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "PRODUCTS_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
 });
 
-productRoutes.post(
-  "/",
-  zValidator(
-    "json",
-    z.object({
-      name: z.string().min(1),
-      description: z.string().optional(),
-      sku: z.string().optional(),
-      category: z.string().optional(),
-      price: z.number().or(z.string()),
-      costPrice: z.number().or(z.string()).optional(),
-      quantity: z.number().int().default(0),
-      lowStockThreshold: z.number().int().default(5),
-    })
-  ),
-  async (c) => {
-    const business = await getBusiness(c);
-    if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-    const data = c.req.valid("json");
-    const db = createDb();
-
-    const [newProduct] = await db.insert(products).values({
-      ...data,
-      price: data.price.toString(),
-      costPrice: data.costPrice?.toString(),
-      businessId: business.id,
-    }).returning();
-
-    if (!newProduct) {
-      return c.json({ success: false, error: { code: "SERVER_ERROR", message: "Failed to create product" } }, 500);
-    }
-
-    return c.json({ success: true, data: newProduct }, 201);
+productRoutes.post("/", validate(CreateProductSchema), async (c) => {
+  try {
+    const businessId = c.get("businessId");
+    const body = c.get("validatedBody");
+    const product = await createProduct(businessId, body);
+    return c.json({ success: true, data: product }, 201);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "PRODUCT_CREATION_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
-);
+});
 
 productRoutes.get("/:id", async (c) => {
-  const business = await getBusiness(c);
-  if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-  const id = c.req.param("id");
-  const db = createDb();
-  const product = await db.query.products.findFirst({
-    where: and(
-      eq(products.id, id),
-      eq(products.businessId, business.id)
-    ),
-  });
-
-  if (!product) return c.json({ success: false, error: { code: "NOT_FOUND", message: "Product not found" } }, 404);
-
-  return c.json({ success: true, data: product });
+  try {
+    const businessId = c.get("businessId");
+    const productId = c.req.param("id");
+    const product = await getProductById(businessId, productId);
+    if (!product) {
+      return c.json({ success: false, error: { code: "PRODUCT_NOT_FOUND", message: "Product not found" } }, 404);
+    }
+    return c.json({ success: true, data: product }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "PRODUCT_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
 });
 
-productRoutes.put(
-  "/:id",
-  zValidator(
-    "json",
-    z.object({
-      name: z.string().min(1),
-      description: z.string().optional(),
-      sku: z.string().optional(),
-      category: z.string().optional(),
-      price: z.number().or(z.string()),
-      costPrice: z.number().or(z.string()).optional(),
-      quantity: z.number().int(),
-      lowStockThreshold: z.number().int(),
-      isActive: z.boolean().optional(),
-    })
-  ),
-  async (c) => {
-    const business = await getBusiness(c);
-    if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-    const id = c.req.param("id");
-    const data = c.req.valid("json");
-    const db = createDb();
-
-    const [updatedProduct] = await db.update(products).set({
-      ...data,
-      price: data.price.toString(),
-      costPrice: data.costPrice?.toString(),
-    }).where(and(
-      eq(products.id, id),
-      eq(products.businessId, business.id)
-    )).returning();
-
-    if (!updatedProduct) return c.json({ success: false, error: { code: "NOT_FOUND", message: "Product not found" } }, 404);
-
-    return c.json({ success: true, data: updatedProduct });
+productRoutes.put("/:id", validate(UpdateProductSchema), async (c) => {
+  try {
+    const businessId = c.get("businessId");
+    const productId = c.req.param("id");
+    const body = c.get("validatedBody");
+    const product = await updateProduct(businessId, productId, body);
+    return c.json({ success: true, data: product }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "PRODUCT_UPDATE_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
-);
+});
 
 productRoutes.delete("/:id", async (c) => {
-  const business = await getBusiness(c);
-  if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-  const id = c.req.param("id");
-  const db = createDb();
-  await db.update(products).set({ isActive: false }).where(and(
-    eq(products.id, id),
-    eq(products.businessId, business.id)
-  ));
-
-  return c.json({ success: true, data: { message: "Product deleted" } });
+  try {
+    const businessId = c.get("businessId");
+    const productId = c.req.param("id");
+    await deleteProduct(businessId, productId);
+    return c.json({ success: true, data: { message: "Product deleted" } }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "PRODUCT_DELETE_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
 });
 
-export default productRoutes;
+productRoutes.post("/:id/image", async (c) => {
+  try {
+    const businessId = c.get("businessId");
+    const productId = c.req.param("id");
+
+    const product = await getProductById(businessId, productId);
+    if (!product) {
+      return c.json({ success: false, error: { code: "PRODUCT_NOT_FOUND", message: "Product not found" } }, 404);
+    }
+
+    const body = await c.req.parseBody();
+    const file = body.image as File;
+
+    if (!file || !(file instanceof File)) {
+      return c.json({ success: false, error: { code: "VALIDATION_ERROR", message: "Image file is required" } }, 400);
+    }
+
+    validateImageFile(file);
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const contentType = file.type;
+
+    const filename = `${productId}-${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+    const filePath = `products/${businessId}/${filename}`;
+
+    await uploadFile("products", filePath, buffer, contentType);
+
+    const imageUrl = await getPublicUrl("products", filePath);
+
+    const updatedProduct = await updateProduct(businessId, productId, { imageUrl });
+
+    return c.json({ success: true, data: updatedProduct }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "IMAGE_UPLOAD_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
+});
+
+productRoutes.patch("/:id/stock", validate(AdjustStockSchema), async (c) => {
+  try {
+    const businessId = c.get("businessId");
+    const productId = c.req.param("id");
+    const body = c.get("validatedBody");
+    const product = await adjustStock(businessId, productId, body.quantity);
+    return c.json({ success: true, data: product }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "STOCK_ADJUST_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
+});
+
+productRoutes.get("/categories", async (c) => {
+  try {
+    const businessId = c.get("businessId");
+    const categories = await getCategories(businessId);
+    return c.json({ success: true, data: { categories } }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "CATEGORIES_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
+});

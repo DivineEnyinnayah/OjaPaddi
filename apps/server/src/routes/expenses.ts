@@ -1,124 +1,58 @@
 import { Hono } from "hono";
-import { authMiddleware } from "../middleware/auth";
-import { createDb } from "@ojapaddi/db";
-import { expenses, businesses } from "@ojapaddi/db/schema";
-import { eq, and, sql } from "drizzle-orm";
-import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
-import type { HonoEnv } from "../types";
-import type { Context } from "hono";
+import { getExpenses, createExpense, updateExpense, deleteExpense } from "../services/expenseService";
+import { authMiddleware, type AuthContext } from "../middleware/auth";
+import { validate } from "../middleware/validate";
+import { CreateExpenseSchema, UpdateExpenseSchema } from "../validators/expenses";
 
-const expenseRoutes = new Hono<HonoEnv>();
+export const expenseRoutes = new Hono<{ Variables: AuthContext }>();
 
-expenseRoutes.use("/*", authMiddleware);
-
-const getBusiness = async (c: Context<HonoEnv>) => {
-  const user = c.get("user");
-  const db = createDb();
-  const business = await db.query.businesses.findFirst({
-    where: eq(businesses.userId, user.id),
-  });
-  return business;
-};
+expenseRoutes.use("*", authMiddleware);
 
 expenseRoutes.get("/", async (c) => {
-  const business = await getBusiness(c);
-  if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-  const db = createDb();
-  const query = c.req.query();
-  const from = query.from ? new Date(query.from) : undefined;
-  const to = query.to ? new Date(query.to) : undefined;
-
-  const result = await db.query.expenses.findMany({
-    where: and(
-      eq(expenses.businessId, business.id),
-      from ? sql`${expenses.incurredAt} >= ${from}` : undefined,
-      to ? sql`${expenses.incurredAt} <= ${to}` : undefined
-    ),
-    orderBy: (expenses, { desc }) => [desc(expenses.incurredAt)],
-  });
-
-  return c.json({ success: true, data: result });
+  try {
+    const businessId = c.get("businessId");
+    const query = {
+      from: c.req.query("from"),
+      to: c.req.query("to"),
+      category: c.req.query("category"),
+    };
+    const result = await getExpenses(businessId, query);
+    return c.json({ success: true, data: result }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "EXPENSES_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
 });
 
-expenseRoutes.post(
-  "/",
-  zValidator(
-    "json",
-    z.object({
-      description: z.string().min(1),
-      amount: z.number().or(z.string()),
-      category: z.string().optional(),
-      incurredAt: z.string().optional().transform((v) => v ? new Date(v) : new Date()),
-    })
-  ),
-  async (c) => {
-    const business = await getBusiness(c);
-    if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-    const data = c.req.valid("json");
-    const db = createDb();
-
-    const [newExpense] = await db.insert(expenses).values({
-      ...data,
-      amount: data.amount.toString(),
-      businessId: business.id,
-    }).returning();
-
-    if (!newExpense) {
-      return c.json({ success: false, error: { code: "SERVER_ERROR", message: "Failed to create expense" } }, 500);
-    }
-
-    return c.json({ success: true, data: newExpense }, 201);
+expenseRoutes.post("/", validate(CreateExpenseSchema), async (c) => {
+  try {
+    const businessId = c.get("businessId");
+    const body = c.get("validatedBody");
+    const expense = await createExpense(businessId, body);
+    return c.json({ success: true, data: expense }, 201);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "EXPENSE_CREATION_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
-);
+});
 
-expenseRoutes.put(
-  "/:id",
-  zValidator(
-    "json",
-    z.object({
-      description: z.string().min(1),
-      amount: z.number().or(z.string()),
-      category: z.string().optional(),
-      incurredAt: z.string().optional().transform((v) => v ? new Date(v) : new Date()),
-    })
-  ),
-  async (c) => {
-    const business = await getBusiness(c);
-    if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-    const id = c.req.param("id");
-    const data = c.req.valid("json");
-    const db = createDb();
-
-    const [updatedExpense] = await db.update(expenses).set({
-      ...data,
-      amount: data.amount.toString(),
-    }).where(and(
-      eq(expenses.id, id),
-      eq(expenses.businessId, business.id)
-    )).returning();
-
-    if (!updatedExpense) return c.json({ success: false, error: { code: "NOT_FOUND", message: "Expense not found" } }, 404);
-
-    return c.json({ success: true, data: updatedExpense });
+expenseRoutes.put("/:id", validate(UpdateExpenseSchema), async (c) => {
+  try {
+    const businessId = c.get("businessId");
+    const expenseId = c.req.param("id");
+    const body = c.get("validatedBody");
+    const expense = await updateExpense(businessId, expenseId, body);
+    return c.json({ success: true, data: expense }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "EXPENSE_UPDATE_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
-);
+});
 
 expenseRoutes.delete("/:id", async (c) => {
-  const business = await getBusiness(c);
-  if (!business) return c.json({ success: false, error: { code: "NO_BUSINESS", message: "Business not found" } }, 404);
-
-  const id = c.req.param("id");
-  const db = createDb();
-  await db.delete(expenses).where(and(
-    eq(expenses.id, id),
-    eq(expenses.businessId, business.id)
-  ));
-
-  return c.json({ success: true, data: { message: "Expense deleted" } });
+  try {
+    const businessId = c.get("businessId");
+    const expenseId = c.req.param("id");
+    await deleteExpense(businessId, expenseId);
+    return c.json({ success: true, data: { message: "Expense deleted" } }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "EXPENSE_DELETE_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
 });
-
-export default expenseRoutes;

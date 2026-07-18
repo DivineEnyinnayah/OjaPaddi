@@ -1,42 +1,246 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { authClient } from "@/lib/auth-client";
-import { env } from "@ojapaddi/env/native";
+import { useState } from 'react';
+import { apiRequest, apiFormDataRequest } from '../lib/api';
+import { useAuthStore } from '../stores/authStore';
 
-const API_URL = `${env.EXPO_PUBLIC_SERVER_URL}/api/products`;
+export interface Product {
+  id: string;
+  businessId: string;
+  name: string;
+  description?: string;
+  sku?: string;
+  category?: string;
+  price: string;
+  costPrice?: string;
+  quantity: number;
+  lowStockThreshold: number;
+  imageUrl?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
-export const useProducts = () => {
-  return useQuery({
-    queryKey: ["products"],
-    queryFn: async () => {
-      const json = await authClient.$fetch(API_URL);
-      return (json as any).data;
-    },
-  });
-};
+export interface ProductsResponse {
+  products: Product[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+  };
+}
 
-export const useProduct = (id: string) => {
-  return useQuery({
-    queryKey: ["products", id],
-    queryFn: async () => {
-      const json = await authClient.$fetch(`${API_URL}/${id}`);
-      return (json as any).data;
-    },
-    enabled: !!id,
-  });
-};
+export function useProducts() {
+  const { accessToken } = useAuthStore();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-export const useCreateProduct = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: any) => {
-      const json = await authClient.$fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify(data),
+  const fetchProducts = async (query: Record<string, string> = {}) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const queryString = new URLSearchParams(query).toString();
+      const result = await apiRequest<ProductsResponse>(
+        `/products${queryString ? `?${queryString}` : ''}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (result.success && result.data) {
+        setProducts(result.data.products || []);
+      } else {
+        setError(result.error?.message || 'Failed to fetch products');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchProductById = async (productId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await apiRequest<Product>(`/products/${productId}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       });
-      return json;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-    },
-  });
-};
+
+      if (result.success && result.data) {
+        setCurrentProduct(result.data);
+        return result.data;
+      } else {
+        setError(result.error?.message || 'Failed to fetch product');
+        return null;
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addProduct = async (productData: {
+    name: string;
+    description?: string;
+    sku?: string;
+    category?: string;
+    price: number;
+    costPrice?: number;
+    quantity: number;
+    lowStockThreshold?: number;
+  }) => {
+    setIsLoading(true);
+    try {
+      const result = await apiRequest<Product>('/products', {
+        method: 'POST',
+        body: JSON.stringify(productData),
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (result.success && result.data) {
+        await fetchProducts();
+        return result.data;
+      } else {
+        throw new Error(result.error?.message || 'Failed to add product');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateProduct = async (productId: string, productData: Partial<Product>) => {
+    setIsLoading(true);
+    try {
+      const result = await apiRequest<Product>(`/products/${productId}`, {
+        method: 'PUT',
+        body: JSON.stringify(productData),
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (result.success && result.data) {
+        await fetchProducts();
+        return result.data;
+      } else {
+        throw new Error(result.error?.message || 'Failed to update product');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteProduct = async (productId: string) => {
+    setIsLoading(true);
+    try {
+      const result = await apiRequest<null>(`/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (result.success) {
+        await fetchProducts();
+        return true;
+      } else {
+        throw new Error(result.error?.message || 'Failed to delete product');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const uploadProductImage = async (productId: string, imageUri: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fileName = imageUri.split('/').pop() || 'image.jpg';
+      const match = /\.(\w+)$/.exec(fileName);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      const formData = new FormData();
+      formData.append('image', {
+        uri: imageUri,
+        name: fileName,
+        type,
+      } as unknown as Blob);
+
+      const result = await apiFormDataRequest<Product>(
+        `/products/${productId}/image`,
+        formData
+      );
+
+      if (result.success && result.data) {
+        await fetchProducts();
+        return result.data;
+      } else {
+        throw new Error(result.error?.message || 'Failed to upload image');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const adjustStock = async (productId: string, quantity: number) => {
+    setIsLoading(true);
+    try {
+      const result = await apiRequest<Product>(`/products/${productId}/stock`, {
+        method: 'PATCH',
+        body: JSON.stringify({ quantity }),
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (result.success && result.data) {
+        await fetchProducts();
+        return result.data;
+      } else {
+        throw new Error(result.error?.message || 'Failed to adjust stock');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    products,
+    currentProduct,
+    isLoading,
+    error,
+    fetchProducts,
+    fetchProductById,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    adjustStock,
+    uploadProductImage,
+  };
+}

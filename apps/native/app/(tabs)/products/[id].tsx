@@ -1,252 +1,199 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Share } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { useThemeColor } from "heroui-native";
-import { useProduct } from "@/hooks/useProducts";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import { Button } from '@/components/ui/button';
+import { Container } from '@/components/container';
+import { Surface } from '@/components/ui/surface';
+import { useProducts, type Product } from '../../../hooks/useProducts';
+import { buildProductShareMessage, shareViaWhatsApp } from '@/lib/whatsapp';
+import { withUniwind } from 'uniwind';
+
+const StyledView = withUniwind(View);
+const StyledText = withUniwind(Text);
+const StyledTouchableOpacity = withUniwind(TouchableOpacity);
+const StyledImage = withUniwind(Image);
+const StyledScrollView = withUniwind(ScrollView);
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const bgColor = useThemeColor("background");
-  const primaryColor = "#005129";
-  const { data: product, isLoading } = useProduct(id as string);
+  const { fetchProductById, adjustStock, deleteProduct, isLoading } = useProducts();
+  const colors = useThemeColor();
+  const [product, setProduct] = useState<Product | null>(null);
 
-  const handleShare = async () => {
-    if (!product) return;
+  useEffect(() => {
+    if (!id) return;
+    fetchProductById(id as string).then((fetched) => {
+      if (fetched) setProduct(fetched);
+    });
+  }, [id]);
+
+  const handleStockAdd = async () => {
     try {
-      const message = `*${product.name}* 🛍️\nPrice: ₦${parseFloat(product.price).toLocaleString()}\n\n${product.description || ""}\n\nContact: 08012345678`;
-      await Share.share({
-        message,
-      });
-    } catch (error) {
-      Alert.alert("Error", "Failed to share product");
+      await adjustStock(id as string, 1);
+      const updated = await fetchProductById(id as string);
+      if (updated) {
+        setProduct(updated);
+      }
+    } catch (err: unknown) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to adjust stock');
     }
   };
 
-  if (isLoading) return <View style={[styles.container, { backgroundColor: bgColor }]} />;
+  const handleStockRemove = async () => {
+    if (!product || product.quantity <= 0) return;
+    try {
+      await adjustStock(id as string, -1);
+      const updated = await fetchProductById(id as string);
+      if (updated) {
+        setProduct(updated);
+      }
+    } catch (err: unknown) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to adjust stock');
+    }
+  };
 
-  if (!product) {
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Product',
+      'Are you sure you want to delete this product?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteProduct(id as string);
+              router.back();
+            } catch (err: unknown) {
+              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to delete product');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleShare = () => {
+    if (!product) return;
+    const message = buildProductShareMessage(product);
+    shareViaWhatsApp(message);
+  };
+
+  if (isLoading && !product) {
     return (
-      <View style={[styles.container, { backgroundColor: bgColor, justifyContent: "center", alignItems: "center" }]}>
-        <Text>Product not found</Text>
-      </View>
+      <Container isScrollable={false} className="bg-background pt-12 items-center justify-center">
+        <ActivityIndicator size="large" color={colors.primary} />
+      </Container>
     );
   }
 
+  if (!product) {
+    return (
+      <Container isScrollable={false} className="bg-background pt-12 items-center justify-center">
+        <StyledText className="text-base text-on-surface-variant mb-4">Product not found</StyledText>
+        <Button onPress={() => router.back()}>
+          Go Back
+        </Button>
+      </Container>
+    );
+  }
+
+  const price = parseFloat(product.price);
+  const lowStockThreshold = product.lowStockThreshold ?? 5;
+
   return (
-    <ScrollView style={[styles.container, { backgroundColor: bgColor }]}>
-      <View style={styles.imageContainer}>
-        <View style={styles.productImageLarge}>
-          <Ionicons name="image-outline" size={80} color="#bfc9be" />
-        </View>
-      </View>
+    <Container isScrollable={false} withTabBar className="bg-background">
+      <StyledView className="relative flex-1">
+        <StyledView className="absolute top-12 left-4 z-20 w-11 h-11 bg-surface rounded-full justify-center items-center shadow-md shadow-black/20 elevation-4">
+          <StyledTouchableOpacity onPress={() => router.back()}>
+            <MaterialIcons name="arrow-back" size={22} color={colors.onSurface} />
+          </StyledTouchableOpacity>
+        </StyledView>
 
-      <View style={styles.content}>
-        <View style={styles.headerRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.productName}>{product.name}</Text>
-            <Text style={styles.productCategory}>{product.category || "No Category"}</Text>
-          </View>
-          <Text style={styles.productPrice}>₦{parseFloat(product.price).toLocaleString()}</Text>
-        </View>
-
-        <View style={styles.stockCard}>
-          <View>
-            <Text style={styles.stockLabel}>Available Stock</Text>
-            <Text style={styles.stockValue}>{product.quantity} Units</Text>
-          </View>
-          <TouchableOpacity style={[styles.adjustButton, { borderColor: primaryColor }]}>
-            <Text style={[styles.adjustButtonText, { color: primaryColor }]}>Adjust Stock</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.descriptionText}>
-            {product.description || "No description provided for this product."}
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Product Details</Text>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Cost Price</Text>
-            <Text style={styles.detailValue}>₦{product.costPrice ? parseFloat(product.costPrice).toLocaleString() : "0.00"}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>SKU</Text>
-            <Text style={styles.detailValue}>{product.sku || "N/A"}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Low Stock Alert</Text>
-            <Text style={styles.detailValue}>{product.lowStockThreshold} Units</Text>
-          </View>
-        </View>
-
-        <TouchableOpacity 
-          style={[styles.shareButton, { backgroundColor: primaryColor }]}
-          onPress={handleShare}
+        <StyledScrollView
+          contentContainerStyle={{ paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
         >
-          <Ionicons name="logo-whatsapp" size={24} color="white" />
-          <Text style={styles.shareButtonText}>Share Product Page</Text>
-        </TouchableOpacity>
+          <StyledView className="w-full h-[300px] bg-surface-variant items-center justify-center">
+            {product.imageUrl ? (
+              <StyledImage source={{ uri: product.imageUrl }} className="w-full h-full" resizeMode="cover" />
+            ) : (
+              <MaterialIcons name="image" size={64} color={colors.outline} />
+            )}
+          </StyledView>
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.editButton}>
-            <Text style={styles.editButtonText}>Edit Product</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteButton}>
-            <Text style={styles.deleteButtonText}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </ScrollView>
+          <StyledView className="px-5 pt-6 pb-2">
+            <StyledText className="text-[22px] font-bold text-on-surface mb-1">{product.name}</StyledText>
+
+            <StyledText className="text-[20px] font-bold text-primary mb-3">
+              \u20A6{price.toLocaleString()}
+            </StyledText>
+
+            <StyledView className="flex-row items-center gap-2 mb-1">
+              <StyledView className="bg-bg-primary-container px-3 py-1 rounded-full">
+                <StyledText className="text-xs font-semibold text-primary">{product.category || 'General'}</StyledText>
+              </StyledView>
+              {product.sku ? (
+                <StyledText className="text-xs text-outline">SKU: {product.sku}</StyledText>
+              ) : null}
+            </StyledView>
+
+            <StyledView className="h-[1px] bg-outline-variant my-5" />
+
+            <StyledText className="text-base font-bold text-on-surface mb-2">Description</StyledText>
+            <StyledText className="text-sm text-on-surface-variant leading-5 mb-6">
+              {product.description || 'No description provided.'}
+            </StyledText>
+
+            <Surface variant="primary" className="p-4">
+              <StyledText className="text-xs font-semibold text-on-surface-variant mb-3">Current Stock</StyledText>
+              <StyledView className="flex-row items-center justify-center gap-5">
+                <StyledTouchableOpacity
+                  className="w-11 h-11 rounded-full justify-center items-center border border-outline/40"
+                  onPress={handleStockRemove}
+                >
+                  <MaterialIcons name="remove" size={22} color={colors.onSurface} />
+                </StyledTouchableOpacity>
+                <StyledText className="text-[28px] font-extrabold text-on-surface min-w-[48px] text-center">
+                  {product.quantity}
+                </StyledText>
+                <StyledTouchableOpacity
+                  className="w-11 h-11 rounded-full bg-primary justify-center items-center"
+                  onPress={handleStockAdd}
+                >
+                  <MaterialIcons name="add" size={22} color={colors.onPrimary} />
+                </StyledTouchableOpacity>
+              </StyledView>
+              {product.quantity <= lowStockThreshold && (
+                <StyledView className="flex-row items-center justify-center mt-3 gap-1">
+                  <MaterialIcons name="warning" size={16} color={colors.error} />
+                  <StyledText className="text-xs font-semibold text-error">Running Low!</StyledText>
+                </StyledView>
+              )}
+            </Surface>
+          </StyledView>
+        </StyledScrollView>
+
+        <StyledView className="absolute bottom-0 left-0 right-0 flex-row items-center gap-3 px-5 py-4 bg-surface border-t border-outline-variant/20">
+          <StyledTouchableOpacity
+            className="w-12 h-12 rounded-full justify-center items-center border-2 border-error"
+            onPress={handleDelete}
+          >
+            <MaterialIcons name="delete" size={22} color={colors.error} />
+          </StyledTouchableOpacity>
+          <Button
+            size="lg"
+            className="flex-1"
+            onPress={handleShare}
+          >
+            Share Product
+          </Button>
+        </StyledView>
+      </StyledView>
+    </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  imageContainer: {
-    height: 300,
-    backgroundColor: "#f7faf3",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  productImageLarge: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  content: {
-    padding: 24,
-    backgroundColor: "white",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: -24,
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 24,
-  },
-  productName: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#181d19",
-  },
-  productCategory: {
-    fontSize: 16,
-    color: "#404940",
-    marginTop: 4,
-  },
-  productPrice: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#005129",
-  },
-  stockCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#f7faf3",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 24,
-  },
-  stockLabel: {
-    fontSize: 14,
-    color: "#404940",
-  },
-  stockValue: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#181d19",
-    marginTop: 4,
-  },
-  adjustButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  adjustButtonText: {
-    fontWeight: "600",
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#181d19",
-    marginBottom: 12,
-  },
-  descriptionText: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: "#404940",
-  },
-  detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ebefe8",
-  },
-  detailLabel: {
-    fontSize: 15,
-    color: "#404940",
-  },
-  detailValue: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#181d19",
-  },
-  shareButton: {
-    height: 56,
-    borderRadius: 12,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  shareButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginLeft: 12,
-  },
-  actionButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  editButton: {
-    flex: 1,
-    height: 48,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 8,
-    backgroundColor: "#ebefe8",
-    borderRadius: 12,
-  },
-  editButtonText: {
-    fontWeight: "600",
-    color: "#181d19",
-  },
-  deleteButton: {
-    width: 100,
-    height: 48,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#ffdad6",
-    borderRadius: 12,
-  },
-  deleteButtonText: {
-    fontWeight: "600",
-    color: "#ba1a1a",
-  },
-});
