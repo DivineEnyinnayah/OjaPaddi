@@ -56,7 +56,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <Container isScrollable={false} withTabBar className="bg-background pt-12 px-auto flex-1">
+    <Container isScrollable={false} withTabBar className="bg-background pt-24 px-auto flex-1">
       <StyledView className="bg-surface-container-lowest border-b border-outline-variant/30 h-14 px-margin flex-row justify-between items-center z-50">
         <StyledView className="flex-row items-center gap-3">
           <StyledTouchableOpacity 

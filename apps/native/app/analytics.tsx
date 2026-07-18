@@ -401,6 +401,30 @@ export default function AnalyticsScreen() {
             </StyledView>
 
             <StyledView className="mt-6 px-margin">
+              <Surface variant="primary" className="rounded-xl p-md flex-row items-center justify-between">
+                <StyledView className="flex-1 pr-4">
+                  <StyledView className="flex-row items-center gap-2 mb-1">
+                    <MaterialIcons name="auto-awesome" size={20} color={colors.primary} />
+                    <StyledText className="text-h3 font-bold text-on-surface">
+                      Smart Recommendations
+                    </StyledText>
+                  </StyledView>
+                  <StyledText className="text-body-sm text-on-surface-variant">
+                    Discover which products your customers frequently buy together using Market Basket Analysis.
+                  </StyledText>
+                </StyledView>
+                <StyledTouchableOpacity
+                  className="bg-primary rounded-lg px-4 py-2"
+                  onPress={() => router.push("/mba")}
+                >
+                  <StyledText className="text-on-primary font-semibold text-xs">
+                    View
+                  </StyledText>
+                </StyledTouchableOpacity>
+              </Surface>
+            </StyledView>
+
+            <StyledView className="mt-6 px-margin">
               <StyledView className="flex-row justify-between items-center mb-3">
                 <StyledText className="text-h2 font-bold text-on-surface">
                   Top Products

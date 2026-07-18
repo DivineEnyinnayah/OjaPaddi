@@ -102,6 +102,17 @@ export default function MoreScreen() {
 
           <StyledTouchableOpacity
             className="flex-row items-center px-5 py-4 border-b border-outline-variant/50"
+            onPress={() => router.push('/mba')}
+          >
+            <StyledView className="w-10 h-10 rounded-full bg-primary-container/15 justify-center items-center mr-4">
+              <StyledMaterialIcons name="auto-awesome" size={20} color={colors.primary} />
+            </StyledView>
+            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface">Smart Recommendations</StyledText>
+            <StyledMaterialIcons name="chevron-right" size={22} color={colors.outline} />
+          </StyledTouchableOpacity>
+
+          <StyledTouchableOpacity
+            className="flex-row items-center px-5 py-4 border-b border-outline-variant/50"
             onPress={() => router.push('/upgrade')}
           >
             <StyledView className="w-10 h-10 rounded-full bg-primary-container/15 justify-center items-center mr-4">

@@ -477,6 +477,176 @@ function handleGetAnalytics(): ApiResponse<AnalyticsSummary> {
   };
 }
 
+function handleGetMba(endpoint: string): ApiResponse<any[]> {
+  const queryString = endpoint.split('?')[1] || '';
+  const params = new URLSearchParams(queryString);
+  const minSupport = parseFloat(params.get('minSupport') || '0.1');
+  const minConfidence = parseFloat(params.get('minConfidence') || '0.5');
+
+  // Build transactions list and product name mapping
+  const transactions: string[][] = [];
+  const productNameMap: Record<string, string> = {};
+
+  for (const sale of mockSales) {
+    const basket: string[] = [];
+    for (const item of sale.items) {
+      basket.push(item.productId);
+      productNameMap[item.productId] = item.productName;
+    }
+    if (basket.length > 0) {
+      transactions.push(Array.from(new Set(basket)));
+    }
+  }
+
+  const totalTx = transactions.length;
+  if (totalTx === 0) {
+    return { success: true, data: [] };
+  }
+
+  const itemsetKey = (itemset: string[]) => [...itemset].sort().join(",");
+
+  // 1. Frequent itemsets of size 1
+  const itemCounts: Record<string, number> = {};
+  for (const tx of transactions) {
+    for (const item of tx) {
+      itemCounts[item] = (itemCounts[item] || 0) + 1;
+    }
+  }
+
+  const frequentItemsets: Record<string, number> = {};
+  const supportMap: Record<string, number> = {};
+
+  for (const [item, count] of Object.entries(itemCounts)) {
+    const support = count / totalTx;
+    if (support >= minSupport) {
+      frequentItemsets[item] = support;
+      supportMap[item] = support;
+    }
+  }
+
+  const allFrequent: Record<string, number> = { ...supportMap };
+  let currentFrequent = Object.keys(frequentItemsets).map(item => [item]);
+  let k = 2;
+
+  while (currentFrequent.length > 0) {
+    const candidates: string[][] = [];
+    for (let i = 0; i < currentFrequent.length; i++) {
+      for (let j = i + 1; j < currentFrequent.length; j++) {
+        const itemsetA = currentFrequent[i];
+        const itemsetB = currentFrequent[j];
+        
+        let canJoin = true;
+        for (let l = 0; l < k - 2; l++) {
+          if (itemsetA[l] !== itemsetB[l]) {
+            canJoin = false;
+            break;
+          }
+        }
+        if (canJoin) {
+          const candidate = Array.from(new Set([...itemsetA, ...itemsetB])).sort();
+          if (candidate.length === k) {
+            candidates.push(candidate);
+          }
+        }
+      }
+    }
+
+    const uniqueCandidates: string[][] = [];
+    const seenCandidates = new Set<string>();
+    for (const cand of candidates) {
+      const key = itemsetKey(cand);
+      if (!seenCandidates.has(key)) {
+        seenCandidates.add(key);
+        uniqueCandidates.push(cand);
+      }
+    }
+
+    const candCounts: Record<string, number> = {};
+    for (const tx of transactions) {
+      const txSet = new Set(tx);
+      for (const cand of uniqueCandidates) {
+        let containsAll = true;
+        for (const item of cand) {
+          if (!txSet.has(item)) {
+            containsAll = false;
+            break;
+          }
+        }
+        if (containsAll) {
+          const key = itemsetKey(cand);
+          candCounts[key] = (candCounts[key] || 0) + 1;
+        }
+      }
+    }
+
+    const nextFrequent: string[][] = [];
+    for (const cand of uniqueCandidates) {
+      const key = itemsetKey(cand);
+      const count = candCounts[key] || 0;
+      const support = count / totalTx;
+      if (support >= minSupport) {
+        nextFrequent.push(cand);
+        allFrequent[key] = support;
+        supportMap[key] = support;
+      }
+    }
+
+    currentFrequent = nextFrequent;
+    k++;
+  }
+
+  function getSubsets(arr: string[]): string[][] {
+    const results: string[][] = [[]];
+    for (const value of arr) {
+      const len = results.length;
+      for (let i = 0; i < len; i++) {
+        results.push([...results[i], value]);
+      }
+    }
+    return results.filter(s => s.length > 0 && s.length < arr.length);
+  }
+
+  const rules: any[] = [];
+
+  for (const [key, support] of Object.entries(allFrequent)) {
+    const items = key.split(",");
+    if (items.length < 2) continue;
+
+    const subsets = getSubsets(items);
+    for (const antecedent of subsets) {
+      const consequent = items.filter(x => !antecedent.includes(x));
+      const antKey = itemsetKey(antecedent);
+      const consKey = itemsetKey(consequent);
+
+      const antSupport = supportMap[antKey] || 0;
+      const consSupport = supportMap[consKey] || 0;
+
+      if (antSupport > 0) {
+        const confidence = support / antSupport;
+        if (confidence >= minConfidence) {
+          const lift = consSupport > 0 ? confidence / consSupport : 0;
+          rules.push({
+            antecedent,
+            consequent,
+            antecedentNames: antecedent.map(id => productNameMap[id] || "Unknown Product"),
+            consequentNames: consequent.map(id => productNameMap[id] || "Unknown Product"),
+            support,
+            confidence,
+            lift,
+          });
+        }
+      }
+    }
+  }
+
+  rules.sort((a, b) => b.lift - a.lift || b.confidence - a.confidence);
+
+  return {
+    success: true,
+    data: rules,
+  };
+}
+
 // ─── Main Router ──────────────────────────────────────────────────────────────
 
 /**
@@ -574,6 +744,10 @@ export async function getMockResponse<T>(
   }
 
   // ── Analytics ──
+  if (path === '/analytics/mba' && method === 'GET') {
+    return handleGetMba(endpoint) as ApiResponse<T>;
+  }
+
   if (path === '/analytics/summary' && method === 'GET') {
     return handleGetAnalytics() as ApiResponse<T>;
   }

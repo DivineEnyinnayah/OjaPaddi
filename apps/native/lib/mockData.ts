@@ -263,6 +263,28 @@ const saleItems4: SaleItem[] = [
   { productId: 'prod-3', productName: 'Golden Penny Semovita 2kg', unitPrice: 2800, quantity: 4, total: 11200 },
 ];
 
+const saleItems5: SaleItem[] = [
+  { productId: 'prod-1', productName: 'Indomie Onion Chicken 70g (Carton)', unitPrice: 7200, quantity: 1, total: 7200 },
+  { productId: 'prod-2', productName: 'Power Oil 1L', unitPrice: 3800, quantity: 1, total: 3800 },
+];
+
+const saleItems6: SaleItem[] = [
+  { productId: 'prod-1', productName: 'Indomie Onion Chicken 70g (Carton)', unitPrice: 7200, quantity: 1, total: 7200 },
+  { productId: 'prod-2', productName: 'Power Oil 1L', unitPrice: 3800, quantity: 2, total: 7600 },
+  { productId: 'prod-3', productName: 'Golden Penny Semovita 2kg', unitPrice: 2800, quantity: 1, total: 2800 },
+];
+
+const saleItems7: SaleItem[] = [
+  { productId: 'prod-4', productName: 'Peak Milk 400g Tin', unitPrice: 2200, quantity: 2, total: 4400 },
+  { productId: 'prod-5', productName: 'Dangote Sugar 500g', unitPrice: 1100, quantity: 2, total: 2200 },
+];
+
+const saleItems8: SaleItem[] = [
+  { productId: 'prod-4', productName: 'Peak Milk 400g Tin', unitPrice: 2200, quantity: 1, total: 2200 },
+  { productId: 'prod-5', productName: 'Dangote Sugar 500g', unitPrice: 1100, quantity: 1, total: 1100 },
+  { productId: 'prod-8', productName: 'Bigi Cola 60cl PET (Pack of 12)', unitPrice: 2400, quantity: 1, total: 2400 },
+];
+
 export const mockSales: Sale[] = [
   {
     id: 'sale-1',
@@ -319,6 +341,62 @@ export const mockSales: Sale[] = [
     notes: 'Will pay balance next week',
     soldAt: daysAgo(5),
     items: saleItems4,
+  },
+  {
+    id: 'sale-5',
+    reference: 'OJA-K1L2M3',
+    customerId: 'cust-4',
+    subtotal: '11000.00',
+    discount: '0.00',
+    total: '11000.00',
+    paymentMethod: 'transfer',
+    paymentStatus: 'paid',
+    amountPaid: '11000.00',
+    notes: undefined,
+    soldAt: daysAgo(6),
+    items: saleItems5,
+  },
+  {
+    id: 'sale-6',
+    reference: 'OJA-N1O2P3',
+    customerId: undefined,
+    subtotal: '17600.00',
+    discount: '0.00',
+    total: '17600.00',
+    paymentMethod: 'cash',
+    paymentStatus: 'paid',
+    amountPaid: '17600.00',
+    notes: undefined,
+    soldAt: daysAgo(7),
+    items: saleItems6,
+  },
+  {
+    id: 'sale-7',
+    reference: 'OJA-Q1R2S3',
+    customerId: 'cust-1',
+    subtotal: '6600.00',
+    discount: '0.00',
+    total: '6600.00',
+    paymentMethod: 'transfer',
+    paymentStatus: 'paid',
+    amountPaid: '6600.00',
+    notes: undefined,
+    soldAt: daysAgo(8),
+    items: saleItems7,
+  },
+  {
+    id: 'sale-8',
+    reference: 'OJA-T1U2V3',
+    customerId: 'cust-2',
+    subtotal: '5700.00',
+    discount: '0.00',
+    total: '5700.00',
+    paymentMethod: 'pos',
+    paymentStatus: 'paid',
+    amountPaid: '5700.00',
+    notes: undefined,
+    soldAt: daysAgo(9),
+    items: saleItems8,
   },
 ];
 

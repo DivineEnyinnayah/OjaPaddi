@@ -32,7 +32,7 @@ export function Container({
     <StyledView
       className={cn("flex-1 bg-background", className)}
       style={{
-        paddingTop: withSafeAreaTop ? insets.top : 0,
+        paddingTop: withSafeAreaTop ? insets.top : 8,
         paddingBottom: isScrollable ? insets.bottom : insets.bottom + extraBottom,
       }}
       {...props}
