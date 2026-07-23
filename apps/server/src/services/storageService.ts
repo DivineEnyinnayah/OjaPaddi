@@ -39,7 +39,7 @@ export async function uploadFile(
     const exists = buckets?.some((b) => b.id === bucket);
     if (!exists) {
       const { error: createError } = await supabase.storage.createBucket(bucket, {
-        public: true,
+        public: false,
       });
       if (createError) {
         console.error(`Failed to create bucket ${bucket}:`, createError.message);
@@ -81,8 +81,7 @@ export async function getSignedUrl(
 }
 
 export async function getPublicUrl(bucket: string, path: string): Promise<string> {
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-  return data.publicUrl;
+  return getSignedUrl(bucket, path, 3600);
 }
 
 

@@ -7,6 +7,10 @@
     "check-types": "tsc -b",
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/server.ts --outfile server",
     "dev": "bun --env-file=.env run --hot src/server.ts",
+    "dev:wrangler": "wrangler dev",
+    "wrangler tail": "wrangler tail",
+    "deploy": "wrangler secret bulk .dev.vars && wrangler deploy",
+    "secrets:deploy": "wrangler secret bulk .dev.vars",
     "start": "bun run dist/server.js"
   },
   "dependencies": {
@@ -20,7 +24,8 @@
   "devDependencies": {
     "@ojapaddi/config": "workspace:*",
     "@types/bun": "catalog:",
-    "typescript": "^6"
+    "typescript": "^6",
+    "wrangler": "^3.114.0"
   },
   "trustedDependencies": [
     "supabase"

@@ -3,7 +3,7 @@ import { z } from "zod";
 export const SaleItemSchema = z.object({
   productId: z.string().uuid("Invalid product ID"),
   quantity: z.coerce.number().int().positive("Quantity must be positive"),
-  unitPrice: z.coerce.number().positive("Unit price must be positive"),
+  unitPrice: z.coerce.number().min(0.01, "Unit price must be at least ₦0.01"),
 });
 
 export const CreateSaleSchema = z.object({

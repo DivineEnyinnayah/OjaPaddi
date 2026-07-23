@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { MaterialIcons } from '@expo/vector-icons';
 import { withUniwind } from 'uniwind';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -59,10 +60,6 @@ function getInitials(name: string): string {
     .join('')
     .toUpperCase()
     .slice(0, 2);
-}
-
-function formatCurrency(amount: number): string {
-  return `₦${amount.toLocaleString()}`;
 }
 
 function SkeletonProductCard({ opacity }: { opacity: Animated.Value }) {
@@ -548,7 +545,7 @@ export default function RecordSaleScreen() {
         onPress={() => setCheckoutVisible(false)}
       >
         <StyledView
-          className="bg-background rounded-t-3xl max-h-[90%]"
+          className="bg-background rounded-t-3xl max-h-[90%] w-full"
           onStartShouldSetResponder={() => true}
         >
           <StyledView className="items-center pt-3 pb-1">
@@ -556,7 +553,7 @@ export default function RecordSaleScreen() {
           </StyledView>
 
           <StyledScrollView
-            className="flex-1 px-6"
+            className="px-6"
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             contentInsetAdjustmentBehavior="never"

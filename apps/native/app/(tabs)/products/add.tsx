@@ -138,10 +138,15 @@ export default function AddProductScreen() {
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.8,
+      quality: 0.7,
     });
     if (!result.canceled && result.assets.length > 0) {
-      setImageUri(result.assets[0].uri);
+      const asset = result.assets[0];
+      if (asset.fileSize && asset.fileSize > 2 * 1024 * 1024) {
+        Alert.alert("Image Too Large", "Please select an image under 2 MB.");
+        return;
+      }
+      setImageUri(asset.uri);
       if (errors.image) {
         setErrors(prev => ({ ...prev, image: undefined }));
       }

@@ -1,8 +1,73 @@
-import { db } from "@ojapaddi/db";
-import { businesses, users } from "@ojapaddi/db/schema";
-import { eq, or } from "drizzle-orm";
+import type { Database } from "@ojapaddi/db";
+import { businesses, users, refreshTokens } from "@ojapaddi/db/schema";
+import { eq, and, lt } from "drizzle-orm";
 import { supabase, supabaseAnon } from "../lib/supabase";
-import { env } from "@ojapaddi/env/server";
+import { createHash, randomBytes } from "crypto";
+
+// ── Refresh Token Helpers ──────────────────────────────────────────────
+
+const TOKEN_EXPIRY_DAYS = 30;
+
+function hashToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+function generateTokenPair() {
+  const token = randomBytes(40).toString("hex");
+  return { token, hash: hashToken(token) };
+}
+
+async function storeRefreshToken(db: Database, userId: string, refreshToken: string) {
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + TOKEN_EXPIRY_DAYS);
+
+  await db.insert(refreshTokens).values({
+    userId,
+    tokenHash: hashToken(refreshToken),
+    expiresAt,
+  });
+}
+
+async function verifyAndRotateRefreshToken(
+  db: Database,
+  userId: string,
+  oldRefreshToken: string,
+  newRefreshToken: string
+): Promise<boolean> {
+  const oldHash = hashToken(oldRefreshToken);
+  const newHash = hashToken(newRefreshToken);
+
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + TOKEN_EXPIRY_DAYS);
+
+  const deleted = await db
+    .delete(refreshTokens)
+    .where(and(eq(refreshTokens.userId, userId), eq(refreshTokens.tokenHash, oldHash)))
+    .returning();
+
+  if (deleted.length === 0) {
+    return false;
+  }
+
+  await db.insert(refreshTokens).values({
+    userId,
+    tokenHash: newHash,
+    expiresAt,
+  });
+
+  return true;
+}
+
+async function revokeRefreshToken(db: Database, refreshToken: string) {
+  const tokenHash = hashToken(refreshToken);
+  await db.delete(refreshTokens).where(eq(refreshTokens.tokenHash, tokenHash));
+}
+
+async function cleanupExpiredTokens(db: Database) {
+  await db.delete(refreshTokens).where(lt(refreshTokens.expiresAt, new Date()));
+}
+
+// ── Auth Service ──────────────────────────────────────────────────────
 
 interface RegistrationData {
   fullName: string;
@@ -19,28 +84,23 @@ interface OnboardingData {
   state: string;
 }
 
-export async function completeRegistration(reg: RegistrationData, onb?: Partial<OnboardingData>) {
-  console.log("[AUTH] Complete registration attempt for:", reg.email);
-
-  // Check if email or phone is already registered in our database
+export async function completeRegistration(db: Database, reg: RegistrationData, onb?: Partial<OnboardingData>) {
   const existingUsers = await db
     .select({ email: users.email, phone: users.phone })
     .from(users)
     .where(
       reg.phone
-        ? or(eq(users.email, reg.email), eq(users.phone, reg.phone))
+        ? { or: [{ email: reg.email }, { phone: reg.phone }] }
         : eq(users.email, reg.email)
     );
 
   if (existingUsers.length > 0) {
     const hasEmail = existingUsers.some(u => u.email.toLowerCase() === reg.email.toLowerCase());
-    if (hasEmail) {
-      throw new Error("Email is already registered");
-    }
+    if (hasEmail) throw new Error("Email is already registered");
     throw new Error("Phone number is already registered");
   }
 
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+  const { dataS, error: authError } = await supabase.auth.signUp({
     email: reg.email,
     password: reg.password,
     options: {
@@ -51,15 +111,10 @@ export async function completeRegistration(reg: RegistrationData, onb?: Partial<
     },
   });
 
-  if (authError) {
-    console.error("[AUTH] Supabase signup failed:", authError.message);
-    throw new Error(authError.message);
-  }
+  if (authError) throw new Error(authError.message);
 
-  const userId = authData.user?.id;
-  if (!userId) {
-    throw new Error("User registration failed: No user ID returned from Supabase");
-  }
+  const userId = dataS.user?.id;
+  if (!userId) throw new Error("User registration failed: No user ID returned from Supabase");
 
   try {
     await db.transaction(async (tx) => {
@@ -68,6 +123,7 @@ export async function completeRegistration(reg: RegistrationData, onb?: Partial<
         email: reg.email,
         fullName: reg.fullName,
         phone: reg.phone || undefined,
+        plan: 'free',
       });
 
       await tx.insert(businesses).values({
@@ -80,55 +136,33 @@ export async function completeRegistration(reg: RegistrationData, onb?: Partial<
       });
     });
 
-    console.log("[AUTH] Registration and onboarding completed successfully for:", reg.email);
+    if (dataS.session?.refresh_token) {
+      await storeRefreshToken(db, userId, dataS.session.refresh_token);
+    }
 
     return {
       user: {
         id: userId,
         email: reg.email,
         fullName: reg.fullName,
+        plan: 'free' as const,
         businessName: onb?.businessName || `${reg.fullName}'s Shop`,
         whatsappNumber: onb?.whatsappNumber || null,
       },
-      access_token: authData.session?.access_token,
-      refresh_token: authData.session?.refresh_token,
+      access_token: dataS.session?.access_token,
+      refresh_token: dataS.session?.refresh_token,
     };
   } catch (dbError: unknown) {
     const message = dbError instanceof Error ? dbError.message : String(dbError);
-    const cause = dbError instanceof Error && dbError.cause ? dbError.cause : null;
-    console.error("[AUTH] Database transaction failed for user:", reg.email, message);
-    if (cause) {
-      console.error("[AUTH] DB error cause:", JSON.stringify(cause, null, 2));
-    }
-
-    try {
-      const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
-      if (deleteError) {
-        console.error("[AUTH] Failed to cleanup Supabase user after DB failure:", deleteError.message);
-      } else {
-        console.log("[AUTH] Successfully cleaned up orphaned Supabase user:", reg.email);
-      }
-    } catch (cleanupError) {
-      console.error("[AUTH] Exception during Supabase user cleanup:", cleanupError);
-    }
-
+    try { await supabase.auth.admin.deleteUser(userId); } catch {}
     throw new Error(`Database setup failed: ${message}`);
   }
 }
 
-export async function loginUser(email: string, password: string) {
-  const { data, error } = await supabaseAnon.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  if (!data.user || !data.session) {
-    throw new Error("Login failed: No user or session returned");
-  }
+export async function loginUser(db: Database, email: string, password: string) {
+  const { data, error } = await supabaseAnon.auth.signInWithPassword({ email, password });
+  if (error) throw new Error(error.message);
+  if (!data.user || !data.session) throw new Error("Login failed: No user or session returned");
 
   const userId = data.user.id;
 
@@ -137,6 +171,7 @@ export async function loginUser(email: string, password: string) {
       id: users.id,
       email: users.email,
       fullName: users.fullName,
+      plan: users.plan,
       businessName: businesses.name,
       whatsappNumber: businesses.whatsappNumber,
     })
@@ -144,11 +179,16 @@ export async function loginUser(email: string, password: string) {
     .leftJoin(businesses, eq(businesses.userId, users.id))
     .where(eq(users.id, userId));
 
+  if (data.session.refresh_token) {
+    await storeRefreshToken(db, userId, data.session.refresh_token);
+  }
+
   return {
     user: {
       id: userId,
       email: data.user.email!,
       fullName: userRow?.fullName || data.user.user_metadata?.full_name || "",
+      plan: userRow?.plan || 'free',
       businessName: userRow?.businessName || "",
       whatsappNumber: userRow?.whatsappNumber || "",
     },
@@ -157,24 +197,27 @@ export async function loginUser(email: string, password: string) {
   };
 }
 
-export async function logoutUser(_refreshToken: string) {
-  const { error } = await supabaseAnon.auth.signOut({ scope: 'global' });
-  if (error) {
-    throw new Error(error.message);
-  }
+export async function logoutUser(db: Database, refreshToken: string) {
+  await revokeRefreshToken(db, refreshToken);
+  const { error } = await supabaseAnon.auth.signOut({ scope: "global" });
+  if (error) throw new Error(error.message);
 }
 
-export async function refreshAccessToken(refreshToken: string) {
-  // Direct HTTP call to Supabase Auth refresh endpoint.
-  // The SDK's setSession() throws "Auth session missing!" in server contexts
-  // because it expects a browser-like session store. The raw API works fine.
+export async function refreshAccessToken(db: Database, refreshToken: string) {
+  await cleanupExpiredTokens(db).catch(() => {});
+
+  const tokenHash = hashToken(refreshToken);
+  const [existingToken] = await db.select().from(refreshTokens).where(eq(refreshTokens.tokenHash, tokenHash));
+
+  if (!existingToken) throw new Error("Refresh token invalid or expired");
+
   const response = await fetch(
-    `${env.EXPO_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,
+    `${process.env.EXPO_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        apikey: env.SUPABASE_ANON_KEY,
+        apikey: process.env.SUPABASE_ANON_KEY!,
       },
       body: JSON.stringify({ refresh_token: refreshToken }),
     }
@@ -182,26 +225,23 @@ export async function refreshAccessToken(refreshToken: string) {
 
   if (!response.ok) {
     const err = (await response.json().catch(() => ({}))) as any;
-    throw new Error(
-      err.error_description || err.message || "Refresh token invalid or expired"
-    );
+    throw new Error(err.error_description || err.message || "Refresh token invalid or expired");
   }
 
   const session = (await response.json()) as any;
-
-  if (!session.access_token) {
-    throw new Error("Refresh failed: No session returned");
-  }
+  if (!session.access_token) throw new Error("Refresh failed: No session returned");
 
   const userId: string | undefined = session.user?.id;
   let userName = session.user?.user_metadata?.full_name || "";
   let businessName = "";
   let whatsappNumber = "";
+  let plan = 'free';
 
   if (userId) {
     const [userRow] = await db
       .select({
         fullName: users.fullName,
+        plan: users.plan,
         businessName: businesses.name,
         whatsappNumber: businesses.whatsappNumber,
       })
@@ -211,9 +251,16 @@ export async function refreshAccessToken(refreshToken: string) {
 
     if (userRow) {
       userName = userRow.fullName || userName;
+      plan = userRow.plan || 'free';
       businessName = userRow.businessName || "";
       whatsappNumber = userRow.whatsappNumber || "";
     }
+  }
+
+  const newRefreshToken = session.refresh_token;
+  if (userId && newRefreshToken) {
+    const rotated = await verifyAndRotateRefreshToken(db, userId, refreshToken, newRefreshToken);
+    if (!rotated) throw new Error("Refresh token rotation failed");
   }
 
   return {
@@ -221,27 +268,31 @@ export async function refreshAccessToken(refreshToken: string) {
       id: userId,
       email: session.user?.email || "",
       fullName: userName,
+      plan,
       businessName,
       whatsappNumber,
     },
     access_token: session.access_token,
-    refresh_token: session.refresh_token,
+    refresh_token: newRefreshToken,
   };
 }
 
 export async function forgotPassword(email: string) {
   const { error } = await supabaseAnon.auth.resetPasswordForEmail(email);
-  if (error) {
-    throw new Error(error.message);
-  }
+  if (error) throw new Error(error.message);
 }
 
-export async function resetPassword(_token: string, newPassword: string) {
-  const { error } = await supabaseAnon.auth.updateUser({
+export async function resetPassword(token: string, newPassword: string) {
+  const { data, error: verifyError } = await supabaseAnon.auth.verifyOtp({
+    token_hash: token,
+    type: "recovery",
+  });
+
+  if (verifyError || !data.user) throw new Error(verifyError?.message || "Invalid or expired reset token");
+
+  const { error } = await supabase.auth.admin.updateUserById(data.user.id, {
     password: newPassword,
   });
 
-  if (error) {
-    throw new Error(error.message);
-  }
+  if (error) throw new Error(error.message);
 }

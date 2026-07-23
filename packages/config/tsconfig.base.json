@@ -17,14 +17,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-<<<<<<< HEAD
-    "types": [
-        "node"
-    ]
-  }
-}
-=======
     "types": ["bun"]
   }
 }
->>>>>>> master

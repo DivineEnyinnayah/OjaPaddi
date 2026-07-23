@@ -9,6 +9,7 @@ export interface User {
   fullName: string;
   businessName?: string;
   whatsappNumber?: string;
+  plan: 'free' | 'pro' | 'growth';
 }
 
 interface RegistrationData {
@@ -54,14 +55,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   pendingOnboarding: null,
   setUser: async (user, accessToken, refreshToken) => {
     if (user && accessToken && refreshToken) {
-      // Store only refresh token and user in secure storage
       await secureStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
       await secureStorage.setItem(USER_KEY, JSON.stringify(user));
     } else {
       await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
       await secureStorage.deleteItem(USER_KEY);
     }
-    // Set everything in memory
     set({ user, accessToken, refreshToken, isInitialized: true });
   },
   clearAuth: async () => {
@@ -80,17 +79,13 @@ export const useAuthStore = create<AuthState>((set) => ({
         });
       }
     } catch {
-      // Logout API call is best-effort; always clear local state
+      // Best effort
     }
     await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
     await secureStorage.deleteItem(USER_KEY);
     set({ user: null, accessToken: null, refreshToken: null, pendingRegistration: null, pendingOnboarding: null, isInitialized: true });
   },
   initialize: async () => {
-    // ── Dev Mode Bypass ──────────────────────────────────────────────
-    // When EXPO_PUBLIC_DEV_MODE=true, inject mock user and token
-    // directly into state. No SecureStore reads, no network calls.
-    // The root _layout.tsx sees accessToken and routes to (tabs).
     if (env.IS_DEV_MODE) {
       set({
         user: MOCK_USER,
@@ -100,7 +95,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
       return;
     }
-    // ── Production Flow ──────────────────────────────────────────────
     const refreshToken = await secureStorage.getItem(REFRESH_TOKEN_KEY);
     const userStr = await secureStorage.getItem(USER_KEY);
 
@@ -119,7 +113,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       isInitialized: true,
     });
 
-    // If we have a refresh token, try to get a new access token
     if (refreshToken && user) {
       try {
         const BASE_URL = env.SERVER_URL;
@@ -140,7 +133,6 @@ export const useAuthStore = create<AuthState>((set) => ({
             });
           }
         } else {
-          // Refresh failed, clear everything
           await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
           await secureStorage.deleteItem(USER_KEY);
           set({ user: null, accessToken: null, refreshToken: null });

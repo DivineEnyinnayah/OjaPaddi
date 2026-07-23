@@ -5,14 +5,15 @@ import { uploadFile, validateImageFile, getPublicUrl } from "../services/storage
 import { validate } from "../middleware/validate";
 import { UpdateBusinessSchema } from "../validators/business";
 
-export const businessRoutes = new Hono<{ Variables: AuthContext }>();
+export const businessRoutes = new Hono<AuthContext>();
 
 businessRoutes.use("*", authMiddleware);
 
 businessRoutes.get("/", async (c) => {
   try {
+    const db = c.get("db");
     const businessId = c.get("businessId");
-    const business = await getBusinessByUserId(businessId);
+    const business = await getBusinessByUserId(db, businessId);
     return c.json({ success: true, data: business }, 200);
   } catch (error: unknown) {
     return c.json({ success: false, error: { code: "BUSINESS_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
@@ -21,9 +22,10 @@ businessRoutes.get("/", async (c) => {
 
 businessRoutes.put("/", validate(UpdateBusinessSchema), async (c) => {
   try {
+    const db = c.get("db");
     const businessId = c.get("businessId");
     const body = c.get("validatedBody");
-    const business = await updateBusiness(businessId, body);
+    const business = await updateBusiness(db, businessId, body);
     return c.json({ success: true, data: business }, 200);
   } catch (error: unknown) {
     return c.json({ success: false, error: { code: "BUSINESS_UPDATE_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
@@ -32,6 +34,7 @@ businessRoutes.put("/", validate(UpdateBusinessSchema), async (c) => {
 
 businessRoutes.post("/logo", async (c) => {
   try {
+    const db = c.get("db");
     const businessId = c.get("businessId");
     const body = await c.req.parseBody();
     const file = body.logo as File;
@@ -52,7 +55,7 @@ businessRoutes.post("/logo", async (c) => {
     await uploadFile("logos", filePath, buffer, contentType);
     const logoUrl = await getPublicUrl("logos", filePath);
 
-    await updateBusiness(businessId, { logoUrl } as Record<string, unknown>);
+    await updateBusiness(db, businessId, { logoUrl } as Record<string, unknown>);
 
     return c.json({ success: true, data: { logoUrl } }, 200);
   } catch (error: unknown) {

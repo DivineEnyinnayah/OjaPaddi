@@ -1,74 +1,59 @@
-import { env } from "@ojapaddi/env/server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { logger } from "hono/logger";
-import { authRoutes } from "./routes/auth";
-import { businessRoutes } from "./routes/business";
-import { supabase } from "./lib/supabase";
-
-import { productRoutes } from "./routes/products";
-import { saleRoutes } from "./routes/sales";
-import { customerRoutes } from "./routes/customers";
-import { expenseRoutes } from "./routes/expenses";
-import { analyticsRoutes } from "./routes/analytics";
-import { shareRoutes } from "./routes/share";
-import { authMiddleware } from "./middleware/auth";
+import { 
+  authRoutes, 
+  businessRoutes, 
+  productRoutes, 
+  saleRoutes, 
+  customerRoutes, 
+  expenseRoutes, 
+  analyticsRoutes, 
+  shareRoutes 
+} from "./routes/index";
+import { dbMiddleware } from "./middleware/db";
 import { rateLimit } from "./middleware/rateLimit";
+import type { HonoEnv } from "./types";
 
-const app = new Hono();
+const app = new Hono<HonoEnv>();
 
-app.use(logger());
+// Request logging
+app.use(async (c, next) => {
+  console.log(`[${c.req.method}] ${c.req.url}`);
+  await next();
+});
+
+// Database connection
+app.use("*", dbMiddleware);
+
+// CORS — allow all origins (safe for mobile API)
 app.use(
   "/*",
   cors({
-    origin: env.CORS_ORIGIN,
+    origin: "*",
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  }),
+    allowHeaders: ["Content-Type", "Authorization"],
+  })
 );
 
-app.use("/auth/*", rateLimit(30, 60000));
-app.use("/*", rateLimit(100, 60000));
+// Rate limits — auth: 10/min, general: 30/min
+app.use("/auth/*", rateLimit(10, 60000));
+app.use("/*", rateLimit(30, 60000));
 
-app.route("/auth", authRoutes);
+// API v1 routes
+const v1 = new Hono<HonoEnv>();
 
-// Apply authMiddleware to all protected routes
-app.use("/business/*", authMiddleware);
-app.use("/products/*", authMiddleware);
-app.use("/sales/*", authMiddleware);
-app.use("/customers/*", authMiddleware);
-app.use("/expenses/*", authMiddleware);
-app.use("/analytics/*", authMiddleware);
-app.use("/share/*", authMiddleware);
+v1.route("/auth", authRoutes);
+v1.route("/business", businessRoutes);
+v1.route("/products", productRoutes);
+v1.route("/sales", saleRoutes);
+v1.route("/customers", customerRoutes);
+v1.route("/expenses", expenseRoutes);
+v1.route("/analytics", analyticsRoutes);
+v1.route("/share", shareRoutes);
 
-app.route("/business", businessRoutes);
-app.route("/products", productRoutes);
-app.route("/sales", saleRoutes);
-app.route("/customers", customerRoutes);
-app.route("/expenses", expenseRoutes);
-app.route("/analytics", analyticsRoutes);
-app.route("/share", shareRoutes);
+app.route("/v1", v1);
 
-app.get("/test-supabase", async (c) => {
-  try {
-    const { data, error } = await supabase.auth.admin.listUsers();
-    if (error) {
-      return c.json({ success: false, error: `Supabase admin API error: ${error.message}` }, 500);
-    }
-    const userCount = data?.users?.length ?? 0;
-    return c.json({
-      success: true,
-      message: "Successfully connected to Supabase!",
-      data: { userCount },
-    }, 200);
-  } catch (error: unknown) {
-    return c.json({ success: false, error: error instanceof Error ? error.message : String(error) }, 500);
-  }
-});
-
-
-app.get("/", (c) => {
-  return c.text("OK");
-});
+// Health check
+app.get("/", (c) => c.text("OjaPaddi API v1 Ready"));
 
 export default app;
-

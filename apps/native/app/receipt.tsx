@@ -10,16 +10,12 @@ import { Chip } from "@/components/ui/chip";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useAuthStore } from "@/stores/authStore";
 import { buildReceiptMessage, shareViaWhatsApp } from "@/lib/whatsapp";
+import { formatCurrency } from "@/lib/currency";
 import type { Sale } from "@/hooks/useSales";
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
 const StyledScrollView = withUniwind(ScrollView);
-
-function formatCurrency(amount: number | string) {
-  const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  return `\u20A6${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 function formatDate(dateString: string) {
   const date = new Date(dateString);

@@ -55,6 +55,7 @@ export function generateSaleReference(): string {
 export const MOCK_USER = {
   id: 'dev-seller-001',
   email: 'chinedu.market@gmail.com',
+  plan: 'free',
   fullName: 'Chinedu Alao',
 };
 

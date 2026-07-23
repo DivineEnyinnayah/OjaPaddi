@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "customer_phone_business_idx" ON "customers" USING btree ("business_id","phone") WHERE "customers"."phone" IS NOT NULL;

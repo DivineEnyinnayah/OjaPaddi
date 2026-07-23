@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuthStore } from '../stores/authStore';
 import { AppThemeProvider, useAppTheme } from '@/contexts/app-theme-context';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 
 function RootLayoutInner() {
@@ -66,7 +67,9 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AppThemeProvider>
-        <RootLayoutInner />
+        <ErrorBoundary>
+          <RootLayoutInner />
+        </ErrorBoundary>
       </AppThemeProvider>
     </GestureHandlerRootView>
   );

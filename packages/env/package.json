@@ -4,8 +4,14 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./server": "./src/server.ts",
-    "./native": "./src/native.ts"
+    "./server": {
+      "types": "./src/server.ts",
+      "default": "./src/server.ts"
+    },
+    "./native": {
+      "types": "./src/native.ts",
+      "default": "./src/native.ts"
+    }
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.1",

@@ -1,8 +1,8 @@
-import { db } from "@ojapaddi/db";
+import type { Database } from "@ojapaddi/db";
 import { sales, saleItems, products } from "@ojapaddi/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 
-export async function createSale(businessId: string, data: {
+export async function createSale(db: Database, businessId: string, data: {
   customerId?: string;
   items: {
     productId: string;
@@ -75,7 +75,7 @@ export async function createSale(businessId: string, data: {
   });
 }
 
-export async function getSales(businessId: string, query: {
+export async function getSales(db: Database, businessId: string, query: {
   page?: number;
   limit?: number;
   from?: string;
@@ -85,7 +85,7 @@ export async function getSales(businessId: string, query: {
   const { page = 1, limit = 20, from, to, paymentStatus } = query;
   const offset = (page - 1) * limit;
 
-  let filters = [eq(sales.businessId, businessId)];
+  let filters = [eq(sales.businessId, businessId), sql`${sales.voidedAt} IS NULL`];
 
   if (from) {
     filters.push(sql`${sales.soldAt} >= ${new Date(from)}`);
@@ -110,7 +110,7 @@ export async function getSales(businessId: string, query: {
   };
 }
 
-export async function getSaleById(businessId: string, saleId: string) {
+export async function getSaleById(db: Database, businessId: string, saleId: string) {
   const saleList = await db.select().from(sales).where(and(eq(sales.id, saleId), eq(sales.businessId, businessId)));
   const sale = saleList[0];
 
@@ -126,13 +126,17 @@ export async function getSaleById(businessId: string, saleId: string) {
   };
 }
 
-export async function voidSale(businessId: string, saleId: string) {
+export async function voidSale(db: Database, businessId: string, saleId: string, userId?: string) {
   return await db.transaction(async (tx) => {
     const saleList = await tx.select().from(sales).where(and(eq(sales.id, saleId), eq(sales.businessId, businessId)));
     const sale = saleList[0];
 
     if (!sale) {
       throw new Error("Sale not found");
+    }
+
+    if (sale.voidedAt) {
+      return { alreadyVoided: true };
     }
 
     const items = await tx.select().from(saleItems).where(eq(saleItems.saleId, saleId));
@@ -143,8 +147,10 @@ export async function voidSale(businessId: string, saleId: string) {
         .where(eq(products.id, item.productId));
     }
 
-    await tx.delete(sales).where(eq(sales.id, saleId));
+    await tx.update(sales)
+      .set({ voidedAt: new Date(), voidedBy: userId || null })
+      .where(eq(sales.id, saleId));
 
-    return true;
+    return { alreadyVoided: false };
   });
 }

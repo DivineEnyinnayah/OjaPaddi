@@ -1,4 +1,5 @@
-import { pgTable, uuid, varchar, text, integer, boolean, timestamp, decimal, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, integer, boolean, timestamp, decimal, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { businesses } from "./businesses";
 
 export const products = pgTable(
@@ -22,7 +23,12 @@ export const products = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
-    skuBusinessIdx: uniqueIndex("sku_business_idx").on(table.businessId, table.sku),
+    // Partial unique index: only enforce SKU uniqueness per business when SKU is not null.
+    // Without WHERE, PostgreSQL treats NULL = NULL in unique indexes, causing a constraint
+    // violation whenever a second product is added without a SKU.
+    skuBusinessIdx: index("sku_business_idx")
+      .on(table.businessId, table.sku)
+      .where(sql`${table.sku} IS NOT NULL`),
   })
 );
 

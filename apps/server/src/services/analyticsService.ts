@@ -1,14 +1,14 @@
-import { db } from "@ojapaddi/db";
+import type { Database } from "@ojapaddi/db";
 import { sales, expenses, products, saleItems } from "@ojapaddi/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 
-export async function getRevenueChart(businessId: string, query: {
+export async function getRevenueChart(db: Database, businessId: string, query: {
   from?: string;
   to?: string;
 }) {
   const { from, to } = query;
 
-  let filters = [eq(sales.businessId, businessId)];
+  let filters = [eq(sales.businessId, businessId), sql`${sales.voidedAt} IS NULL`];
   if (from) {
     filters.push(sql`${sales.soldAt} >= ${new Date(from)}`);
   }
@@ -33,14 +33,14 @@ export async function getRevenueChart(businessId: string, query: {
   }));
 }
 
-export async function getTopCustomers(businessId: string, query: {
+export async function getTopCustomers(db: Database, businessId: string, query: {
   from?: string;
   to?: string;
   limit?: number;
 }) {
   const { from, to, limit = 5 } = query;
 
-  let filters = [eq(sales.businessId, businessId)];
+  let filters = [eq(sales.businessId, businessId), sql`${sales.voidedAt} IS NULL`];
   if (from) {
     filters.push(sql`${sales.soldAt} >= ${new Date(from)}`);
   }
@@ -73,13 +73,13 @@ export async function getTopCustomers(businessId: string, query: {
   }));
 }
 
-export async function getAnalyticsSummary(businessId: string, query: {
+export async function getAnalyticsSummary(db: Database, businessId: string, query: {
   from?: string;
   to?: string;
 }) {
   const { from, to } = query;
 
-  let salesFilters = [eq(sales.businessId, businessId)];
+  let salesFilters = [eq(sales.businessId, businessId), sql`${sales.voidedAt} IS NULL`];
   if (from) {
     salesFilters.push(sql`${sales.soldAt} >= ${new Date(from)}`);
   }
@@ -99,7 +99,17 @@ export async function getAnalyticsSummary(businessId: string, query: {
   const totalRevenue = Number(salesData?.totalRevenue ?? 0);
   const totalExpenses = Number(expenseData?.totalExpenses ?? 0);
   const totalSalesCount = Number(salesData?.totalSalesCount ?? 0);
-  const netProfit = totalRevenue - totalExpenses;
+
+  // Calculate COGS (Cost of Goods Sold) from sale_items
+  const [cogsData] = await db.select({
+    totalCogs: sql<number>`COALESCE(sum(COALESCE(CAST(${saleItems.costPrice} AS numeric), 0) * ${saleItems.quantity}), 0)`,
+  }).from(saleItems)
+    .innerJoin(sales, eq(saleItems.saleId, sales.id))
+    .where(and(...salesFilters));
+
+  const totalCogs = Number(cogsData?.totalCogs ?? 0);
+  const grossProfit = totalRevenue - totalCogs;
+  const netProfit = grossProfit - totalExpenses;
 
   // Top products
   const topProductsResult = await db.select({
@@ -129,6 +139,8 @@ export async function getAnalyticsSummary(businessId: string, query: {
     totalRevenue,
     totalSalesCount,
     totalExpenses,
+    totalCogs,
+    grossProfit,
     netProfit,
     topProducts: topProductsResult.map(p => ({
       name: p.name,

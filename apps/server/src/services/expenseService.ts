@@ -1,8 +1,8 @@
-import { db } from "@ojapaddi/db";
+import type { Database } from "@ojapaddi/db";
 import { expenses } from "@ojapaddi/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 
-export async function getExpenses(businessId: string, query: {
+export async function getExpenses(db: Database, businessId: string, query: {
   from?: string;
   to?: string;
   category?: string;
@@ -26,7 +26,7 @@ export async function getExpenses(businessId: string, query: {
   return result;
 }
 
-export async function createExpense(businessId: string, data: {
+export async function createExpense(db: Database, businessId: string, data: {
   description: string;
   amount: number;
   category?: string;
@@ -42,7 +42,12 @@ export async function createExpense(businessId: string, data: {
   return newExpense;
 }
 
-export async function updateExpense(businessId: string, expenseId: string, data: Partial<typeof expenses.$inferSelect>) {
+export async function getExpenseById(db: Database, businessId: string, expenseId: string) {
+  const expenseList = await db.select().from(expenses).where(and(eq(expenses.id, expenseId), eq(expenses.businessId, businessId)));
+  return expenseList[0] || null;
+}
+
+export async function updateExpense(db: Database, businessId: string, expenseId: string, data: Partial<typeof expenses.$inferSelect>) {
   const expenseList = await db.select().from(expenses).where(and(eq(expenses.id, expenseId), eq(expenses.businessId, businessId)));
   const expense = expenseList[0];
 
@@ -54,15 +59,10 @@ export async function updateExpense(businessId: string, expenseId: string, data:
     .set(data)
     .where(eq(expenses.id, expenseId));
 
-  return await getExpenseById(businessId, expenseId);
+  return await getExpenseById(db, businessId, expenseId);
 }
 
-export async function getExpenseById(businessId: string, expenseId: string) {
-  const expenseList = await db.select().from(expenses).where(and(eq(expenses.id, expenseId), eq(expenses.businessId, businessId)));
-  return expenseList[0] || null;
-}
-
-export async function deleteExpense(businessId: string, expenseId: string) {
+export async function deleteExpense(db: Database, businessId: string, expenseId: string) {
   const expenseList = await db.select().from(expenses).where(and(eq(expenses.id, expenseId), eq(expenses.businessId, businessId)));
   const expense = expenseList[0];
 

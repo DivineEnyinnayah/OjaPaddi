@@ -1,4 +1,4 @@
-import { db } from "@ojapaddi/db";
+import type { Database } from "@ojapaddi/db";
 import { sales, saleItems } from "@ojapaddi/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -184,6 +184,7 @@ export function runApriori(
  * Main service call to compute MBA rules for a business.
  */
 export async function getMBARules(
+  db: Database,
   businessId: string,
   minSupport: number = 0.1,
   minConfidence: number = 0.5

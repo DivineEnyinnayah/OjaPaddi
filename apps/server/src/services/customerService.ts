@@ -1,8 +1,8 @@
-import { db } from "@ojapaddi/db";
+import type { Database } from "@ojapaddi/db";
 import { customers } from "@ojapaddi/db/schema";
 import { eq, and, like, sql } from "drizzle-orm";
 
-export async function getCustomers(businessId: string, query: {
+export async function getCustomers(db: Database, businessId: string, query: {
   page?: number;
   limit?: number;
   search?: string;
@@ -29,13 +29,26 @@ export async function getCustomers(businessId: string, query: {
   };
 }
 
-export async function createCustomer(businessId: string, data: {
+export async function createCustomer(db: Database, businessId: string, data: {
   name: string;
   phone?: string;
   email?: string;
   address?: string;
   notes?: string;
 }) {
+  if (data.phone) {
+    const existing = await db
+      .select({ id: customers.id })
+      .from(customers)
+      .where(and(eq(customers.businessId, businessId), eq(customers.phone, data.phone)));
+
+    if (existing.length > 0) {
+      const err = new Error("A customer with this phone number already exists");
+      (err as any).code = "CONFLICT";
+      throw err;
+    }
+  }
+
   const [newCustomer] = await db.insert(customers).values({
     businessId,
     ...data,
@@ -43,7 +56,7 @@ export async function createCustomer(businessId: string, data: {
   return newCustomer;
 }
 
-export async function getCustomerById(businessId: string, customerId: string) {
+export async function getCustomerById(db: Database, businessId: string, customerId: string) {
   const customerList = await db.select().from(customers).where(and(eq(customers.id, customerId), eq(customers.businessId, businessId)));
   const customer = customerList[0];
 
@@ -54,7 +67,7 @@ export async function getCustomerById(businessId: string, customerId: string) {
   return customer;
 }
 
-export async function updateCustomer(businessId: string, customerId: string, data: Partial<typeof customers.$inferSelect>) {
+export async function updateCustomer(db: Database, businessId: string, customerId: string, data: Partial<typeof customers.$inferSelect>) {
   const customerList = await db.select().from(customers).where(and(eq(customers.id, customerId), eq(customers.businessId, businessId)));
   const customer = customerList[0];
 
@@ -69,10 +82,10 @@ export async function updateCustomer(businessId: string, customerId: string, dat
     })
     .where(eq(customers.id, customerId));
 
-  return await getCustomerById(businessId, customerId);
+  return await getCustomerById(db, businessId, customerId);
 }
 
-export async function deleteCustomer(businessId: string, customerId: string) {
+export async function deleteCustomer(db: Database, businessId: string, customerId: string) {
   const customerList = await db.select().from(customers).where(and(eq(customers.id, customerId), eq(customers.businessId, businessId)));
   const customer = customerList[0];
 

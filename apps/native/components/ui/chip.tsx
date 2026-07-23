@@ -33,7 +33,7 @@ export function Chip({
   return (
     <StyledView
       className={cn(
-        "rounded-full px-3 py-1 border self-start",
+        "rounded-full px-3 py-1.5 border self-start items-center justify-center min-h-[32px]",
         variantStyles[variant],
         className
       )}

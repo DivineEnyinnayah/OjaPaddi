@@ -18,6 +18,7 @@ import { Surface } from '@/components/ui/surface';
 import { Button } from '@/components/ui/button';
 import { withUniwind } from 'uniwind';
 import { ILLUSTRATIONS } from '@/constants/illustrations';
+import { formatCurrency } from "@/lib/currency";
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -43,10 +44,6 @@ export default function HomeScreen() {
       loadData();
     }, [loadData])
   );
-
-  const formatCurrency = (amount: number) => {
-    return `₦${amount.toLocaleString('en-NG', { minimumFractionDigits: 0 })}`;
-  };
 
   const getGreeting = () => {
     const hour = new Date().getHours();

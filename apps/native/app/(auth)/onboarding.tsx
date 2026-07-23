@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { KeyboardAvoidingView, Platform, Alert, View, Text, TouchableOpacity, ScrollView, TextInput, Image, Animated, useWindowDimensions } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { apiRequest } from '../../lib/api';
+import { apiRequest, apiFormDataRequest } from '../../lib/api';
 import { useAuthStore, type User } from '../../stores/authStore';
 import { withUniwind } from 'uniwind';
 import { ILLUSTRATIONS } from '@/constants/illustrations';
@@ -65,6 +66,7 @@ export default function OnboardingScreen() {
     state: '',
     logoUri: '',
   });
+  const [logoAsset, setLogoAsset] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
@@ -160,6 +162,27 @@ export default function OnboardingScreen() {
       });
 
       if (result.success && result.data) {
+        // Upload logo if one was selected
+        if (logoAsset && result.data.user) {
+          try {
+            const fileName = logoAsset.uri.split('/').pop() || 'logo.jpg';
+            const match = /\.(\w+)$/.exec(fileName);
+            const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+            const logoFormData = new FormData();
+            logoFormData.append('logo', {
+              uri: logoAsset.uri,
+              name: fileName,
+              type,
+            } as unknown as Blob);
+
+            await apiFormDataRequest('/business/logo', logoFormData, 'POST');
+          } catch (logoError) {
+            // Logo upload failure is non-critical - user can upload later
+            console.warn('Logo upload failed during onboarding:', logoError);
+          }
+        }
+
         await setUser(result.data.user, result.data.access_token, result.data.refresh_token);
         clearPendingData();
         router.replace('/');
@@ -207,6 +230,29 @@ export default function OnboardingScreen() {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const pickLogo = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert('Permission needed', 'Please grant gallery permissions to upload a business logo.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets.length > 0) {
+      const asset = result.assets[0];
+      if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+        Alert.alert('Image Too Large', 'Please select an image under 5 MB.');
+        return;
+      }
+      setFormData(prev => ({ ...prev, logoUri: asset.uri }));
+      setLogoAsset(asset);
     }
   };
 
@@ -270,12 +316,12 @@ export default function OnboardingScreen() {
                     setShowCategoryPicker(false);
                   }}
                 >
-                  <MaterialIcons name="category" size={18} color={formData.category === category ? '#1A6B3C' : colors.outline} style={{ marginRight: 10 }} />
+                  <MaterialIcons name="category" size={18} color={formData.category === category ? colors.primary : colors.outline} style={{ marginRight: 10 }} />
                   <StyledText className={`flex-1 text-body-lg ${formData.category === category ? 'font-semibold text-primary' : ''}`}>
                     {category}
                   </StyledText>
                   {formData.category === category && (
-                    <MaterialIcons name="check" size={18} color="#1A6B3C" />
+                    <MaterialIcons name="check" size={18} color={colors.primary} />
                   )}
                 </StyledTouchableOpacity>
               ))}
@@ -360,7 +406,7 @@ export default function OnboardingScreen() {
       <StyledView className="items-center mb-6">
         <StyledTouchableOpacity
           className="w-[100px] h-[100px] rounded-[20px] justify-center items-center border-2 border-dashed border-outline-variant bg-surface"
-          onPress={() => Alert.alert('Coming Soon', 'Logo upload will be available soon.')}
+          onPress={pickLogo}
         >
           {formData.logoUri ? (
             <StyledImage source={{ uri: formData.logoUri }} className="w-full h-full rounded-[18px]" />
@@ -370,6 +416,11 @@ export default function OnboardingScreen() {
               <StyledText className="text-body-sm mt-1 text-outline">Logo</StyledText>
             </StyledView>
           )}
+        </StyledTouchableOpacity>
+        <StyledTouchableOpacity onPress={pickLogo}>
+          <StyledText className="text-body-sm text-primary font-medium mt-2">
+            {formData.logoUri ? 'Change Logo' : 'Add Logo'}
+          </StyledText>
         </StyledTouchableOpacity>
       </StyledView>
 
@@ -429,7 +480,7 @@ export default function OnboardingScreen() {
                   Continue
                 </Button>
                 <StyledTouchableOpacity className="items-center" onPress={handleSkip}>
-                  <StyledText className="text-body-lg text-on-surface-variant">Skip for now</StyledText>
+                  <StyledText className="text-body-lg text-on-surface-variant">Complete Later</StyledText>
                 </StyledTouchableOpacity>
               </StyledView>
             ) : (
@@ -438,7 +489,7 @@ export default function OnboardingScreen() {
                   {isLoading ? 'Setting up...' : 'Complete Setup'}
                 </Button>
                 <StyledTouchableOpacity className="items-center" onPress={handleBack}>
-                  <StyledText className="text-body-lg text-primary font-semibold">Back</StyledText>
+                  <StyledText className="text-body-lg text-primary font-semibold">← Go Back</StyledText>
                 </StyledTouchableOpacity>
               </StyledView>
             )}

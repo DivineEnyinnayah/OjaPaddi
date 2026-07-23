@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  Share,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -26,6 +28,7 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { Container } from "@/components/container";
 import { Surface } from "@/components/ui/surface";
+import { formatCurrency } from "@/lib/currency";
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -39,10 +42,6 @@ const PERIODS: { key: Period; label: string }[] = [
   { key: "month", label: "This Month" },
   { key: "custom", label: "Custom" },
 ];
-
-function formatCurrency(amount: number): string {
-  return `\u20A6${Math.round(amount).toLocaleString("en-NG")}`;
-}
 
 function seededRandom(seed: number): () => number {
   let s = seed;
@@ -85,6 +84,35 @@ export default function AnalyticsScreen() {
   const loadData = useCallback(() => {
     fetchSummary();
   }, [fetchSummary]);
+
+  const handleExportCSV = async () => {
+    if (!summary) {
+      Alert.alert("No data to export", "Please wait for the data to load.");
+      return;
+    }
+
+    try {
+      let csv = "Metric,Value\n";
+      csv += `Total Revenue,${summary.totalRevenue}\n`;
+      csv += `Total Sales,${summary.totalSalesCount}\n`;
+      csv += `Total Expenses,${summary.totalExpenses}\n`;
+      csv += `Net Profit,${summary.netProfit}\n`;
+      csv += `Low Stock Count,${summary.lowStockCount}\n`;
+      csv += `Total Products,${summary.totalProducts}\n\n`;
+
+      csv += "Top Products,Quantity Sold,Revenue\n";
+      summary.topProducts.forEach(p => {
+        csv += `"${p.name}",${p.quantitySold},${p.revenue}\n`;
+      });
+
+      await Share.share({
+        message: csv,
+        title: "Business Analytics Export",
+      });
+    } catch (err: unknown) {
+      Alert.alert("Export Failed", err instanceof Error ? err.message : String(err));
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -183,6 +211,13 @@ export default function AnalyticsScreen() {
           </StyledTouchableOpacity>
           <StyledText className="text-h2 font-bold text-on-surface">Analytics</StyledText>
         </StyledView>
+        <StyledTouchableOpacity
+          onPress={handleExportCSV}
+          className="flex-row items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full"
+        >
+          <MaterialIcons name="ios-share" size={16} color={colors.primary} />
+          <StyledText className="text-primary font-semibold text-xs">Export CSV</StyledText>
+        </StyledTouchableOpacity>
       </StyledView>
 
       <ScrollView

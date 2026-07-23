@@ -1,13 +1,13 @@
-import { db } from "@ojapaddi/db";
+import type { Database } from "@ojapaddi/db";
 import { businesses } from "@ojapaddi/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function getBusinessByUserId(businessId: string) {
+export async function getBusinessByUserId(db: Database, businessId: string) {
   const businessList = await db.select().from(businesses).where(eq(businesses.id, businessId));
   return businessList[0] || null;
 }
 
-export async function updateBusiness(businessId: string, data: Partial<typeof businesses.$inferSelect>) {
+export async function updateBusiness(db: Database, businessId: string, data: Partial<typeof businesses.$inferSelect>) {
   const businessList = await db.select().from(businesses).where(eq(businesses.id, businessId));
   const business = businessList[0];
 
@@ -33,5 +33,5 @@ export async function updateBusiness(businessId: string, data: Partial<typeof bu
     })
     .where(eq(businesses.id, businessId));
 
-  return await getBusinessByUserId(businessId);
+  return await getBusinessByUserId(db, businessId);
 }

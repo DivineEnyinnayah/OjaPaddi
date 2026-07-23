@@ -22,4 +22,6 @@ export const sales = pgTable("sales", {
   notes: text("notes"),
   soldAt: timestamp("sold_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  voidedAt: timestamp("voided_at"),
+  voidedBy: uuid("voided_by"),
 });

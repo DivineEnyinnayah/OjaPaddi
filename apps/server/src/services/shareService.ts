@@ -1,9 +1,9 @@
-import { db } from "@ojapaddi/db";
+import type { Database } from "@ojapaddi/db";
 import { sales, saleItems, products, businesses } from "@ojapaddi/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
-export async function getReceiptShareData(saleId: string) {
-  const saleList = await db.select().from(sales).where(eq(sales.id, saleId));
+export async function getReceiptShareData(db: Database, saleId: string, businessId: string) {
+  const saleList = await db.select().from(sales).where(and(eq(sales.id, saleId), eq(sales.businessId, businessId)));
   const sale = saleList[0];
 
   if (!sale) {
@@ -21,8 +21,8 @@ export async function getReceiptShareData(saleId: string) {
   };
 }
 
-export async function getProductShareData(productId: string) {
-  const productList = await db.select().from(products).where(eq(products.id, productId));
+export async function getProductShareData(db: Database, productId: string, businessId: string) {
+  const productList = await db.select().from(products).where(and(eq(products.id, productId), eq(products.businessId, businessId)));
   const product = productList[0];
 
   if (!product) {

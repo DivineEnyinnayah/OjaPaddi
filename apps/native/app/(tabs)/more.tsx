@@ -120,7 +120,9 @@ export default function MoreScreen() {
             </StyledView>
             <StyledText className="flex-1 text-body-lg font-semibold text-on-surface">Subscription Plan</StyledText>
             <StyledView className="bg-secondary-container px-2.5 py-0.5 rounded-md mr-1">
-              <StyledText className="text-label-caps font-bold text-on-surface">Pro</StyledText>
+              <StyledText className="text-label-caps font-bold text-on-surface uppercase">
+                {user?.plan || 'Free'}
+              </StyledText>
             </StyledView>
             <StyledMaterialIcons name="chevron-right" size={22} color={colors.outline} />
           </StyledTouchableOpacity>
@@ -133,7 +135,7 @@ export default function MoreScreen() {
               <StyledMaterialIcons name="people" size={20} color={colors.primary} />
             </StyledView>
             <StyledText className="flex-1 text-body-lg font-semibold text-on-surface opacity-50">Staff Accounts</StyledText>
-            <StyledText className='text-md font-medium opacity-50'>Coming Soon</StyledText>
+            <StyledText className="text-md font-medium opacity-50">Coming Soon</StyledText>
             <StyledView className="border border-outline-variant rounded-md px-2 py-0.5 mr-1">
               <StyledText className="text-label-caps font-medium text-on-surface-variant">Free</StyledText>
             </StyledView>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Share,
   Alert,
   useWindowDimensions,
+  Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -35,16 +36,30 @@ export default function MBAScreen() {
   const [minSupport, setMinSupport] = useState<number>(0.1);
   const [minConfidence, setMinConfidence] = useState<number>(0.5);
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
   const loadData = useCallback(() => {
     // Round to 2 decimal places to prevent float precision issues
     const support = Math.round(minSupport * 100) / 100;
     const confidence = Math.round(minConfidence * 100) / 100;
+    
+    fadeAnim.setValue(0);
     fetchRules(support, confidence);
-  }, [minSupport, minConfidence, fetchRules]);
+  }, [minSupport, minConfidence, fetchRules, fadeAnim]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isLoading]);
 
   const adjustSupport = (amount: number) => {
     setMinSupport(prev => {
@@ -61,6 +76,10 @@ export default function MBAScreen() {
   };
 
   const handleExportCSV = async () => {
+    if (isLoading) {
+      Alert.alert("Loading", "Please wait while the analysis is completing.");
+      return;
+    }
     if (rules.length === 0) {
       Alert.alert("No rules to export", "Try lowering the support or confidence thresholds to find more rules.");
       return;
@@ -213,8 +232,16 @@ export default function MBAScreen() {
         }
       >
         {isLoading && rules.length === 0 ? (
-          <StyledView className="mt-20 items-center justify-center">
+          <StyledView className="mt-20 items-center justify-center gap-4">
+            <Animated.View style={{ opacity: fadeAnim }}>
+              <StyledView className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center">
+                <StyledMaterialIcons name="auto-awesome" size={32} className="text-primary" />
+              </StyledView>
+            </Animated.View>
             <ActivityIndicator size="large" color={colors.primary} />
+            <StyledText className="text-on-surface-variant text-body-sm font-medium text-center px-10">
+              Analyzing purchase patterns...
+            </StyledText>
           </StyledView>
         ) : error ? (
           <StyledView className="items-center p-6 bg-surface-container-low rounded-xl border border-outline-variant mt-10">

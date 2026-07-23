@@ -1,16 +1,14 @@
 import { createMiddleware } from "hono/factory";
-import { env } from "@ojapaddi/env/server";
 
+// In-memory rate limit store (resets on server restart).
+// For Cloudflare Workers production, use KV or Durable Objects.
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
 export const rateLimit = (limit: number, windowMs: number) => 
   createMiddleware(async (c, next) => {
-    // Multiply limits by 10 in development mode for a smoother developer experience
-    const actualLimit = env.NODE_ENV === "development" ? limit * 10 : limit;
-
-    // Identify client by Authorization token if present, otherwise by IP
     const authHeader = c.req.header("Authorization");
-    const key = authHeader ? authHeader.substring(0, 100) : (c.req.header("x-forwarded-for") || "anonymous");
+    const clientIp = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "anonymous";
+    const key = authHeader ? `token:${authHeader.substring(0, 100)}` : `ip:${clientIp}`;
     const now = Date.now();
     
     const record = rateLimitStore.get(key);
@@ -26,7 +24,7 @@ export const rateLimit = (limit: number, windowMs: number) =>
     
     const currentRecord = rateLimitStore.get(key)!;
     
-    if (currentRecord.count > actualLimit) {
+    if (currentRecord.count > limit) {
       return c.json({ 
         success: false, 
         error: { 
@@ -38,4 +36,3 @@ export const rateLimit = (limit: number, windowMs: number) =>
     
     await next();
   });
-

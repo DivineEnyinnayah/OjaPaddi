@@ -1,8 +1,8 @@
-import { db } from "@ojapaddi/db";
+import type { Database } from "@ojapaddi/db";
 import { products } from "@ojapaddi/db/schema";
 import { eq, and, like, sql } from "drizzle-orm";
 
-export async function getProducts(businessId: string, query: {
+export async function getProducts(db: Database, businessId: string, query: {
   page?: number;
   limit?: number;
   category?: string;
@@ -39,12 +39,12 @@ export async function getProducts(businessId: string, query: {
   };
 }
 
-export async function getProductById(businessId: string, productId: string) {
+export async function getProductById(db: Database, businessId: string, productId: string) {
   const productList = await db.select().from(products).where(and(eq(products.id, productId), eq(products.businessId, businessId), eq(products.isActive, true)));
   return productList[0] || null;
 }
 
-export async function createProduct(businessId: string, data: {
+export async function createProduct(db: Database, businessId: string, data: {
   name: string;
   description?: string;
   sku?: string;
@@ -55,6 +55,10 @@ export async function createProduct(businessId: string, data: {
   lowStockThreshold?: number;
   imageUrl?: string;
 }) {
+  console.log("DEBUG: Creating product for businessId:", businessId);
+  if (!businessId) {
+    throw new Error("Missing businessId for product creation");
+  }
   const [newProduct] = await db.insert(products).values({
     businessId,
     name: data.name,
@@ -70,7 +74,7 @@ export async function createProduct(businessId: string, data: {
   return newProduct;
 }
 
-export async function updateProduct(businessId: string, productId: string, data: Partial<typeof products.$inferSelect>) {
+export async function updateProduct(db: Database, businessId: string, productId: string, data: Partial<typeof products.$inferSelect>) {
   const productList = await db.select().from(products).where(and(eq(products.id, productId), eq(products.businessId, businessId)));
   const product = productList[0];
 
@@ -96,10 +100,10 @@ export async function updateProduct(businessId: string, productId: string, data:
     })
     .where(eq(products.id, productId));
 
-  return await getProductById(businessId, productId);
+  return await getProductById(db, businessId, productId);
 }
 
-export async function deleteProduct(businessId: string, productId: string) {
+export async function deleteProduct(db: Database, businessId: string, productId: string) {
   const productList = await db.select().from(products).where(and(eq(products.id, productId), eq(products.businessId, businessId)));
   const product = productList[0];
 
@@ -114,7 +118,7 @@ export async function deleteProduct(businessId: string, productId: string) {
   return true;
 }
 
-export async function adjustStock(businessId: string, productId: string, quantity: number) {
+export async function adjustStock(db: Database, businessId: string, productId: string, quantity: number) {
   const productList = await db.select().from(products).where(and(eq(products.id, productId), eq(products.businessId, businessId)));
   const product = productList[0];
 
@@ -131,10 +135,10 @@ export async function adjustStock(businessId: string, productId: string, quantit
     .set({ quantity: newQuantity, updatedAt: new Date() })
     .where(eq(products.id, productId));
 
-  return await getProductById(businessId, productId);
+  return await getProductById(db, businessId, productId);
 }
 
-export async function getCategories(businessId: string) {
+export async function getCategories(db: Database, businessId: string) {
   const result = await db.selectDistinct({ category: products.category })
     .from(products)
     .where(eq(products.businessId, businessId));

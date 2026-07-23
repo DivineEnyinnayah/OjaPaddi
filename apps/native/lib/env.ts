@@ -8,7 +8,7 @@
  */
 
 interface AppEnv {
-  /** Base URL for the HonoJS API server */
+  /** Base URL for the HonoJS API server (includes /v1 prefix) */
   SERVER_URL: string;
   /**
    * When true, authentication is bypassed and all API calls are routed
@@ -19,6 +19,6 @@ interface AppEnv {
 }
 
 export const env: AppEnv = {
-  SERVER_URL: process.env.EXPO_PUBLIC_SERVER_URL || 'http://localhost:3001',
+  SERVER_URL: process.env.EXPO_PUBLIC_SERVER_URL || 'http://localhost:3001/v1',
   IS_DEV_MODE: process.env.EXPO_PUBLIC_DEV_MODE === 'true',
 };

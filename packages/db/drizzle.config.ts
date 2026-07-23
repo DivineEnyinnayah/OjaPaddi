@@ -5,6 +5,6 @@ export default defineConfig({
   out: "./src/migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url: "postgresql://postgres:tLxj4cxKUraXMaeX@db.obtteivclhfwlucwrtsf.supabase.co:5432/postgres",
+    url: process.env.DIRECT_URL || process.env.DATABASE_URL || "postgresql://postgres:tLxj4cxKUraXMaeX@db.obtteivclhfwlucwrtsf.supabase.co:5432/postgres?sslmode=require",
   },
 });

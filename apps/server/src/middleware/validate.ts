@@ -1,8 +1,9 @@
 import { createMiddleware } from "hono/factory";
 import type { ZodSchema } from "zod";
+import type { HonoEnv } from "../types";
 
 export const validate = <T>(schema: ZodSchema<T>) => 
-  createMiddleware<{ Variables: { validatedBody: T } }>(async (c, next) => {
+  createMiddleware<HonoEnv>(async (c, next) => {
     const body = await c.req.json().catch(() => ({}));
     
     const result = schema.safeParse(body);

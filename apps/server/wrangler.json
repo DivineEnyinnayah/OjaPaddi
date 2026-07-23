@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ojapaddi-server",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-23",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env"
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "8902a13a52574c279ce54317bd6ba545"
+    }
+  ],
+  "vars": {
+    "CORS_ORIGIN": "*",
+    "EXPO_PUBLIC_SUPABASE_URL": "https://obtteivclhfwlucwrtsf.supabase.co"
+  }
+}

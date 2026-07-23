@@ -11,6 +11,7 @@ import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
 import { Chip } from '@/components/ui/chip';
 import { useSales, type Sale, type SaleItem } from '../../../hooks/useSales';
 import { withUniwind } from 'uniwind';
+import { formatCurrency } from '@/lib/currency';
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -44,11 +45,6 @@ export default function SaleDetailScreen() {
       if (fetched) setSale(fetched);
     });
   }, [id]);
-
-  const formatCurrency = (value: string | number) => {
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    return `₦${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
