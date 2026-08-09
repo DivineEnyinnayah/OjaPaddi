@@ -50,11 +50,39 @@ cd apps/server
 npx wrangler deploy
 ```
 
+## Rollback
+
+Cloudflare Workers keeps the last 10 deployed versions — rollback is instant.
+
+### Trigger conditions
+- Error rate spikes (>2x baseline — check Cloudflare dashboard → Workers → analytics)
+- P95 latency regression
+- User-reported issues spike
+- Data integrity issues detected
+
+### Rollback steps
+1. **Dashboard:** Workers → `ojapaddi-server` → Deployments → ⋯ → Rollback to previous version (instant, keeps current version as fallback). Or CLI:
+   ```bash
+   npx wrangler rollback
+   ```
+2. **Verify:** hit the health check (`GET /` should return `OjaPaddi API v1 Ready`) and check error rates return to baseline
+3. **Communicate:** notify the team of the rollback
+
+### Database considerations
+- Schema changes are additive-only (Drizzle migrations). If a migration introduced data you need to remove, do it with a new migration — never edit rolled-back rows manually.
+- Time to rollback: < 1 minute for Workers code; migration corrections require a new forward migration.
+
+## Monitoring
+
+- Workers observability is enabled (`observability.enabled: true` in wrangler.json) — request logs and traces in Cloudflare dashboard
+- Health check: `GET /` → `OjaPaddi API v1 Ready`
+- No Sentry/third-party error reporting yet — watch the Workers analytics dashboard after each deploy for the first hour
+
 ## Troubleshooting
 
 ### "CORS origin not allowed"
-- The server has `CORS_ORIGIN: "*"` which allows all origins
-- If you restricted it, make sure your app's origin matches
+- The server reads `CORS_ORIGIN` from the env var (default `"*"` which allows all origins).
+- To restrict, set `CORS_ORIGIN` (comma-separated allowlist, e.g. `https://app.example.com`) in `wrangler.json` → `vars`, then redeploy.
 
 ### "404 Not Found"
 - Make sure `EXPO_PUBLIC_SERVER_URL` ends with `/v1`

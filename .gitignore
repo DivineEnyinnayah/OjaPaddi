@@ -52,3 +52,8 @@ tmp
 temp
 android/
 ios/
+
+# Agent session logs (may contain secrets — never commit)
+session-*.md
+.conductor/
+.crush/

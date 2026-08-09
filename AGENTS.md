@@ -65,25 +65,25 @@
 ## DB & schema
 
 - All tables in `packages/db/src/schema/` (9 files: users, businesses, products, customers, sales, sale_items, expenses, refresh_tokens).
-- **Drizzle config** (`packages/db/drizzle.config.ts`) has hardcoded connection URL (DB credentials present in `.env` and drizzle config — handle with care).
+- **Drizzle config** (`packages/db/drizzle.config.ts`) reads connection URL from env (`DIRECT_URL`/`DATABASE_URL`, loaded via `--env-file=apps/server/.env`) and fails fast if absent — never hardcode credentials.
 - **Critical rules:** every query scoped by `business_id`; `sale_items` stores price snapshots (never join back to live product prices); product delete = soft delete (`is_active: false`); stock decrement in transaction.
 
 ---
 
 ## Current state
 
-Project scaffolded by [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack) (bts.jsonc confirms config). Substantial code exists for: auth (backend + mobile screens), products CRUD, sales recording, customer management, expenses, analytics dashboard, and WhatsApp sharing. Mock API layer covers all entities for offline dev. No CI/CD workflows yet (no `.github/`). No tests found in repo. No lint/format config found.
+Project scaffolded by [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack) (bts.jsonc confirms config). Substantial code exists for: auth (backend + mobile screens), products CRUD, sales recording, customer management, expenses, analytics dashboard, and WhatsApp sharing. Mock API layer covers all entities for offline dev. CI exists (`.github/workflows/ci.yml`): typecheck → server build → deploy to Cloudflare Workers on `main` push. **No tests and no lint config in the repo.** No error-reporting service (Workers observability only).
 
 ---
 
 ## Security notes
 
 - `.env` files contain live Supabase credentials (service role key, DB URLs). Never commit.
-- Drizzle config `packages/db/drizzle.config.ts` contains hardcoded DB connection string.
+- Agent session logs (`session-*.md`) can contain secrets — they are gitignored; never force-add them.
 - `SUPABASE_SERVICE_ROLE_KEY` is used server-side; never expose client-side.
-- Server uses variable `CORS_ORIGIN` from env (restricted origin).
+- Server reads `CORS_ORIGIN` from env (comma-separated allowlist or `*`; defined as a var in `wrangler.json`).
+- Global error handler returns `INTERNAL_ERROR` without stack traces (Hono `app.onError`).
 - Rate limiter is in-memory (not Redis) — resets on restart.
-- No stack traces in error responses expected by middleware convention.
 
 ---
 

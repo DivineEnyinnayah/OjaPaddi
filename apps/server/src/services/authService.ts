@@ -1,8 +1,8 @@
 import type { Database } from "@ojapaddi/db";
 import { businesses, users, refreshTokens } from "@ojapaddi/db/schema";
-import { eq, and, lt } from "drizzle-orm";
+import { eq, and, or, lt } from "drizzle-orm";
 import { supabase, supabaseAnon } from "../lib/supabase";
-import { createHash, randomBytes } from "crypto";
+import { createHash } from "crypto";
 
 // ── Refresh Token Helpers ──────────────────────────────────────────────
 
@@ -10,11 +10,6 @@ const TOKEN_EXPIRY_DAYS = 30;
 
 function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
-}
-
-function generateTokenPair() {
-  const token = randomBytes(40).toString("hex");
-  return { token, hash: hashToken(token) };
 }
 
 async function storeRefreshToken(db: Database, userId: string, refreshToken: string) {
@@ -90,7 +85,7 @@ export async function completeRegistration(db: Database, reg: RegistrationData, 
     .from(users)
     .where(
       reg.phone
-        ? { or: [{ email: reg.email }, { phone: reg.phone }] }
+        ? or(eq(users.email, reg.email), eq(users.phone, reg.phone))
         : eq(users.email, reg.email)
     );
 
@@ -100,7 +95,7 @@ export async function completeRegistration(db: Database, reg: RegistrationData, 
     throw new Error("Phone number is already registered");
   }
 
-  const { dataS, error: authError } = await supabase.auth.signUp({
+  const { data, error: authError } = await supabase.auth.signUp({
     email: reg.email,
     password: reg.password,
     options: {
@@ -113,7 +108,7 @@ export async function completeRegistration(db: Database, reg: RegistrationData, 
 
   if (authError) throw new Error(authError.message);
 
-  const userId = dataS.user?.id;
+  const userId = data.user?.id;
   if (!userId) throw new Error("User registration failed: No user ID returned from Supabase");
 
   try {
@@ -136,8 +131,8 @@ export async function completeRegistration(db: Database, reg: RegistrationData, 
       });
     });
 
-    if (dataS.session?.refresh_token) {
-      await storeRefreshToken(db, userId, dataS.session.refresh_token);
+    if (data.session?.refresh_token) {
+      await storeRefreshToken(db, userId, data.session.refresh_token);
     }
 
     return {
@@ -149,8 +144,8 @@ export async function completeRegistration(db: Database, reg: RegistrationData, 
         businessName: onb?.businessName || `${reg.fullName}'s Shop`,
         whatsappNumber: onb?.whatsappNumber || null,
       },
-      access_token: dataS.session?.access_token,
-      refresh_token: dataS.session?.refresh_token,
+      access_token: data.session?.access_token,
+      refresh_token: data.session?.refresh_token,
     };
   } catch (dbError: unknown) {
     const message = dbError instanceof Error ? dbError.message : String(dbError);

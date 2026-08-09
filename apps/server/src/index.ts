@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { env } from "@ojapaddi/env/server";
 import { 
   authRoutes, 
   businessRoutes, 
@@ -25,15 +26,29 @@ app.use(async (c, next) => {
 // Database connection
 app.use("*", dbMiddleware);
 
-// CORS — allow all origins (safe for mobile API)
+// CORS — allowlist from CORS_ORIGIN env (comma-separated), or "*" for all origins (mobile API)
+const allowedOrigins = env.CORS_ORIGIN.split(",").map((o) => o.trim());
 app.use(
   "/*",
   cors({
-    origin: "*",
+    origin: (origin) => {
+      if (!origin) return origin;
+      if (allowedOrigins.includes("*")) return origin;
+      return allowedOrigins.includes(origin) ? origin : null;
+    },
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// Global error handler — never leak internals to clients
+app.onError((err, c) => {
+  console.error(`[ERROR] ${err.name}: ${err.message}`, err.stack);
+  return c.json(
+    { success: false, error: { code: "INTERNAL_ERROR", message: "Something went wrong" } },
+    500
+  );
+});
 
 // Rate limits — auth: 10/min, general: 30/min
 app.use("/auth/*", rateLimit(10, 60000));
