@@ -81,7 +81,7 @@ export default function SalesScreen() {
     const itemCount = item.items?.length || 0;
 
     return (
-      <StyledTouchableOpacity onPress={() => {}}>
+      <StyledTouchableOpacity onPress={() => router.push(`/sales/${item.id}`)}>
         <Surface variant="outline" className="flex-col p-4 mb-3">
           <StyledView className="flex-row justify-between items-start mb-2">
             <StyledView className="flex-1 mr-3">

@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { withUniwind } from 'uniwind';
 import { useAuthStore } from '@/stores/authStore';
+import { useToast } from '@/components/ui/toast';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -67,6 +68,7 @@ export default function UpgradeScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const colors = useThemeColor();
+  const toast = useToast();
   const currentPlan = user?.plan || 'free';
 
   const isFree = currentPlan === 'free';
@@ -143,10 +145,9 @@ export default function UpgradeScreen() {
             <StyledTouchableOpacity
               className="bg-primary py-4 rounded-2xl items-center justify-center"
               onPress={() => {
-                Alert.alert(
-                  'Upgrade to Pro',
+                toast.info(
                   'Payment integration is coming soon. We will notify you once you can upgrade!',
-                  [{ text: 'Got it' }]
+                  'Upgrade to Pro'
                 );
               }}
             >
@@ -166,7 +167,7 @@ export default function UpgradeScreen() {
               <StyledTouchableOpacity
                 className="bg-primary py-4 rounded-2xl items-center justify-center"
                 onPress={() => {
-                  Alert.alert('Coming Soon', 'Growth plan options are coming soon!');
+                  toast.info('Growth plan options are coming soon!', 'Coming Soon');
                 }}
               >
                 <StyledText className="text-on-primary font-bold text-lg">Explore Growth Plan</StyledText>

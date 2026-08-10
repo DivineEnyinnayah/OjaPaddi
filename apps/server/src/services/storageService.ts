@@ -94,3 +94,17 @@ export async function deleteFile(bucket: string, path: string) {
 
   return true;
 }
+
+/**
+ * Resolve an image_url value to a usable URL.
+ * - If it's already an HTTP URL (legacy signed URL), return as-is.
+ * - If it's a storage path (e.g. "products/businessId/file.jpg"), generate a fresh signed URL.
+ * - If null/undefined, return null.
+ */
+export async function resolveImageUrl(imageUrl: string | null | undefined): Promise<string | null> {
+  if (!imageUrl) return null;
+  // Already a full URL (legacy data or external URL)
+  if (imageUrl.startsWith("http")) return imageUrl;
+  // It's a storage path — generate a fresh signed URL (1 hour expiry)
+  return getSignedUrl("products", imageUrl, 3600);
+}

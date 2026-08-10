@@ -28,8 +28,6 @@ const StyledScrollView = withUniwind(ScrollView);
 const StyledImage = withUniwind(Image);
 
 
-const CATEGORIES = ['All', 'General', 'Clothing', 'Food', 'Electronics', 'Beauty'];
-
 function getInitials(name: string): string {
   return name
     .split(' ')
@@ -131,6 +129,14 @@ export default function ProductsScreen() {
     [router, colors],
   );
 
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    products.forEach((p) => {
+      if (p.category) cats.add(p.category);
+    });
+    return ['All', ...Array.from(cats).sort()];
+  }, [products]);
+
   if (isLoading && products.length === 0) {
     return (
       <Container isScrollable={false} withTabBar className="items-center justify-center">
@@ -180,10 +186,10 @@ export default function ProductsScreen() {
       <StyledScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="px-6"
+        className="px-6 mb-2"
         contentContainerStyle={{ gap: 6 }}
       >
-        {CATEGORIES.map((category) => {
+        {categories.map((category) => {
           const isSelected = selectedCategory === category;
           return (
             <StyledTouchableOpacity

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, adjustStock, getCategories } from "../services/productService";
-import { uploadFile, validateImageFile, getPublicUrl } from "../services/storageService";
+import { uploadFile, validateImageFile } from "../services/storageService";
 import { authMiddleware, type AuthContext } from "../middleware/auth";
 import { validate } from "../middleware/validate";
 import { CreateProductSchema, UpdateProductSchema, AdjustStockSchema } from "../validators/products";
@@ -32,11 +32,19 @@ productRoutes.post("/", validate(CreateProductSchema), async (c) => {
   try {
     const db = c.get("db");
     const businessId = c.get("businessId");
+
+    if (!businessId || typeof businessId !== "string") {
+      console.error("POST /products - businessId missing or invalid:", businessId);
+      return c.json({ success: false, error: { code: "UNAUTHORIZED", message: "Business ID not found in context" } }, 401);
+    }
+
     await checkProductLimit(db, businessId);
     const body = c.get("validatedBody");
+
     const product = await createProduct(db, businessId, body);
     return c.json({ success: true, data: product }, 201);
   } catch (error: unknown) {
+    console.error("POST /products error:", error);
     const code = (error as any)?.code || "PRODUCT_CREATION_FAILED";
     const status = code === "PLAN_LIMIT_REACHED" ? 403 : 400;
     return c.json({ success: false, error: { code, message: error instanceof Error ? error.message : String(error) } }, status);
@@ -122,8 +130,8 @@ productRoutes.post("/:id/image", async (c) => {
     const filePath = `products/${businessId}/${filename}`;
 
     await uploadFile("products", filePath, buffer, contentType);
-    const imageUrl = await getPublicUrl("products", filePath);
-    const updatedProduct = await updateProduct(db, businessId, productId, { imageUrl });
+    // Store the storage path (short, permanent) — resolve to signed URL on read
+    const updatedProduct = await updateProduct(db, businessId, productId, { imageUrl: filePath });
 
     return c.json({ success: true, data: updatedProduct }, 200);
   } catch (error: unknown) {

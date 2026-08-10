@@ -1,17 +1,18 @@
 import React from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { withUniwind } from "uniwind";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Surface } from "@/components/ui/surface";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { Chip } from "@/components/ui/chip";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useAuthStore } from "@/stores/authStore";
 import { buildReceiptMessage, shareViaWhatsApp } from "@/lib/whatsapp";
 import { formatCurrency } from "@/lib/currency";
-import type { Sale } from "@/hooks/useSales";
+import { useSales, type Sale } from "@/hooks/useSales";
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -58,16 +59,38 @@ export default function ReceiptScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const colors = useThemeColor();
+  const toast = useToast();
   const { user } = useAuthStore();
-  const params = useLocalSearchParams<{ sale?: string }>();
+  const { getSaleById } = useSales();
+  const params = useLocalSearchParams<{ sale?: string; saleId?: string }>();
+  
+  const [sale, setSale] = React.useState<Sale | null>(null);
+  const [loading, setLoading] = React.useState(true);
 
-  let sale: Sale | null = null;
-  try {
-    if (params.sale) {
-      sale = JSON.parse(params.sale) as Sale;
+  React.useEffect(() => {
+    if (params.saleId) {
+      getSaleById(params.saleId)
+        .then((res) => {
+          if (res) setSale(res);
+        })
+        .finally(() => setLoading(false));
+    } else if (params.sale) {
+      try {
+        setSale(JSON.parse(params.sale) as Sale);
+      } catch {}
+      setLoading(false);
+    } else {
+      setLoading(false);
     }
-  } catch {
-    sale = null;
+  }, [params.saleId, params.sale]);
+
+  if (loading) {
+    return (
+      <StyledView className="flex-1 bg-background items-center justify-center">
+        <ActivityIndicator size="large" color={colors.primary} />
+        <StyledText className="text-sm text-on-surface-variant mt-3">Loading receipt...</StyledText>
+      </StyledView>
+    );
   }
 
   if (!sale) {
@@ -234,7 +257,7 @@ export default function ReceiptScreen() {
         <Button size="lg" onPress={() => router.replace("/sales")}>
           Done
         </Button>
-        <Button variant="secondary" size="lg" onPress={() => {}}>
+        <Button variant="secondary" size="lg" onPress={() => toast.info("Printing receipt functionality is not yet available.", "Coming Soon")}>
           Print Receipt
         </Button>
       </StyledView>

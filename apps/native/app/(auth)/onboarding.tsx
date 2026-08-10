@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { KeyboardAvoidingView, Platform, Alert, View, Text, TouchableOpacity, ScrollView, TextInput, Image, Animated, useWindowDimensions } from 'react-native';
+import { KeyboardAvoidingView, Platform, View, Text, TouchableOpacity, ScrollView, TextInput, Image, Animated, useWindowDimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
+import { useToast } from '@/components/ui/toast';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { apiRequest, apiFormDataRequest } from '../../lib/api';
@@ -54,6 +55,7 @@ export default function OnboardingScreen() {
   const clearPendingData = useAuthStore(state => state.clearPendingData);
   const pendingRegistration = useAuthStore(state => state.pendingRegistration);
   const colors = useThemeColor();
+  const toast = useToast();
   const { width: screenWidth } = useWindowDimensions();
   const stepWidth = screenWidth; // Dynamic viewport screen width
 
@@ -187,10 +189,10 @@ export default function OnboardingScreen() {
         clearPendingData();
         router.replace('/');
       } else {
-        Alert.alert('Setup Failed', result.error?.message || 'Failed to complete business setup.');
+        toast.error(result.error?.message || 'Failed to complete business setup.', 'Setup Failed');
       }
     } catch (error: unknown) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to set up your business. Please try again.');
+      toast.error(error instanceof Error ? error.message : 'Failed to set up your business. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -217,10 +219,10 @@ export default function OnboardingScreen() {
         clearPendingData();
         router.replace('/');
       } else {
-        Alert.alert('Setup Failed', result.error?.message || 'Failed to complete setup.');
+        toast.error(result.error?.message || 'Failed to complete setup.', 'Setup Failed');
       }
     } catch (error: unknown) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'An error occurred.');
+      toast.error(error instanceof Error ? error.message : 'An error occurred.');
     } finally {
       setIsLoading(false);
     }
@@ -236,7 +238,7 @@ export default function OnboardingScreen() {
   const pickLogo = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert('Permission needed', 'Please grant gallery permissions to upload a business logo.');
+      toast.error('Please grant gallery permissions to upload a business logo.', 'Permission needed');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -248,7 +250,7 @@ export default function OnboardingScreen() {
     if (!result.canceled && result.assets.length > 0) {
       const asset = result.assets[0];
       if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
-        Alert.alert('Image Too Large', 'Please select an image under 5 MB.');
+        toast.error('Please select an image under 5 MB.', 'Image Too Large');
         return;
       }
       setFormData(prev => ({ ...prev, logoUri: asset.uri }));

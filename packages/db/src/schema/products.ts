@@ -19,6 +19,7 @@ export const products = pgTable(
     lowStockThreshold: integer("low_stock_threshold").default(5).notNull(),
     imageUrl: varchar("image_url", { length: 255 }),
     isActive: boolean("is_active").default(true).notNull(),
+    isVisible: boolean("is_visible").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

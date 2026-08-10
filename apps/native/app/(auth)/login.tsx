@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Alert, View, Text, Image, TouchableOpacity, TextInput } from 'react-native';
+import { KeyboardAvoidingView, Platform, View, Text, Image, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
+import { useToast } from '@/components/ui/toast';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore, type User } from '../../stores/authStore';
 import { withUniwind } from 'uniwind';
@@ -26,6 +27,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const setUser = useAuthStore(state => state.setUser);
   const colors = useThemeColor();
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -62,10 +64,10 @@ export default function LoginScreen() {
         await setUser(result.data.user, result.data.access_token, result.data.refresh_token);
         router.replace('/');
       } else {
-        Alert.alert('Login Failed', result.error?.message || 'An error occurred');
+        toast.error(result.error?.message || 'An error occurred', 'Login Failed');
       }
     } catch (error: unknown) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'An error occurred');
+      toast.error(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +75,7 @@ export default function LoginScreen() {
 
   const handleForgotPassword = async () => {
     if (!formData.email.trim()) {
-      Alert.alert('Email Required', 'Please enter your email address first.');
+      toast.error('Please enter your email address first.', 'Email Required');
       return;
     }
     setIsLoading(true);
@@ -83,12 +85,12 @@ export default function LoginScreen() {
         body: JSON.stringify({ email: formData.email }),
       });
       if (result.success) {
-        Alert.alert('Check Your Email', 'If an account exists with that email, we\'ve sent a password reset link.');
+        toast.success('If an account exists with that email, we\'ve sent a password reset link.', 'Check Your Email');
       } else {
-        Alert.alert('Error', result.error?.message || 'Failed to send reset email.');
+        toast.error(result.error?.message || 'Failed to send reset email.');
       }
     } catch {
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }

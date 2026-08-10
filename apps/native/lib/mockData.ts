@@ -61,11 +61,23 @@ export const MOCK_USER = {
 
 export const MOCK_BUSINESS = {
   id: MOCK_BUSINESS_ID,
+  userId: 'dev-seller-001',
   name: "Chinedu's General Store",
+  slug: 'chinedus-store',
+  description: 'Your one-stop shop for quality provisions, household items, and everyday essentials at fair prices.',
   category: 'General Retail',
-  whatsappNumber: '2348012345678',
+  logoUrl: undefined as string | undefined,
+  phone: '08012345678',
+  email: 'chinedu.market@gmail.com',
+  address: '12 Broad Street, Lagos Island',
   city: 'Lagos',
   state: 'Lagos',
+  country: 'Nigeria',
+  currency: 'NGN',
+  whatsappNumber: '2348012345678',
+  isPublished: false,
+  createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+  updatedAt: new Date().toISOString(),
 };
 
 // ─── Products ─────────────────────────────────────────────────────────────────

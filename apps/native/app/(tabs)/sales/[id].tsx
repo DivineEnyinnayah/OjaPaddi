@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
+import { useToast } from '@/components/ui/toast';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
 import { Chip } from '@/components/ui/chip';
@@ -37,6 +38,7 @@ export default function SaleDetailScreen() {
   const { getSaleById, voidSale, isLoading } = useSales();
   const colors = useThemeColor();
   const insets = useSafeAreaInsets();
+  const toast = useToast();
   const [sale, setSale] = useState<Sale | null>(null);
 
   useEffect(() => {
@@ -64,26 +66,21 @@ export default function SaleDetailScreen() {
   };
 
   const handleVoidSale = () => {
-    Alert.alert(
-      'Void Sale',
-      'Are you sure you want to void this sale? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Void Sale',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await voidSale(id as string);
-              Alert.alert('Sale voided', 'The sale has been successfully voided.');
-              router.back();
-            } catch (err: unknown) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to void sale');
-            }
-          },
-        },
-      ]
-    );
+    toast.confirm({
+      title: 'Void Sale',
+      message: 'Are you sure you want to void this sale? This action cannot be undone.',
+      confirmLabel: 'Void Sale',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          await voidSale(id as string);
+          toast.success('The sale has been successfully voided.', 'Sale voided');
+          router.back();
+        } catch (err: unknown) {
+          toast.error(err instanceof Error ? err.message : 'Failed to void sale');
+        }
+      },
+    });
   };
 
   if (isLoading && !sale) {

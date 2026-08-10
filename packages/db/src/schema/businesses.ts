@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, timestamp, boolean } from "drizzle-orm/pg-core";
 import { users } from "./users";
 
 export const businesses = pgTable("businesses", {
@@ -7,6 +7,7 @@ export const businesses = pgTable("businesses", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 50 }).unique(),
   description: text("description"),
   category: varchar("category", { length: 100 }),
   logoUrl: varchar("logo_url", { length: 255 }),
@@ -18,6 +19,8 @@ export const businesses = pgTable("businesses", {
   country: varchar("country", { length: 100 }).default("Nigeria").notNull(),
   currency: varchar("currency", { length: 10 }).default("NGN").notNull(),
   whatsappNumber: varchar("whatsapp_number", { length: 20 }),
+  isPublished: boolean("is_published").default(false).notNull(),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

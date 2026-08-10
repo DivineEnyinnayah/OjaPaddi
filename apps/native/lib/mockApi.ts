@@ -35,6 +35,10 @@ interface ApiResponse<T> {
   error?: { code: string; message: string };
 }
 
+// ─── Mutable Business State ───────────────────────────────────────────────────
+
+const mockBusiness = { ...MOCK_BUSINESS };
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Simulate realistic network latency */
@@ -647,6 +651,25 @@ function handleGetMba(endpoint: string): ApiResponse<any[]> {
   };
 }
 
+// -- Business --
+
+function handleGetBusiness(): ApiResponse<typeof mockBusiness> {
+  return { success: true, data: { ...mockBusiness } };
+}
+
+function handleUpdateBusiness(options: RequestInit): ApiResponse<typeof mockBusiness> {
+  const body = parseBody<Partial<typeof mockBusiness>>(options);
+  Object.assign(mockBusiness, body, { updatedAt: new Date().toISOString() });
+  return { success: true, data: { ...mockBusiness } };
+}
+
+function handleUploadBusinessLogo(): ApiResponse<{ logoUrl: string }> {
+  const logoUrl = `https://placehold.co/200x200/1A6B3C/FFFFFF?text=${encodeURIComponent(mockBusiness.name.slice(0, 8))}`;
+  mockBusiness.logoUrl = logoUrl;
+  mockBusiness.updatedAt = new Date().toISOString();
+  return { success: true, data: { logoUrl } };
+}
+
 // ─── Main Router ──────────────────────────────────────────────────────────────
 
 /**
@@ -780,7 +803,15 @@ export async function getMockResponse<T>(
 
   // ── Business ──
   if (path === '/business/logo' && method === 'POST') {
-    return { success: true, data: { logoUrl: 'https://placehold.co/200x200/1A6B3C/FFFFFF?text=Logo' } } as ApiResponse<T>;
+    return handleUploadBusinessLogo() as ApiResponse<T>;
+  }
+
+  if (path === '/business' && method === 'GET') {
+    return handleGetBusiness() as ApiResponse<T>;
+  }
+
+  if (path === '/business' && method === 'PUT') {
+    return handleUpdateBusiness(options) as ApiResponse<T>;
   }
 
   // ── Fallback ──
@@ -809,6 +840,10 @@ export async function getMockFormDataResponse<T>(
 
   if (productImageMatch && method === 'POST') {
     return handleUploadProductImage(productImageMatch[1]) as ApiResponse<T>;
+  }
+
+  if (path === '/business/logo' && method === 'POST') {
+    return handleUploadBusinessLogo() as ApiResponse<T>;
   }
 
   return {

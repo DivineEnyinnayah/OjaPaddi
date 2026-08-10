@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Alert, View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { KeyboardAvoidingView, Platform, View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Container } from '@/components/container';
+import { useToast } from '@/components/ui/toast';
 import { useAuthStore } from '../../stores/authStore';
 import { withUniwind } from 'uniwind';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -23,6 +24,7 @@ interface FormErrors {
 export default function RegisterScreen() {
   const router = useRouter();
   const setPendingRegistration = useAuthStore(state => state.setPendingRegistration);
+  const toast = useToast();
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -61,7 +63,7 @@ export default function RegisterScreen() {
     if (!validateForm()) return;
     
     if (!agreedToTerms) {
-      Alert.alert('Agreement Required', 'Please agree to the terms and conditions to continue.');
+      toast.error('Please agree to the terms and conditions to continue.', 'Agreement Required');
       return;
     }
     
@@ -76,7 +78,7 @@ export default function RegisterScreen() {
       });
       router.replace('/onboarding');
     } catch (error: unknown) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'An error occurred');
+      toast.error(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }

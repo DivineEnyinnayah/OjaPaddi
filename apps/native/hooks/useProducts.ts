@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { apiRequest, apiFormDataRequest } from '../lib/api';
-import { useAuthStore } from '../stores/authStore';
 
 export interface Product {
   id: string;
@@ -29,7 +28,6 @@ export interface ProductsResponse {
 }
 
 export function useProducts() {
-  const { accessToken } = useAuthStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,9 +42,6 @@ export function useProducts() {
         `/products${queryString ? `?${queryString}` : ''}`,
         {
           method: 'GET',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
         }
       );
 
@@ -68,9 +63,6 @@ export function useProducts() {
     try {
       const result = await apiRequest<Product>(`/products/${productId}`, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
 
       if (result.success && result.data) {
@@ -103,13 +95,11 @@ export function useProducts() {
       const result = await apiRequest<Product>('/products', {
         method: 'POST',
         body: JSON.stringify(productData),
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
 
       if (result.success && result.data) {
-        await fetchProducts();
+        // Non-critical: refresh the list in the background, don't let it mask success
+        fetchProducts().catch(() => {});
         return result.data;
       } else {
         throw new Error(result.error?.message || 'Failed to add product');
@@ -128,13 +118,10 @@ export function useProducts() {
       const result = await apiRequest<Product>(`/products/${productId}`, {
         method: 'PUT',
         body: JSON.stringify(productData),
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
 
       if (result.success && result.data) {
-        await fetchProducts();
+        fetchProducts().catch(() => {});
         return result.data;
       } else {
         throw new Error(result.error?.message || 'Failed to update product');
@@ -152,13 +139,10 @@ export function useProducts() {
     try {
       const result = await apiRequest<null>(`/products/${productId}`, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
 
       if (result.success) {
-        await fetchProducts();
+        fetchProducts().catch(() => {});
         return true;
       } else {
         throw new Error(result.error?.message || 'Failed to delete product');
@@ -176,7 +160,7 @@ export function useProducts() {
     setError(null);
     try {
       const fileName = imageUri.split('/').pop() || 'image.jpg';
-      const match = /\.(\w+)$/.exec(fileName);
+      const match = /\.(\\w+)$/.exec(fileName);
       const type = match ? `image/${match[1]}` : 'image/jpeg';
 
       const formData = new FormData();
@@ -192,7 +176,7 @@ export function useProducts() {
       );
 
       if (result.success && result.data) {
-        await fetchProducts();
+        fetchProducts().catch(() => {});
         return result.data;
       } else {
         throw new Error(result.error?.message || 'Failed to upload image');
@@ -211,13 +195,10 @@ export function useProducts() {
       const result = await apiRequest<Product>(`/products/${productId}/stock`, {
         method: 'PATCH',
         body: JSON.stringify({ quantity }),
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
 
       if (result.success && result.data) {
-        await fetchProducts();
+        fetchProducts().catch(() => {});
         return result.data;
       } else {
         throw new Error(result.error?.message || 'Failed to adjust stock');

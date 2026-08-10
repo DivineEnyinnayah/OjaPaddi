@@ -8,6 +8,7 @@ import { useAuthStore } from '../stores/authStore';
 import { AppThemeProvider, useAppTheme } from '@/contexts/app-theme-context';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ToastProvider } from '@/components/ui/toast';
 
 
 function RootLayoutInner() {
@@ -58,6 +59,7 @@ function RootLayoutInner() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="analytics" />
         <Stack.Screen name="receipt" />
+        <Stack.Screen name="business-profile" />
       </Stack>
     </>
   );
@@ -68,7 +70,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AppThemeProvider>
         <ErrorBoundary>
-          <RootLayoutInner />
+          <ToastProvider>
+            <RootLayoutInner />
+          </ToastProvider>
         </ErrorBoundary>
       </AppThemeProvider>
     </GestureHandlerRootView>

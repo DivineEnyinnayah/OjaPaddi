@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Modal,
-  Alert,
   Pressable,
   Animated,
   Image,
@@ -20,7 +19,9 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useCartStore } from '@/stores/cartStore';
 import { withUniwind } from 'uniwind';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
@@ -34,11 +35,6 @@ const StyledImage = withUniwind(Image);
 
 type PaymentMethod = 'cash' | 'transfer' | 'pos' | 'other';
 type PaymentStatus = 'paid' | 'partial' | 'unpaid';
-
-interface CartItem {
-  product: Product;
-  quantity: number;
-}
 
 const PAYMENT_METHODS: { key: PaymentMethod; label: string; icon: React.ComponentProps<typeof MaterialIcons>['name'] }[] = [
   { key: 'cash', label: 'Cash', icon: 'payments' },
@@ -80,28 +76,42 @@ function SkeletonProductCard({ opacity }: { opacity: Animated.Value }) {
 export default function RecordSaleScreen() {
   const router = useRouter();
   const colors = useThemeColor();
+  const toast = useToast();
   const { products, isLoading, fetchProducts } = useProducts();
   const { customers, fetchCustomers, createCustomer } = useCustomers();
   const { createSale } = useSales();
 
+  const {
+    items: cartItems,
+    selectedCustomer,
+    paymentMethod: selectedPayment,
+    paymentStatus,
+    amountPaid,
+    discount,
+    notes,
+    addItem: addToCart,
+    updateQuantity,
+    clearCart,
+    setCustomer: setSelectedCustomer,
+    setPaymentMethod: setSelectedPayment,
+    setPaymentStatus,
+    setAmountPaid,
+    setDiscount,
+    setNotes,
+    getSubtotal,
+    getTotal,
+  } = useCartStore();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerModalVisible, setCustomerModalVisible] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
 
-  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('paid');
-  const [amountPaid, setAmountPaid] = useState('');
-  const [discount, setDiscount] = useState('');
-  const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [checkoutVisible, setCheckoutVisible] = useState(false);
 
   const pulsingOpacity = useRef(new Animated.Value(1)).current;
@@ -149,17 +159,8 @@ export default function RecordSaleScreen() {
     [cartItems],
   );
 
-  const subtotal = useMemo(
-    () =>
-      cartItems.reduce(
-        (sum, item) => sum + parseFloat(item.product.price) * item.quantity,
-        0,
-      ),
-    [cartItems],
-  );
-
-  const discountAmount = parseFloat(discount) || 0;
-  const total = Math.max(0, subtotal - discountAmount);
+  const subtotal = getSubtotal();
+  const total = getTotal();
   const isCartEmpty = cartItems.length === 0;
 
   const getCartQuantity = useCallback(
@@ -169,34 +170,6 @@ export default function RecordSaleScreen() {
     },
     [cartItems],
   );
-
-  const addToCart = useCallback((product: Product) => {
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.product.id === product.id);
-      if (existing) {
-        if (existing.quantity >= product.quantity) return prev;
-        return prev.map((item) =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        );
-      }
-      return [...prev, { product, quantity: 1 }];
-    });
-  }, []);
-
-  const updateQuantity = useCallback((productId: string, delta: number) => {
-    setCartItems((prev) => {
-      const item = prev.find((i) => i.product.id === productId);
-      if (!item) return prev;
-      if (delta > 0 && item.quantity + delta > item.product.quantity) return prev;
-      const newQuantity = item.quantity + delta;
-      if (newQuantity <= 0) return prev.filter((i) => i.product.id !== productId);
-      return prev.map((i) =>
-        i.product.id === productId ? { ...i, quantity: newQuantity } : i,
-      );
-    });
-  }, []);
 
   const handleAddCustomer = useCallback(async () => {
     if (!newCustomerName.trim()) return;
@@ -211,24 +184,31 @@ export default function RecordSaleScreen() {
       setNewCustomerPhone('');
       setCustomerModalVisible(false);
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to add customer');
+      toast.error(err instanceof Error ? err.message : 'Failed to add customer');
     }
-  }, [newCustomerName, newCustomerPhone, createCustomer]);
+  }, [newCustomerName, newCustomerPhone, createCustomer, setSelectedCustomer]);
 
   const handleCompleteSale = useCallback(async () => {
     if (isCartEmpty) return;
 
     const amountPaidValue = parseFloat(amountPaid) || 0;
+    const discountAmount = parseFloat(discount) || 0;
 
     if (paymentStatus !== 'unpaid' && amountPaidValue <= 0) {
-      Alert.alert('Error', 'Please enter the amount paid.');
+      toast.error('Please enter the amount paid.');
       return;
     }
 
     if (paymentStatus === 'paid' && amountPaidValue < total) {
-      Alert.alert(
-        'Error',
+      toast.error(
         'Amount paid must equal or exceed the total for paid orders.',
+      );
+      return;
+    }
+
+    if (paymentStatus === 'partial' && (amountPaidValue <= 0 || amountPaidValue >= total)) {
+      toast.error(
+        'Amount paid for partial payment must be greater than zero and less than the total.',
       );
       return;
     }
@@ -249,12 +229,15 @@ export default function RecordSaleScreen() {
         notes: notes || undefined,
       });
 
+      clearCart();
+      setCheckoutVisible(false);
+      
       router.replace({
         pathname: '/receipt',
-        params: { sale: JSON.stringify(sale) },
+        params: { saleId: sale.id },
       });
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to record sale');
+      toast.error(err instanceof Error ? err.message : 'Failed to record sale');
     } finally {
       setIsSubmitting(false);
     }
@@ -264,12 +247,13 @@ export default function RecordSaleScreen() {
     selectedPayment,
     paymentStatus,
     amountPaid,
-    discountAmount,
+    discount,
     notes,
     total,
     isCartEmpty,
     createSale,
     router,
+    clearCart,
   ]);
 
   useEffect(() => {
@@ -278,7 +262,7 @@ export default function RecordSaleScreen() {
     } else if (paymentStatus === 'unpaid') {
       setAmountPaid('');
     }
-  }, [paymentStatus, total]);
+  }, [paymentStatus, total, setAmountPaid]);
 
   const renderProductCard = useCallback(
     (product: Product) => {
@@ -347,7 +331,7 @@ export default function RecordSaleScreen() {
             <StyledView className="flex-row items-center gap-1">
               <StyledTouchableOpacity
                 className="w-8 h-8 rounded-full bg-primary items-center justify-center active:opacity-80"
-                onPress={() => updateQuantity(product.id, -1)}
+                onPress={() => updateQuantity(product.id, cartQty - 1)}
               >
                 <MaterialIcons name="remove" size={16} color="#FFFFFF" />
               </StyledTouchableOpacity>
@@ -586,7 +570,7 @@ export default function RecordSaleScreen() {
                         {formatCurrency(lineTotal)}
                       </StyledText>
                       <StyledTouchableOpacity
-                        onPress={() => updateQuantity(item.product.id, -item.quantity)}
+                        onPress={() => updateQuantity(item.product.id, 0)}
                         className="w-7 h-7 rounded-full bg-error/10 items-center justify-center active:opacity-70"
                       >
                         <MaterialIcons name="close" size={14} color={colors.error} />
@@ -752,11 +736,11 @@ export default function RecordSaleScreen() {
                   {formatCurrency(subtotal)}
                 </StyledText>
               </StyledView>
-              {discountAmount > 0 && (
+              {(parseFloat(discount) || 0) > 0 && (
                 <StyledView className="flex-row justify-between items-center py-1">
                   <StyledText className="text-sm text-on-surface-variant">Discount</StyledText>
                   <StyledText className="text-sm font-semibold text-error">
-                    -{formatCurrency(discountAmount)}
+                    -{formatCurrency(parseFloat(discount) || 0)}
                   </StyledText>
                 </StyledView>
               )}

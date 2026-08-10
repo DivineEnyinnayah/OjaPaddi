@@ -1,21 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Image,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
 import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
 import { Input } from '@/components/ui/input';
 import { useProducts } from '@/hooks/useProducts';
+import { useProductForm } from '@/hooks/useProductForm';
+import { CategoryPicker } from '@/components/CategoryPicker';
+import { ProfitMarginBadge } from '@/components/ProfitMarginBadge';
 import { withUniwind } from 'uniwind';
 import { copy } from '@/constants/copy';
 
@@ -24,7 +29,6 @@ const StyledText = withUniwind(Text);
 const StyledTouchableOpacity = withUniwind(TouchableOpacity);
 const StyledImage = withUniwind(Image);
 
-
 interface FormErrors {
   name?: string;
   category?: string;
@@ -32,6 +36,7 @@ interface FormErrors {
   costPrice?: string;
   quantity?: string;
   image?: string;
+  [key: string]: string | undefined;
 }
 
 function FormSection({ title, children }: { title?: string; children: React.ReactNode }) {
@@ -49,136 +54,48 @@ function FormSection({ title, children }: { title?: string; children: React.Reac
   );
 }
 
-// Wizard steps
 type WizardStep = 'welcome' | 'photo' | 'details' | 'pricing' | 'review';
 
 export default function AddProductScreen() {
   const router = useRouter();
+  const { editId } = useLocalSearchParams<{ editId?: string }>();
+  const isEditMode = !!editId;
   const insets = useSafeAreaInsets();
   const colors = useThemeColor();
-  const { products, fetchProducts, addProduct, uploadProductImage } = useProducts();
-  const [isSaving, setIsSaving] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const toast = useToast();
   
-  // Wizard state
+  const { products, fetchProducts } = useProducts();
   const [currentStep, setCurrentStep] = useState<WizardStep>('welcome');
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: '',
-    price: '',
-    costPrice: '',
-    quantity: '',
-    lowStockThreshold: '5',
-    sku: '',
-  });
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Fetch product count on mount
+  const {
+    formData,
+    imageUri,
+    existingImageUrl,
+    errors,
+    isSaving,
+    isLoadingProduct,
+    updateField,
+    handleImagePress,
+    handleSave,
+    validateStep,
+    resetForm,
+  } = useProductForm(editId);
+
   useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        await fetchProducts();
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
-        setIsInitialLoad(false);
-      }
-    };
-    
-    loadProducts();
+    fetchProducts().finally(() => setIsInitialLoad(false));
   }, []);
 
-  // Determine if we should show wizard (first 3 products) or simple form
-  const shouldShowWizard = products.length < 3;
-  
-  // If not showing wizard and initial load is complete, show simple form
-  if (!shouldShowWizard && !isInitialLoad) {
-    return <SimpleAddProductForm />;
+  const shouldShowWizard = !isEditMode && products.length < 3;
+
+  if (isEditMode && isLoadingProduct) {
+    return (
+      <StyledView className="flex-1 bg-background pt-12 items-center justify-center">
+        <ActivityIndicator size="large" color={colors.primary} />
+        <StyledText className="text-sm text-on-surface-variant mt-3">Loading product...</StyledText>
+      </StyledView>
+    );
   }
-
-  const validateStep = (step: WizardStep) => {
-    const newErrors: FormErrors = {};
-    
-    switch (step) {
-      case 'details':
-        if (!formData.name.trim()) {
-          newErrors.name = 'Product name is required';
-        }
-        break;
-      case 'pricing':
-        if (!formData.price || isNaN(Number(formData.price))) {
-          newErrors.price = 'Valid price is required';
-        }
-        if (!formData.quantity || isNaN(Number(formData.quantity))) {
-          newErrors.quantity = 'Valid quantity is required';
-        }
-        break;
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const updateField = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert('Permission needed', 'Please grant camera roll permissions to add a product photo.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-    if (!result.canceled && result.assets.length > 0) {
-      const asset = result.assets[0];
-      if (asset.fileSize && asset.fileSize > 2 * 1024 * 1024) {
-        Alert.alert("Image Too Large", "Please select an image under 2 MB.");
-        return;
-      }
-      setImageUri(asset.uri);
-      if (errors.image) {
-        setErrors(prev => ({ ...prev, image: undefined }));
-      }
-    }
-  };
-
-  const takePhoto = async () => {
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert('Permission needed', 'Please grant camera permissions to take a product photo.');
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets.length > 0) {
-      setImageUri(result.assets[0].uri);
-      if (errors.image) {
-        setErrors(prev => ({ ...prev, image: undefined }));
-      }
-    }
-  };
-
-  const handleImagePress = () => {
-    Alert.alert('Add Photo', 'Choose an option', [
-      { text: 'Camera', onPress: takePhoto },
-      { text: 'Gallery', onPress: pickImage },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
-  };
 
   const handleNext = () => {
     if (!validateStep(currentStep)) return;
@@ -197,7 +114,7 @@ export default function AddProductScreen() {
         setCurrentStep('review');
         break;
       case 'review':
-        handleSave();
+        onSaveProduct();
         break;
     }
   };
@@ -222,88 +139,34 @@ export default function AddProductScreen() {
     }
   };
 
-  const handleSave = async () => {
-    if (!validateStep('pricing')) return;
-    setIsSaving(true);
-    try {
-      const payload = {
-        name: formData.name,
-        description: formData.description,
-        category: formData.category,
-        price: Number(formData.price),
-        costPrice: formData.costPrice ? Number(formData.costPrice) : undefined,
-        quantity: Number(formData.quantity),
-        lowStockThreshold: Number(formData.lowStockThreshold),
-        sku: formData.sku,
-      };
-      const product = await addProduct(payload);
-      if (imageUri && product) {
-        await uploadProductImage(product.id, imageUri);
-      }
-      
-      // Show success and let user choose next action
-      Alert.alert(
-        copy.productOnboarding.review.successTitle,
-        copy.productOnboarding.review.successSubtitle,
-        [
-          {
-            text: copy.productOnboarding.review.addAnother,
-            onPress: () => {
-              // Reset form but stay on screen
-              setFormData({
-                name: '',
-                description: '',
-                category: '',
-                price: '',
-                costPrice: '',
-                quantity: '',
-                lowStockThreshold: '5',
-                sku: '',
-              });
-              setImageUri(null);
-              setErrors({});
-              setCurrentStep('welcome');
+  const onSaveProduct = () => {
+    handleSave(() => {
+      if (isEditMode) {
+        toast.action({
+          title: 'Saved',
+          message: 'Product updated successfully.',
+          options: [{ label: 'OK', onPress: () => router.back() }],
+        });
+      } else {
+        toast.action({
+          title: copy.productOnboarding.review.successTitle,
+          message: copy.productOnboarding.review.successSubtitle,
+          options: [
+            {
+              label: copy.productOnboarding.review.addAnother,
+              onPress: () => {
+                resetForm();
+                setCurrentStep('welcome');
+              }
+            },
+            {
+              label: copy.productOnboarding.review.viewProducts,
+              onPress: () => router.replace('/products')
             }
-          },
-          {
-            text: copy.productOnboarding.review.viewProducts,
-            onPress: () => router.replace('/products')
-          }
-        ]
-      );
-    } catch (error: unknown) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to add product');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const isLoading = isSaving || isInitialLoad;
-
-  // Show loading spinner while fetching products
-  if (isInitialLoad) {
-    return (
-      <StyledView className="flex-1 bg-background items-center justify-center">
-        <MaterialIcons name="shopping-bag" size={48} color={colors.primary} />
-        <StyledText className="text-on-surface mt-4">Setting up your product form...</StyledText>
-      </StyledView>
-    );
-  }
-
-  const renderStepIndicator = () => {
-    if (currentStep === 'welcome' || currentStep === 'review') return null;
-    
-    const steps: WizardStep[] = ['photo', 'details', 'pricing'];
-    const currentIndex = steps.indexOf(currentStep) + 1;
-    const totalSteps = steps.length;
-    
-    return (
-      <StyledView className="flex-row items-center justify-center mb-6">
-        <StyledText className="text-on-surface-variant font-medium">
-          {copy.productOnboarding.stepIndicator.replace('{current}', currentIndex.toString()).replace('{total}', totalSteps.toString())}
-        </StyledText>
-      </StyledView>
-    );
+          ]
+        });
+      }
+    });
   };
 
   const renderWelcomeStep = () => (
@@ -327,10 +190,7 @@ export default function AddProductScreen() {
   );
 
   const renderPhotoStep = () => (
-    <ScrollView 
-      contentContainerStyle={{ flexGrow: 1 }}
-      className="flex-1 px-6"
-    >
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="flex-1 px-6">
       <StyledView className="flex-1 items-center justify-center">
         <StyledText className="text-xl font-bold text-on-surface mb-2">
           {copy.productOnboarding.photo.title}
@@ -344,9 +204,9 @@ export default function AddProductScreen() {
           className="w-48 h-48 rounded-2xl border-2 border-dashed items-center justify-center overflow-hidden active:opacity-80 mb-8"
           style={{ borderColor: colors.outlineVariant }}
         >
-          {imageUri ? (
+          {(imageUri || existingImageUrl) ? (
             <StyledImage
-              source={{ uri: imageUri }}
+              source={{ uri: imageUri || existingImageUrl! }}
               className="w-full h-full"
               resizeMode="cover"
             />
@@ -366,10 +226,7 @@ export default function AddProductScreen() {
   );
 
   const renderDetailsStep = () => (
-    <ScrollView 
-      contentContainerStyle={{ padding: 24 }}
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView contentContainerStyle={{ padding: 24 }} showsVerticalScrollIndicator={false}>
       <StyledView>
         <StyledText className="text-xl font-bold text-on-surface mb-2">
           {copy.productOnboarding.details.title}
@@ -387,12 +244,9 @@ export default function AddProductScreen() {
             error={errors.name}
             containerClassName="mb-4 mt-2"
           />
-          <Input
-            label="Category"
-            placeholder={copy.productOnboarding.details.categoryPlaceholder}
+          <CategoryPicker
             value={formData.category}
-            onChangeText={(value) => updateField('category', value)}
-            containerClassName="mb-4"
+            onChange={(val) => updateField('category', val)}
           />
           <Input
             label="Description"
@@ -409,10 +263,7 @@ export default function AddProductScreen() {
   );
 
   const renderPricingStep = () => (
-    <ScrollView 
-      contentContainerStyle={{ padding: 24 }}
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView contentContainerStyle={{ padding: 24 }} showsVerticalScrollIndicator={false}>
       <StyledView>
         <StyledText className="text-xl font-bold text-on-surface mb-2">
           {copy.productOnboarding.pricing.title}
@@ -432,6 +283,15 @@ export default function AddProductScreen() {
             containerClassName="mb-4 mt-2"
           />
           <Input
+            label="Cost Price (₦)"
+            placeholder="0.00"
+            value={formData.costPrice}
+            onChangeText={(value) => updateField('costPrice', value)}
+            keyboardType="decimal-pad"
+            containerClassName="mb-4"
+          />
+          <ProfitMarginBadge sellingPrice={formData.price} costPrice={formData.costPrice} />
+          <Input
             label="Quantity"
             placeholder="0"
             value={formData.quantity}
@@ -446,10 +306,7 @@ export default function AddProductScreen() {
   );
 
   const renderReviewStep = () => (
-    <ScrollView 
-      contentContainerStyle={{ padding: 24, flexGrow: 1 }}
-      className="flex-1"
-    >
+    <ScrollView contentContainerStyle={{ padding: 24, flexGrow: 1 }} className="flex-1">
       <StyledView className="flex-1 items-center justify-center">
         <MaterialIcons name="check-circle" size={80} color={colors.primary} />
         <StyledText className="text-2xl font-bold text-on-surface mt-6 text-center">
@@ -489,12 +346,172 @@ export default function AddProductScreen() {
 
   const getButtonText = () => {
     if (currentStep === 'review') {
-      return isLoading ? copy.productOnboarding.review.adding : copy.productOnboarding.review.button;
+      return isSaving ? copy.productOnboarding.review.adding : copy.productOnboarding.review.button;
     }
     return 'Continue';
   };
 
-  const canSkipPhoto = currentStep === 'photo';
+  if (!shouldShowWizard && !isInitialLoad) {
+    return (
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <StyledView className="flex-1 bg-background">
+          <StyledView
+            className="flex-row items-center px-4 pb-2"
+            style={{ paddingTop: insets.top + 12 }}
+          >
+            <StyledTouchableOpacity
+              onPress={() => router.back()}
+              className="w-10 h-10 items-center justify-center rounded-full bg-surface-container active:scale-95"
+            >
+              <MaterialIcons name="arrow-back" size={22} color={colors.onSurface} />
+            </StyledTouchableOpacity>
+            <StyledText className="flex-1 text-xl font-bold text-on-surface tracking-tight ml-2">
+              {isEditMode ? 'Edit Product' : copy.addProduct.title}
+            </StyledText>
+          </StyledView>
+
+          <ScrollView
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <StyledView className="gap-3">
+              <StyledTouchableOpacity
+                onPress={handleImagePress}
+                className="w-full h-48 rounded-xl border-2 border-dashed items-center justify-center overflow-hidden active:opacity-80"
+                style={{
+                  borderColor: errors.image ? colors.error : colors.outlineVariant,
+                }}
+              >
+                {(imageUri || existingImageUrl) ? (
+                  <StyledImage
+                    source={{ uri: imageUri || existingImageUrl! }}
+                    className="w-full h-full"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <StyledView className="items-center gap-2">
+                    <MaterialIcons name="add-a-photo" size={28} color={colors.primary} />
+                    <StyledText className="text-sm text-on-surface-variant font-medium">
+                      {copy.addProduct.imagePlaceholder}
+                    </StyledText>
+                  </StyledView>
+                )}
+              </StyledTouchableOpacity>
+
+              <FormSection title="Basic Info">
+                <Input
+                  label="Product Name"
+                  placeholder="e.g., Ankara Top"
+                  value={formData.name}
+                  onChangeText={(value) => updateField('name', value)}
+                  error={errors.name}
+                  containerClassName="mb-1.5 mt-1"
+                />
+                <Input
+                  label="Description"
+                  placeholder="Describe your product..."
+                  value={formData.description}
+                  onChangeText={(value) => updateField('description', value)}
+                  multiline
+                  numberOfLines={2}
+                  inputClassName="min-h-[60px] py-2 text-left align-top"
+                />
+                <CategoryPicker
+                  value={formData.category}
+                  onChange={(val) => updateField('category', val)}
+                />
+              </FormSection>
+
+              <FormSection title="Pricing">
+                <StyledView className="flex-row gap-2">
+                  <StyledView className="flex-1">
+                    <Input
+                      label="Selling Price (₦)"
+                      placeholder="0.00"
+                      value={formData.price}
+                      onChangeText={(value) => updateField('price', value)}
+                      keyboardType="decimal-pad"
+                      error={errors.price}
+                    />
+                  </StyledView>
+                  <StyledView className="flex-1">
+                    <Input
+                      label="Cost Price (₦)"
+                      placeholder="0.00"
+                      value={formData.costPrice}
+                      onChangeText={(value) => updateField('costPrice', value)}
+                      keyboardType="decimal-pad"
+                    />
+                  </StyledView>
+                </StyledView>
+                <ProfitMarginBadge sellingPrice={formData.price} costPrice={formData.costPrice} />
+              </FormSection>
+
+              <FormSection title="Stock">
+                <StyledView className="flex-row gap-2">
+                  <StyledView className="flex-1">
+                    <Input
+                      label="Quantity"
+                      placeholder="0"
+                      value={formData.quantity}
+                      onChangeText={(value) => updateField('quantity', value)}
+                      keyboardType="numeric"
+                      error={errors.quantity}
+                    />
+                  </StyledView>
+                  <StyledView className="flex-1">
+                    <Input
+                      label="Low Stock Alert"
+                      placeholder="5"
+                      value={formData.lowStockThreshold}
+                      onChangeText={(value) => updateField('lowStockThreshold', value)}
+                      keyboardType="numeric"
+                    />
+                  </StyledView>
+                </StyledView>
+              </FormSection>
+
+              <FormSection title="Identifier">
+                <Input
+                  label="SKU (Optional)"
+                  placeholder="e.g., ANK-001"
+                  value={formData.sku}
+                  onChangeText={(value) => updateField('sku', value)}
+                />
+              </FormSection>
+            </StyledView>
+          </ScrollView>
+
+          <StyledView
+            className="px-4 pt-3"
+            style={{
+              position: 'absolute',
+              bottom: insets.bottom + TAB_BAR_OFFSET,
+              left: 0,
+              right: 0,
+              paddingBottom: 8,
+              backgroundColor: colors.surface,
+              borderTopWidth: 1,
+              borderTopColor: colors.outlineVariant + '30',
+            }}
+          >
+            <Button
+              size="lg"
+              variant="primary"
+              onPress={onSaveProduct}
+              isDisabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Product'}
+            </Button>
+          </StyledView>
+        </StyledView>
+      </KeyboardAvoidingView>
+    );
+  }
 
   return (
     <StyledView className="flex-1 bg-background">
@@ -502,37 +519,16 @@ export default function AddProductScreen() {
         className="flex-row items-center px-4 pb-2"
         style={{ paddingTop: insets.top + 12 }}
       >
-        {currentStep === 'welcome' ? (
-          <StyledTouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 items-center justify-center rounded-full bg-surface-container active:scale-95"
-          >
-            <MaterialIcons name="arrow-back" size={22} color={colors.onSurface} />
-          </StyledTouchableOpacity>
-        ) : (
-          <StyledTouchableOpacity
-            onPress={handleBack}
-            className="w-10 h-10 items-center justify-center rounded-full bg-surface-container active:scale-95"
-          >
-            <MaterialIcons name="arrow-back" size={22} color={colors.onSurface} />
-          </StyledTouchableOpacity>
-        )}
-        <StyledText className="flex-1 text-xl font-bold text-on-surface tracking-tight ml-2" numberOfLines={1}>
+        <StyledTouchableOpacity
+          onPress={handleBack}
+          className="w-10 h-10 items-center justify-center rounded-full bg-surface-container active:scale-95"
+        >
+          <MaterialIcons name="arrow-back" size={22} color={colors.onSurface} />
+        </StyledTouchableOpacity>
+        <StyledText className="flex-1 text-xl font-bold text-on-surface tracking-tight ml-2">
           {currentStep !== 'welcome' && currentStep !== 'review' ? getStepTitle() : ''}
         </StyledText>
-        {canSkipPhoto && (
-          <StyledTouchableOpacity
-            onPress={() => setCurrentStep('details')}
-            className="px-3 py-2"
-          >
-            <StyledText className="text-primary font-medium">
-              {copy.productOnboarding.photo.skip}
-            </StyledText>
-          </StyledTouchableOpacity>
-        )}
       </StyledView>
-
-      {renderStepIndicator()}
 
       {currentStep === 'welcome' && renderWelcomeStep()}
       {currentStep === 'photo' && renderPhotoStep()}
@@ -558,301 +554,12 @@ export default function AddProductScreen() {
             size="lg"
             variant="primary"
             onPress={handleNext}
-            isDisabled={isLoading}
+            isDisabled={isSaving}
           >
             {getButtonText()}
           </Button>
         </StyledView>
       )}
-    </StyledView>
-  );
-}
-
-// Simple form for products 4 and beyond
-function SimpleAddProductForm() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const colors = useThemeColor();
-  const { addProduct, uploadProductImage } = useProducts();
-  const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: '',
-    price: '',
-    costPrice: '',
-    quantity: '',
-    lowStockThreshold: '5',
-    sku: '',
-  });
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [errors, setErrors] = useState<FormErrors>({});
-
-  const validateForm = () => {
-    const newErrors: FormErrors = {};
-    if (!formData.name.trim()) {
-      newErrors.name = 'Product name is required';
-    }
-    if (!formData.price || isNaN(Number(formData.price))) {
-      newErrors.price = 'Valid price is required';
-    }
-    if (!formData.quantity || isNaN(Number(formData.quantity))) {
-      newErrors.quantity = 'Valid quantity is required';
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const updateField = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert('Permission needed', 'Please grant camera roll permissions to add a product photo.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets.length > 0) {
-      setImageUri(result.assets[0].uri);
-      if (errors.image) {
-        setErrors(prev => ({ ...prev, image: undefined }));
-      }
-    }
-  };
-
-  const takePhoto = async () => {
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert('Permission needed', 'Please grant camera permissions to take a product photo.');
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets.length > 0) {
-      setImageUri(result.assets[0].uri);
-      if (errors.image) {
-        setErrors(prev => ({ ...prev, image: undefined }));
-      }
-    }
-  };
-
-  const handleImagePress = () => {
-    Alert.alert('Add Photo', 'Choose an option', [
-      { text: 'Camera', onPress: takePhoto },
-      { text: 'Gallery', onPress: pickImage },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) return;
-    setIsSaving(true);
-    try {
-      const payload = {
-        name: formData.name,
-        description: formData.description,
-        category: formData.category,
-        price: Number(formData.price),
-        costPrice: formData.costPrice ? Number(formData.costPrice) : undefined,
-        quantity: Number(formData.quantity),
-        lowStockThreshold: Number(formData.lowStockThreshold),
-        sku: formData.sku,
-      };
-      const product = await addProduct(payload);
-      if (imageUri && product) {
-        await uploadProductImage(product.id, imageUri);
-      }
-      router.back();
-    } catch (error: unknown) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to add product');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const isLoading = isSaving;
-
-  return (
-    <StyledView className="flex-1 bg-background">
-      <StyledView
-        className="flex-row items-center px-4 pb-2"
-        style={{ paddingTop: insets.top + 12 }}
-      >
-        <StyledTouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 items-center justify-center rounded-full bg-surface-container active:scale-95"
-        >
-          <MaterialIcons name="arrow-back" size={22} color={colors.onSurface} />
-        </StyledTouchableOpacity>
-        <StyledText className="flex-1 text-xl font-bold text-on-surface tracking-tight ml-2">
-          {copy.addProduct.title}
-        </StyledText>
-      </StyledView>
-
-      <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <StyledView className="gap-3">
-          <StyledTouchableOpacity
-            onPress={handleImagePress}
-            className="w-full h-48 rounded-xl border-2 border-dashed items-center justify-center overflow-hidden active:opacity-80"
-            style={{
-              borderColor: errors.image ? colors.error : colors.outlineVariant,
-            }}
-          >
-            {imageUri ? (
-              <StyledImage
-                source={{ uri: imageUri }}
-                className="w-full h-full"
-                resizeMode="cover"
-              />
-            ) : (
-              <StyledView className="items-center gap-2">
-                <StyledView className="w-16 h-16 rounded-full bg-surface-container items-center justify-center">
-                  <MaterialIcons name="add-a-photo" size={28} color={colors.primary} />
-                </StyledView>
-                <StyledText className="text-sm text-on-surface-variant font-medium">
-                  {copy.addProduct.imagePlaceholder}
-                </StyledText>
-                <StyledText className="text-xs text-on-surface-variant">
-                  JPG, PNG up to 2MB
-                </StyledText>
-              </StyledView>
-            )}
-          </StyledTouchableOpacity>
-          {errors.image && (
-            <StyledText className="text-sm text-error ml-1 -mt-2">{errors.image}</StyledText>
-          )}
-
-          <FormSection title="Basic Info">
-            <Input
-              label="Product Name"
-              placeholder="e.g., Ankara Top"
-              value={formData.name}
-              onChangeText={(value) => updateField('name', value)}
-              error={errors.name}
-              containerClassName="mb-1.5 mt-1"
-            />
-            <Input
-              label="Description"
-              placeholder="Describe your product..."
-              value={formData.description}
-              onChangeText={(value) => updateField('description', value)}
-              multiline
-              numberOfLines={2}
-              inputClassName="min-h-[60px] py-2 text-left align-top"
-              containerClassName="mb-1.5"
-            />
-            <Input
-              label="Category"
-              placeholder="e.g., Clothing"
-              value={formData.category}
-              onChangeText={(value) => updateField('category', value)}
-              containerClassName="mb-1.5"
-            />
-          </FormSection>
-
-          <FormSection title="Pricing">
-            <StyledView className="flex-row gap-2">
-              <StyledView className="flex-1">
-                <Input
-                  label="Selling Price (₦)"
-                  placeholder="0.00"
-                  value={formData.price}
-                  onChangeText={(value) => updateField('price', value)}
-                  keyboardType="decimal-pad"
-                  error={errors.price}
-                  containerClassName="mb-1.5"
-                />
-              </StyledView>
-              <StyledView className="flex-1">
-                <Input
-                  label="Cost Price (₦)"
-                  placeholder="0.00"
-                  value={formData.costPrice}
-                  onChangeText={(value) => updateField('costPrice', value)}
-                  keyboardType="decimal-pad"
-                  containerClassName="mb-1.5"
-                />
-              </StyledView>
-            </StyledView>
-          </FormSection>
-
-          <FormSection title="Stock">
-            <StyledView className="flex-row gap-2">
-              <StyledView className="flex-1">
-                <Input
-                  label="Quantity"
-                  placeholder="0"
-                  value={formData.quantity}
-                  onChangeText={(value) => updateField('quantity', value)}
-                  keyboardType="numeric"
-                  error={errors.quantity}
-                  containerClassName="mb-1.5"
-                />
-              </StyledView>
-              <StyledView className="flex-1">
-                <Input
-                  label="Low Stock Alert"
-                  placeholder="5"
-                  value={formData.lowStockThreshold}
-                  onChangeText={(value) => updateField('lowStockThreshold', value)}
-                  keyboardType="numeric"
-                  containerClassName="mb-1.5"
-                />
-              </StyledView>
-            </StyledView>
-          </FormSection>
-
-          <FormSection title="Identifier">
-            <Input
-              label="SKU (Optional)"
-              placeholder="e.g., ANK-001"
-              value={formData.sku}
-              onChangeText={(value) => updateField('sku', value)}
-              containerClassName="mb-1.5"
-            />
-          </FormSection>
-        </StyledView>
-      </ScrollView>
-
-      <StyledView
-        className="px-4 pt-3"
-        style={{
-          position: 'absolute',
-          bottom: insets.bottom + TAB_BAR_OFFSET,
-          left: 0,
-          right: 0,
-          paddingBottom: 8,
-          backgroundColor: colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: colors.outlineVariant + '30',
-        }}
-      >
-        <Button
-          size="lg"
-          variant="primary"
-          onPress={handleSave}
-          isDisabled={isLoading}
-        >
-          {isLoading ? copy.addProduct.saving : copy.addProduct.save}
-        </Button>
-      </StyledView>
     </StyledView>
   );
 }

@@ -7,9 +7,7 @@ export const saleItems = pgTable("sale_items", {
   saleId: uuid("sale_id")
     .notNull()
     .references(() => sales.id, { onDelete: "cascade" }),
-  productId: uuid("product_id")
-    .notNull()
-    .references(() => products.id, { onDelete: "set null" }),
+  productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
   productName: varchar("product_name", { length: 255 }).notNull(),
   unitPrice: decimal("unit_price", { precision: 12, scale: 2 }).notNull(),
   costPrice: decimal("cost_price", { precision: 12, scale: 2 }),

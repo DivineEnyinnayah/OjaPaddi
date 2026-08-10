@@ -9,7 +9,6 @@ import {
   Animated,
   Dimensions,
   Share,
-  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -26,6 +25,7 @@ import Svg, {
 import { withUniwind } from "uniwind";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { useToast } from "@/components/ui/toast";
 import { Container } from "@/components/container";
 import { Surface } from "@/components/ui/surface";
 import { formatCurrency } from "@/lib/currency";
@@ -76,6 +76,7 @@ const BAR_GAP = 6;
 export default function AnalyticsScreen() {
   const { summary, isLoading, error, fetchSummary } = useAnalytics();
   const colors = useThemeColor();
+  const toast = useToast();
   const router = useRouter();
   const [period, setPeriod] = React.useState<Period>("week");
 
@@ -87,7 +88,7 @@ export default function AnalyticsScreen() {
 
   const handleExportCSV = async () => {
     if (!summary) {
-      Alert.alert("No data to export", "Please wait for the data to load.");
+      toast.info("Please wait for the data to load.", "No data to export");
       return;
     }
 
@@ -110,7 +111,7 @@ export default function AnalyticsScreen() {
         title: "Business Analytics Export",
       });
     } catch (err: unknown) {
-      Alert.alert("Export Failed", err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err), "Export Failed");
     }
   };
 

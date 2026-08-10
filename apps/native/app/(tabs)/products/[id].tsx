@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
+import { useToast } from '@/components/ui/toast';
 import { useProducts, type Product } from '../../../hooks/useProducts';
 import { buildProductShareMessage, shareViaWhatsApp } from '@/lib/whatsapp';
 import { withUniwind } from 'uniwind';
@@ -21,6 +22,7 @@ export default function ProductDetailScreen() {
   const router = useRouter();
   const { fetchProductById, adjustStock, deleteProduct, isLoading } = useProducts();
   const colors = useThemeColor();
+  const toast = useToast();
   const [product, setProduct] = useState<Product | null>(null);
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function ProductDetailScreen() {
         setProduct(updated);
       }
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to adjust stock');
+      toast.error(err instanceof Error ? err.message : 'Failed to adjust stock');
     }
   };
 
@@ -51,30 +53,26 @@ export default function ProductDetailScreen() {
         setProduct(updated);
       }
     } catch (err: unknown) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to adjust stock');
+      toast.error(err instanceof Error ? err.message : 'Failed to adjust stock');
     }
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Product',
-      'Are you sure you want to delete this product?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteProduct(id as string);
-              router.back();
-            } catch (err: unknown) {
-              Alert.alert('Error', err instanceof Error ? err.message : 'Failed to delete product');
-            }
-          },
-        },
-      ]
-    );
+    toast.confirm({
+      title: 'Delete Product',
+      message: 'Are you sure you want to delete this product?',
+      confirmLabel: 'Delete',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          await deleteProduct(id as string);
+          toast.success('Product has been removed.', 'Deleted');
+          router.back();
+        } catch (err: unknown) {
+          toast.error(err instanceof Error ? err.message : 'Failed to delete product');
+        }
+      },
+    });
   };
 
   const handleShare = () => {
@@ -182,9 +180,23 @@ export default function ProductDetailScreen() {
           <StyledTouchableOpacity
             className="w-12 h-12 rounded-full justify-center items-center border-2 border-error"
             onPress={handleDelete}
+            disabled={isLoading}
           >
             <MaterialIcons name="delete" size={22} color={colors.error} />
           </StyledTouchableOpacity>
+          <Button
+            size="lg"
+            variant="outline"
+            className="flex-1"
+            onPress={() =>
+              router.push({
+                pathname: '/products/add',
+                params: { editId: id as string },
+              })
+            }
+          >
+            Edit Product
+          </Button>
           <Button
             size="lg"
             className="flex-1"

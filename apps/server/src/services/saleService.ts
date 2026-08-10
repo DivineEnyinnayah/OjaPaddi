@@ -142,6 +142,7 @@ export async function voidSale(db: Database, businessId: string, saleId: string,
     const items = await tx.select().from(saleItems).where(eq(saleItems.saleId, saleId));
 
     for (const item of items) {
+      if (!item.productId) continue;
       await tx.update(products)
         .set({ quantity: sql`${products.quantity} + ${item.quantity}`, updatedAt: new Date() })
         .where(eq(products.id, item.productId));

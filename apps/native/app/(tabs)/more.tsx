@@ -1,13 +1,15 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { withUniwind } from 'uniwind';
 import { useAuthStore } from '../../stores/authStore';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
+import { useToast } from '@/components/ui/toast';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { copy } from '@/constants/copy';
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -18,23 +20,19 @@ export default function MoreScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const colors = useThemeColor();
+  const toast = useToast();
 
   const handleLogout = () => {
-    Alert.alert(
-      'Log Out',
-      'Are you sure you want to log out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log Out',
-          style: 'destructive',
-          onPress: () => {
-            logout();
-            router.replace('/(auth)/welcome');
-          },
-        },
-      ]
-    );
+    toast.confirm({
+      title: 'Log Out',
+      message: 'Are you sure you want to log out?',
+      confirmLabel: 'Log Out',
+      destructive: true,
+      onConfirm: () => {
+        logout();
+        router.replace('/(auth)/welcome');
+      },
+    });
   };
 
   const getInitials = (fullName: string, email: string) => {
@@ -80,12 +78,12 @@ export default function MoreScreen() {
         <Surface variant="primary" className="p-0 overflow-hidden">
           <StyledTouchableOpacity
             className="flex-row items-center px-5 py-4 border-b border-outline-variant/50"
-            onPress={() => {}}
+            onPress={() => router.push('/business-profile')}
           >
             <StyledView className="w-10 h-10 rounded-full bg-primary-container/15 justify-center items-center mr-4">
               <StyledMaterialIcons name="work" size={20} color={colors.primary} />
             </StyledView>
-            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface">Business Profile</StyledText>
+            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface">{copy.more.businessProfile}</StyledText>
             <StyledMaterialIcons name="chevron-right" size={22} color={colors.outline} />
           </StyledTouchableOpacity>
 

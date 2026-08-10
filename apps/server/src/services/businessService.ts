@@ -7,6 +7,11 @@ export async function getBusinessByUserId(db: Database, businessId: string) {
   return businessList[0] || null;
 }
 
+export async function getBusinessBySlug(db: Database, slug: string) {
+  const businessList = await db.select().from(businesses).where(eq(businesses.slug, slug));
+  return businessList[0] || null;
+}
+
 export async function updateBusiness(db: Database, businessId: string, data: Partial<typeof businesses.$inferSelect>) {
   const businessList = await db.select().from(businesses).where(eq(businesses.id, businessId));
   const business = businessList[0];
@@ -18,6 +23,7 @@ export async function updateBusiness(db: Database, businessId: string, data: Par
   await db.update(businesses)
     .set({
       name: data.name,
+      slug: data.slug,
       description: data.description,
       category: data.category,
       logoUrl: data.logoUrl,
@@ -29,9 +35,20 @@ export async function updateBusiness(db: Database, businessId: string, data: Par
       country: data.country,
       currency: data.currency,
       whatsappNumber: data.whatsappNumber,
+      isPublished: data.isPublished,
       updatedAt: new Date(),
     })
     .where(eq(businesses.id, businessId));
 
   return await getBusinessByUserId(db, businessId);
+}
+
+export async function softDeleteBusiness(db: Database, businessId: string) {
+  await db.update(businesses)
+    .set({
+      deletedAt: new Date(),
+      isPublished: false,
+      updatedAt: new Date(),
+    })
+    .where(eq(businesses.id, businessId));
 }

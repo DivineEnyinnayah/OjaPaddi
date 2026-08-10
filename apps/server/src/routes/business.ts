@@ -4,6 +4,7 @@ import { authMiddleware, type AuthContext } from "../middleware/auth";
 import { uploadFile, validateImageFile, getPublicUrl } from "../services/storageService";
 import { validate } from "../middleware/validate";
 import { UpdateBusinessSchema } from "../validators/business";
+import { UpdateStorefrontSettingsSchema, SlugSchema } from "../validators/slug";
 
 export const businessRoutes = new Hono<AuthContext>();
 
@@ -29,6 +30,42 @@ businessRoutes.put("/", validate(UpdateBusinessSchema), async (c) => {
     return c.json({ success: true, data: business }, 200);
   } catch (error: unknown) {
     return c.json({ success: false, error: { code: "BUSINESS_UPDATE_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
+});
+
+businessRoutes.put("/storefront", validate(UpdateStorefrontSettingsSchema), async (c) => {
+  try {
+    const db = c.get("db");
+    const businessId = c.get("businessId");
+    const body = c.get("validatedBody");
+    const business = await updateBusiness(db, businessId, body);
+    return c.json({ success: true, data: business }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "STOREFRONT_UPDATE_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
+});
+
+businessRoutes.get("/storefront/slug-available/:slug", async (c) => {
+  try {
+    const db = c.get("db");
+    const slug = c.req.param("slug");
+    
+    // Validate slug format first
+    const validation = SlugSchema.safeParse(slug);
+    if (!validation.success) {
+      return c.json({ success: true, data: { available: false, reason: "invalid_format" } }, 200);
+    }
+    
+    // Check if slug is taken by another business
+    const { businesses } = await import("@ojapaddi/db/schema");
+    const { eq, and, isNull } = await import("drizzle-orm");
+    const existing = await db.select({ id: businesses.id }).from(businesses).where(and(eq(businesses.slug, slug), isNull(businesses.deletedAt)));
+
+        const available = existing.length === 0 || existing[0]?.id === c.get("businessId");
+
+        return c.json({ success: true, data: { available } }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "SLUG_CHECK_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 

@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   Share,
-  Alert,
   useWindowDimensions,
   Animated,
 } from "react-native";
@@ -16,6 +15,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { withUniwind } from "uniwind";
 import { useMba, type MBARule } from "@/hooks/useMba";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { useToast } from "@/components/ui/toast";
 import { Container } from "@/components/container";
 import { Surface } from "@/components/ui/surface";
 
@@ -29,6 +29,7 @@ type Tab = "recommendations" | "rules";
 export default function MBAScreen() {
   const { rules, isLoading, error, fetchRules } = useMba();
   const colors = useThemeColor();
+  const toast = useToast();
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
 
@@ -77,11 +78,11 @@ export default function MBAScreen() {
 
   const handleExportCSV = async () => {
     if (isLoading) {
-      Alert.alert("Loading", "Please wait while the analysis is completing.");
+      toast.info("Please wait while the analysis is completing.", "Loading");
       return;
     }
     if (rules.length === 0) {
-      Alert.alert("No rules to export", "Try lowering the support or confidence thresholds to find more rules.");
+      toast.info("Try lowering the support or confidence thresholds to find more rules.", "No rules to export");
       return;
     }
 
@@ -98,7 +99,7 @@ export default function MBAScreen() {
         title: "Market Basket Analysis Rules",
       });
     } catch (err: unknown) {
-      Alert.alert("Export Failed", err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err), "Export Failed");
     }
   };
 
