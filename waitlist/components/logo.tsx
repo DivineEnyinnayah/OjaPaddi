@@ -1,39 +1,7 @@
-export function Logo({ dark = false }: { dark?: boolean }) {
+import Image from "next/image";
+
+export function Logo() {
   return (
-    <span className="inline-flex items-center gap-2.5">
-      {/* Simple market stall / awning mark */}
-      <svg
-        width="32"
-        height="32"
-        viewBox="0 0 32 32"
-        fill="none"
-        aria-hidden="true"
-        className="shrink-0"
-      >
-        <rect
-          x="1.5"
-          y="1.5"
-          width="29"
-          height="29"
-          rx="7"
-          fill={dark ? "#005232" : "#005232"}
-        />
-        {/* awning stripes */}
-        <path d="M5 12h22v5H5z" fill="#f08080" />
-        <path d="M5 17h22v2H5z" fill="#f1fcf7" />
-        <path d="M5 12h4v7H5z" fill="#005232" />
-        <path d="M14 12h4v7h-4z" fill="#005232" />
-        <path d="M23 12h4v7h-4z" fill="#005232" />
-        {/* counter */}
-        <rect x="8" y="22" width="16" height="3" rx="1.5" fill="#f1fcf7" />
-      </svg>
-      <span
-        className={`font-display text-lg font-bold tracking-tight ${
-          dark ? "text-paper" : "text-paddi-900"
-        }`}
-      >
-        OjaPaddi
-      </span>
-    </span>
+   <Image src="/OjaPaddi.png" alt="Logo" width={150} height={50} />
   );
 }
