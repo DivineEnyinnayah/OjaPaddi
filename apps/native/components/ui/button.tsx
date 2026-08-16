@@ -1,10 +1,7 @@
 import React from "react";
-import { Pressable, Text, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
-import { withUniwind } from "uniwind";
+import { type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 import { cn } from "../../lib/utils";
-
-const StyledPressable = withUniwind(Pressable);
-const StyledText = withUniwind(Text);
+import { StyledPressable, StyledText } from "./styled";
 
 export interface ButtonProps extends Omit<PressableProps, "style"> {
   size?: "sm" | "md" | "lg";

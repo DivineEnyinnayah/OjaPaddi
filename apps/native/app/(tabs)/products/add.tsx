@@ -5,13 +5,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
+import { ShoppingBag, CameraPlus, CheckCircle, ArrowLeft } from 'phosphor-react-native';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
@@ -44,7 +43,7 @@ function FormSection({ title, children }: { title?: string; children: React.Reac
     <StyledView className="rounded-xl border border-outline-variant/40 bg-surface">
       {title && (
         <StyledView className="px-4 pt-3 pb-1">
-          <StyledText className="text-xs font-semibold text-primary tracking-wider uppercase">{title}</StyledText>
+          <StyledText className="text-xs font-semibold text-primary uppercase">{title}</StyledText>
         </StyledView>
       )}
       <StyledView className="px-4 pb-2">
@@ -83,16 +82,26 @@ export default function AddProductScreen() {
   } = useProductForm(editId);
 
   useEffect(() => {
-    fetchProducts().finally(() => setIsInitialLoad(false));
-  }, []);
+    fetchProducts().then((prods) => {
+      setIsInitialLoad(false);
+      const hasProducts = prods ? prods.length > 0 : false;
+      if (!isEditMode && !hasProducts) {
+        setCurrentStep('welcome');
+      } else if (!isEditMode && currentStep === 'welcome') {
+        setCurrentStep('photo');
+      }
+    });
+  }, [isEditMode]);
 
-  const shouldShowWizard = !isEditMode && products.length < 3;
+  const shouldShowWizard = !isEditMode && products.length === 0;
 
   if (isEditMode && isLoadingProduct) {
     return (
-      <StyledView className="flex-1 bg-background pt-12 items-center justify-center">
-        <ActivityIndicator size="large" color={colors.primary} />
-        <StyledText className="text-sm text-on-surface-variant mt-3">Loading product...</StyledText>
+      <StyledView className="flex-1 bg-background items-center justify-center gap-3">
+        <StyledView className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center">
+          <StyledView className="w-10 h-10 rounded-full bg-primary/20 animate-pulse" />
+        </StyledView>
+        <StyledText className="text-sm text-on-surface-variant font-medium">Loading product...</StyledText>
       </StyledView>
     );
   }
@@ -171,7 +180,7 @@ export default function AddProductScreen() {
 
   const renderWelcomeStep = () => (
     <StyledView className="flex-1 items-center justify-center px-8">
-      <MaterialIcons name="shopping-bag" size={80} color={colors.primary} />
+      <ShoppingBag size={80} color={colors.primary} />
       <StyledText className="text-2xl font-bold text-on-surface mt-6 text-center">
         {copy.productOnboarding.welcome.title}
       </StyledText>
@@ -213,7 +222,7 @@ export default function AddProductScreen() {
           ) : (
             <StyledView className="items-center">
               <StyledView className="w-16 h-16 rounded-full bg-surface-container items-center justify-center mb-4">
-                <MaterialIcons name="add-a-photo" size={32} color={colors.primary} />
+                <CameraPlus size={32} color={colors.primary} />
               </StyledView>
               <StyledText className="text-on-surface font-medium">
                 {copy.productOnboarding.photo.addPhoto}
@@ -308,7 +317,7 @@ export default function AddProductScreen() {
   const renderReviewStep = () => (
     <ScrollView contentContainerStyle={{ padding: 24, flexGrow: 1 }} className="flex-1">
       <StyledView className="flex-1 items-center justify-center">
-        <MaterialIcons name="check-circle" size={80} color={colors.primary} />
+        <CheckCircle size={80} color={colors.primary} />
         <StyledText className="text-2xl font-bold text-on-surface mt-6 text-center">
           {copy.productOnboarding.review.title}
         </StyledText>
@@ -366,9 +375,9 @@ export default function AddProductScreen() {
               onPress={() => router.back()}
               className="w-10 h-10 items-center justify-center rounded-full bg-surface-container active:scale-95"
             >
-              <MaterialIcons name="arrow-back" size={22} color={colors.onSurface} />
+              <ArrowLeft size={22} color={colors.onSurface} />
             </StyledTouchableOpacity>
-            <StyledText className="flex-1 text-xl font-bold text-on-surface tracking-tight ml-2">
+            <StyledText className="flex-1 text-h2 font-bold text-on-surface ml-2">
               {isEditMode ? 'Edit Product' : copy.addProduct.title}
             </StyledText>
           </StyledView>
@@ -394,7 +403,7 @@ export default function AddProductScreen() {
                   />
                 ) : (
                   <StyledView className="items-center gap-2">
-                    <MaterialIcons name="add-a-photo" size={28} color={colors.primary} />
+                    <CameraPlus size={28} color={colors.primary} />
                     <StyledText className="text-sm text-on-surface-variant font-medium">
                       {copy.addProduct.imagePlaceholder}
                     </StyledText>
@@ -523,9 +532,9 @@ export default function AddProductScreen() {
           onPress={handleBack}
           className="w-10 h-10 items-center justify-center rounded-full bg-surface-container active:scale-95"
         >
-          <MaterialIcons name="arrow-back" size={22} color={colors.onSurface} />
+          <ArrowLeft size={22} color={colors.onSurface} />
         </StyledTouchableOpacity>
-        <StyledText className="flex-1 text-xl font-bold text-on-surface tracking-tight ml-2">
+        <StyledText className="flex-1 text-h2 font-bold text-on-surface ml-2">
           {currentStep !== 'welcome' && currentStep !== 'review' ? getStepTitle() : ''}
         </StyledText>
       </StyledView>
@@ -538,13 +547,12 @@ export default function AddProductScreen() {
 
       {currentStep !== 'welcome' && (
         <StyledView
-          className="px-4 pt-3"
+          className="px-4 py-3 shadow-lg z-10"
           style={{
             position: 'absolute',
-            bottom: insets.bottom + TAB_BAR_OFFSET,
+            bottom: TAB_BAR_OFFSET,
             left: 0,
             right: 0,
-            paddingBottom: 8,
             backgroundColor: colors.surface,
             borderTopWidth: 1,
             borderTopColor: colors.outlineVariant + '30',

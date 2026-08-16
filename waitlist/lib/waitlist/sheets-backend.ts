@@ -47,7 +47,10 @@ function loadCredentials(): { clientEmail: string; privateKey: string } {
       "GOOGLE_SERVICE_ACCOUNT_JSON is missing client_email or private_key."
     );
   }
-  return { clientEmail: obj.client_email, privateKey: obj.private_key };
+  return {
+    clientEmail: obj.client_email,
+    privateKey: obj.private_key.replace(/\\n/g, "\n"),
+  };
 }
 
 let clientPromise: Promise<sheets_v4.Sheets> | null = null;

@@ -3,7 +3,6 @@ import {
   View,
   Text,
   ScrollView,
-  ActivityIndicator,
   TouchableOpacity,
   RefreshControl,
   Share,
@@ -11,18 +10,27 @@ import {
   Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { MaterialIcons } from "@expo/vector-icons";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CaretDown,
+  Minus,
+  Plus,
+  Share as ShareIcon,
+  Sparkle,
+  TrendUp,
+  Warning,
+} from "phosphor-react-native";
 import { withUniwind } from "uniwind";
+import { MaterialIcons } from "@expo/vector-icons";
 import { useMba, type MBARule } from "@/hooks/useMba";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useToast } from "@/components/ui/toast";
 import { Container } from "@/components/container";
 import { Surface } from "@/components/ui/surface";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const StyledView = withUniwind(View);
-const StyledText = withUniwind(Text);
-const StyledTouchableOpacity = withUniwind(TouchableOpacity);
-const StyledMaterialIcons = withUniwind(MaterialIcons);
+import { StyledView, StyledText, StyledTouchableOpacity } from "@/components/ui/styled";
 
 type Tab = "recommendations" | "rules";
 
@@ -40,13 +48,10 @@ export default function MBAScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const loadData = useCallback(() => {
-    // Round to 2 decimal places to prevent float precision issues
     const support = Math.round(minSupport * 100) / 100;
     const confidence = Math.round(minConfidence * 100) / 100;
-    
-    fadeAnim.setValue(0);
     fetchRules(support, confidence);
-  }, [minSupport, minConfidence, fetchRules, fadeAnim]);
+  }, [minSupport, minConfidence, fetchRules]);
 
   useEffect(() => {
     loadData();
@@ -54,13 +59,20 @@ export default function MBAScreen() {
 
   useEffect(() => {
     if (!isLoading) {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }).start();
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
-  }, [isLoading]);
+  }, [isLoading, fadeAnim]);
 
   const adjustSupport = (amount: number) => {
     setMinSupport(prev => {
@@ -112,17 +124,18 @@ export default function MBAScreen() {
   return (
     <Container isScrollable={false} withTabBar={false} withSafeAreaTop className="bg-background flex-1">
       {/* Header */}
-      <StyledView className="bg-surface-container-lowest h-14 px-margin flex-row justify-between items-center z-50 border-b border-outline-variant/30">
+      <StyledView className="bg-surface-container-lowest h-14 px-margin flex-row justify-between items-center z-[var(--z-header)] border-b border-outline-variant/30">
         <StyledView className="flex-row items-center gap-2 flex-1 mr-2">
           <StyledTouchableOpacity
             onPress={() => router.back()}
             className="w-10 h-10 items-center justify-center"
+            accessibilityLabel="Go back"
           >
-            <StyledMaterialIcons name="arrow-back" size={24} className="text-on-surface" />
+            <MaterialIcons name="arrow-back" size={24} className="text-on-surface" />
           </StyledTouchableOpacity>
-          <StyledText 
-            className="text-h3 font-bold text-on-surface flex-1" 
-            numberOfLines={1} 
+          <StyledText
+            className="font-h3 text-on-surface flex-1 text-balance"
+            numberOfLines={1}
             ellipsizeMode="tail"
           >
             Smart Recommendations
@@ -133,27 +146,27 @@ export default function MBAScreen() {
           onPress={handleExportCSV}
           className="flex-row items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full"
         >
-          <StyledMaterialIcons name="ios-share" size={16} className="text-primary" />
+          <MaterialIcons name="ios-share" size={16} className="text-primary" />
           <StyledText className="text-primary font-semibold text-xs">Export CSV</StyledText>
         </StyledTouchableOpacity>
       </StyledView>
 
       {/* Threshold Selectors */}
       <StyledView className="p-margin bg-surface-container-lowest border-b border-outline-variant/30">
-        <StyledText className="text-xs font-bold text-on-surface-variant mb-3 uppercase tracking-wider">
+        <StyledText className="font-label-caps text-on-surface-variant mb-3">
           Analysis Configuration
         </StyledText>
         
         <StyledView className={screenWidth < 360 ? "flex-col gap-3" : "flex-row gap-4"}>
           {/* Support Threshold control */}
           <StyledView className="flex-1 bg-surface-container-low rounded-xl p-3 border border-outline-variant/20">
-            <StyledText className="text-xs text-on-surface-variant mb-1.5 font-medium">Min Support</StyledText>
+            <StyledText className="font-label text-on-surface-variant mb-1.5">Min Support</StyledText>
             <StyledView className="flex-row items-center justify-between">
               <StyledTouchableOpacity
                 onPress={() => adjustSupport(-0.05)}
                 className="w-8 h-8 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant/30"
               >
-                <StyledMaterialIcons name="remove" size={16} className="text-on-surface" />
+                <MaterialIcons name="remove" size={16} className="text-on-surface" />
               </StyledTouchableOpacity>
               <StyledText className="font-bold text-on-surface text-lg">
                 {(minSupport * 100).toFixed(0)}%
@@ -162,20 +175,20 @@ export default function MBAScreen() {
                 onPress={() => adjustSupport(0.05)}
                 className="w-8 h-8 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant/30"
               >
-                <StyledMaterialIcons name="add" size={16} className="text-on-surface" />
+                <MaterialIcons name="add" size={16} className="text-on-surface" />
               </StyledTouchableOpacity>
             </StyledView>
           </StyledView>
 
           {/* Confidence Threshold control */}
           <StyledView className="flex-1 bg-surface-container-low rounded-xl p-3 border border-outline-variant/20">
-            <StyledText className="text-xs text-on-surface-variant mb-1.5 font-medium">Min Confidence</StyledText>
+            <StyledText className="font-label text-on-surface-variant mb-1.5">Min Confidence</StyledText>
             <StyledView className="flex-row items-center justify-between">
               <StyledTouchableOpacity
                 onPress={() => adjustConfidence(-0.05)}
                 className="w-8 h-8 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant/30"
               >
-                <StyledMaterialIcons name="remove" size={16} className="text-on-surface" />
+                <MaterialIcons name="remove" size={16} className="text-on-surface" />
               </StyledTouchableOpacity>
               <StyledText className="font-bold text-on-surface text-lg">
                 {(minConfidence * 100).toFixed(0)}%
@@ -184,7 +197,7 @@ export default function MBAScreen() {
                 onPress={() => adjustConfidence(0.05)}
                 className="w-8 h-8 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant/30"
               >
-                <StyledMaterialIcons name="add" size={16} className="text-on-surface" />
+                <MaterialIcons name="add" size={16} className="text-on-surface" />
               </StyledTouchableOpacity>
             </StyledView>
           </StyledView>
@@ -200,7 +213,7 @@ export default function MBAScreen() {
           }`}
         >
           <StyledText
-            className={`font-semibold text-sm ${
+            className={`font-label-bold ${
               activeTab === "recommendations" ? "text-on-primary" : "text-on-surface-variant"
             }`}
           >
@@ -215,7 +228,7 @@ export default function MBAScreen() {
           }`}
         >
           <StyledText
-            className={`font-semibold text-sm ${
+            className={`font-label-bold ${
               activeTab === "rules" ? "text-on-primary" : "text-on-surface-variant"
             }`}
           >
@@ -236,18 +249,20 @@ export default function MBAScreen() {
           <StyledView className="mt-20 items-center justify-center gap-4">
             <Animated.View style={{ opacity: fadeAnim }}>
               <StyledView className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center">
-                <StyledMaterialIcons name="auto-awesome" size={32} className="text-primary" />
+                <MaterialIcons name="auto-awesome" size={32} className="text-primary" />
               </StyledView>
             </Animated.View>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <StyledText className="text-on-surface-variant text-body-sm font-medium text-center px-10">
+            <StyledView className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center mt-4">
+              <StyledView className="w-10 h-10 rounded-full bg-primary/20 animate-pulse" />
+            </StyledView>
+            <StyledText className="text-on-surface-variant text-body-sm text-center px-10">
               Analyzing purchase patterns...
             </StyledText>
           </StyledView>
         ) : error ? (
           <StyledView className="items-center p-6 bg-surface-container-low rounded-xl border border-outline-variant mt-10">
-            <StyledMaterialIcons name="error-outline" size={40} className="text-error" />
-            <StyledText className="text-error text-center mt-3 mb-4 text-body-lg font-semibold">
+            <MaterialIcons name="error-outline" size={40} className="text-error" />
+            <StyledText className="text-error text-center mt-3 mb-4 font-body-lg font-semibold">
               {error}
             </StyledText>
             <StyledTouchableOpacity className="px-6 py-3 bg-primary rounded-xl" onPress={loadData}>
@@ -256,11 +271,11 @@ export default function MBAScreen() {
           </StyledView>
         ) : rules.length === 0 ? (
           <StyledView className="p-8 items-center bg-surface-container-lowest rounded-2xl border border-dashed border-outline-variant mt-6">
-            <StyledMaterialIcons name="auto-awesome" size={48} className="text-on-surface-variant opacity-40" />
-            <StyledText className="text-on-surface text-body-lg font-bold mt-4 mb-2 text-center">
+            <MaterialIcons name="auto-awesome" size={48} className="text-on-surface-variant opacity-40" />
+            <StyledText className="text-on-surface font-body-lg font-bold mt-4 mb-2 text-center">
               No product patterns found
             </StyledText>
-            <StyledText className="text-on-surface-variant text-body-sm text-center mb-6 leading-5">
+            <StyledText className="text-on-surface-variant font-body-sm text-center mb-6 leading-5">
               We couldn't find any associations above the current settings. Try lowering support or confidence to discover weaker correlations.
             </StyledText>
             <StyledTouchableOpacity
@@ -276,33 +291,33 @@ export default function MBAScreen() {
         ) : activeTab === "recommendations" ? (
           /* Simplified Recommendations Card List */
           <StyledView className="gap-3">
-            <StyledText className="text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-wider">
+            <StyledText className="font-label-caps text-on-surface-variant mb-1">
               Plain Business Insights ({rules.length})
             </StyledText>
             {rules.map((rule, idx) => (
               <Surface key={idx} variant="primary" className="rounded-2xl p-4 border border-outline-variant/10 flex-row gap-3">
                 <StyledView className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center">
-                  <StyledMaterialIcons name="auto-awesome" size={20} className="text-primary" />
+                  <MaterialIcons name="auto-awesome" size={20} className="text-primary" />
                 </StyledView>
                 <StyledView className="flex-1">
-                  <StyledText className="text-body-lg font-black text-on-surface mb-2 leading-6">
+                  <StyledText className="font-body-lg font-black text-on-surface mb-2 leading-6">
                     Customers who buy <StyledText className="text-primary">{rule.antecedentNames.join(" & ")}</StyledText> often also buy <StyledText className="text-secondary">{rule.consequentNames.join(" & ")}</StyledText>.
                   </StyledText>
                   
                   <StyledView className="flex-row items-center gap-4 mt-2 pt-2.5 border-t border-outline-variant/10">
-                    <StyledView>
-                      <StyledText className="text-[10px] text-on-surface-variant uppercase font-bold tracking-wider">Likelihood</StyledText>
-                      <StyledText className="text-body-sm font-semibold text-primary mt-0.5">
-                        {(rule.confidence * 100).toFixed(0)}% Certainty
-                      </StyledText>
-                    </StyledView>
-                    
-                    <StyledView>
-                      <StyledText className="text-[10px] text-on-surface-variant uppercase font-bold tracking-wider">Strength</StyledText>
-                      <StyledText className="text-body-sm font-semibold text-on-surface mt-0.5">
-                        {getLiftText(rule.lift)} ({rule.lift.toFixed(1)}x)
-                      </StyledText>
-                    </StyledView>
+                     <StyledView>
+                       <StyledText className="text-[10px] text-on-surface-variant uppercase font-bold">Likelihood</StyledText>
+                       <StyledText className="text-body-sm font-semibold text-primary mt-0.5 tabular-nums">
+                         {(rule.confidence * 100).toFixed(0)}% Certainty
+                       </StyledText>
+                     </StyledView>
+
+                     <StyledView>
+                       <StyledText className="text-[10px] text-on-surface-variant uppercase font-bold">Strength</StyledText>
+                       <StyledText className="text-body-sm font-semibold text-on-surface mt-0.5 tabular-nums">
+                         {getLiftText(rule.lift)} ({rule.lift.toFixed(1)}x)
+                       </StyledText>
+                     </StyledView>
                   </StyledView>
                 </StyledView>
               </Surface>
@@ -311,7 +326,7 @@ export default function MBAScreen() {
         ) : (
           /* Technical Association Rules Detail Table */
           <StyledView className="gap-3">
-            <StyledText className="text-xs font-bold text-on-surface-variant mb-1 uppercase tracking-wider">
+            <StyledText className="font-label-caps text-on-surface-variant mb-1">
               Technical Rule Rankings ({rules.length})
             </StyledText>
             {rules.map((rule, idx) => (
@@ -321,7 +336,7 @@ export default function MBAScreen() {
                     <StyledText className="text-[10px] font-bold text-primary">RULE #{idx + 1}</StyledText>
                   </StyledView>
                   <StyledView className="flex-row items-center gap-1">
-                    <StyledMaterialIcons name="trending-up" size={14} className="text-secondary" />
+                    <MaterialIcons name="trending-up" size={14} className="text-secondary" />
                     <StyledText className="text-xs font-semibold text-on-surface-variant">
                       Lift: <StyledText className="text-on-surface font-bold">{rule.lift.toFixed(2)}</StyledText>
                     </StyledText>
@@ -336,7 +351,7 @@ export default function MBAScreen() {
                       <StyledText className={`text-body-sm font-bold text-on-surface ${screenWidth < 380 ? "text-center" : ""}`}>{rule.antecedentNames.join(" + ")}</StyledText>
                     </StyledView>
                     
-                    <StyledMaterialIcons 
+                    <MaterialIcons 
                       name={screenWidth < 380 ? "arrow-downward" : "arrow-forward"} 
                       size={18} 
                       className="text-primary" 

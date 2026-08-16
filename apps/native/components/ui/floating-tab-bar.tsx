@@ -110,7 +110,7 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
               />
               <Text
                 style={{
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: isFocused ? '700' : '500',
                   color: isFocused ? colors.tabActiveIcon : colors.tabInactiveIcon,
                 }}

@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Space_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
 
-const grotesk = Space_Grotesk({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-grotesk",
+  variable: "--font-jakarta",
   display: "swap",
 });
 
-const spaceMono = Space_Mono({
+const beVietnam = Be_Vietnam_Pro({
   subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-spacemono",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-be-vietnam",
   display: "swap",
 });
 
@@ -33,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${grotesk.variable} ${spaceMono.variable}`}>
+    <html lang="en" className={`${jakarta.variable} ${beVietnam.variable}`}>
       <body className="font-display antialiased">{children}</body>
     </html>
   );

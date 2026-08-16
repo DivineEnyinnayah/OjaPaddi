@@ -32,10 +32,14 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isInitialized: boolean;
+  /** True when the server rejected our tokens (invalid/expired session) — drives redirect to sign-in. */
+  sessionExpired: boolean;
   pendingRegistration: RegistrationData | null;
   pendingOnboarding: OnboardingData | null;
   setUser: (user: User | null, accessToken: string | null, refreshToken: string | null) => Promise<void>;
   clearAuth: () => Promise<void>;
+  /** Clears auth and marks the session as expired by the server (drives redirect to sign-in). */
+  expireSession: () => Promise<void>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
   setPendingRegistration: (data: RegistrationData | null) => void;
@@ -51,6 +55,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   accessToken: null,
   refreshToken: null,
   isInitialized: false,
+  sessionExpired: false,
   pendingRegistration: null,
   pendingOnboarding: null,
   setUser: async (user, accessToken, refreshToken) => {
@@ -61,12 +66,17 @@ export const useAuthStore = create<AuthState>((set) => ({
       await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
       await secureStorage.deleteItem(USER_KEY);
     }
-    set({ user, accessToken, refreshToken, isInitialized: true });
+    set({ user, accessToken, refreshToken, isInitialized: true, sessionExpired: false });
   },
   clearAuth: async () => {
     await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
     await secureStorage.deleteItem(USER_KEY);
     set({ user: null, accessToken: null, refreshToken: null, isInitialized: true });
+  },
+  expireSession: async () => {
+    await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
+    await secureStorage.deleteItem(USER_KEY);
+    set({ user: null, accessToken: null, refreshToken: null, sessionExpired: true, isInitialized: true });
   },
   logout: async () => {
     try {
@@ -83,7 +93,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
     await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
     await secureStorage.deleteItem(USER_KEY);
-    set({ user: null, accessToken: null, refreshToken: null, pendingRegistration: null, pendingOnboarding: null, isInitialized: true });
+    set({ user: null, accessToken: null, refreshToken: null, pendingRegistration: null, pendingOnboarding: null, sessionExpired: false, isInitialized: true });
   },
   initialize: async () => {
     if (env.IS_DEV_MODE) {
@@ -91,6 +101,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         user: MOCK_USER,
         accessToken: 'mock-access-token-dev',
         refreshToken: 'mock-refresh-token-dev',
+        sessionExpired: false,
         isInitialized: true,
       });
       return;
@@ -110,6 +121,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({
       user,
       refreshToken,
+      sessionExpired: false,
       isInitialized: true,
     });
 
@@ -130,19 +142,20 @@ export const useAuthStore = create<AuthState>((set) => ({
               user: userData,
               accessToken: access_token,
               refreshToken: refresh_token,
+              sessionExpired: false,
             });
           }
         } else {
           await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
           await secureStorage.deleteItem(USER_KEY);
-          set({ user: null, accessToken: null, refreshToken: null });
+          set({ user: null, accessToken: null, refreshToken: null, sessionExpired: true });
         }
       } catch (error) {
         console.error("Failed to refresh token during initialization", error);
         if (error instanceof TypeError && error.message.includes('Network request failed')) {
-          await secureStorage.deleteItem(REFRESH_TOKEN_KEY);
-          await secureStorage.deleteItem(USER_KEY);
-          set({ user: null, accessToken: null, refreshToken: null });
+          // Keep stored tokens — an offline cold start shouldn't destroy the session.
+          // Try again on next launch.
+          set({ user: null, accessToken: null, refreshToken: null, sessionExpired: false });
         }
       }
     }

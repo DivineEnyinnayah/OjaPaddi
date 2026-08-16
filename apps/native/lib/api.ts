@@ -3,6 +3,7 @@ import * as Network from 'expo-network';
 import { useAuthStore } from '../stores/authStore';
 import { env } from './env';
 import { getMockResponse, getMockFormDataResponse } from './mockApi';
+import { ERROR_MESSAGES } from '@/constants/errorMessages';
 
 const BASE_URL = env.SERVER_URL;
 
@@ -217,25 +218,33 @@ async function executeRequest<T>(
       });
 
       // Handle 401 Unauthorized - attempt token refresh (only on first attempt)
-      if (response.status === 401 && refreshToken && attempt === 0) {
-        const refreshed = await handleTokenRefresh(endpoint, options, defaultHeaders);
-        if (refreshed) {
-          // Retry with new token
-          const newAccessToken = useAuthStore.getState().accessToken;
-          const retryHeaders = {
-            ...defaultHeaders,
-            ...options.headers,
-            ...(newAccessToken ? { Authorization: `Bearer ${newAccessToken}` } : {}),
-          };
-          const retryResponse = await fetch(url, { ...options, headers: retryHeaders });
-          lastResponse = retryResponse;
+      if (response.status === 401 && attempt === 0 && !isAuthEndpoint(endpoint)) {
+        if (refreshToken) {
+          const refreshed = await handleTokenRefresh();
+          if (refreshed) {
+            // Retry with new token
+            const newAccessToken = useAuthStore.getState().accessToken;
+            const retryHeaders = {
+              ...defaultHeaders,
+              ...options.headers,
+              ...(newAccessToken ? { Authorization: `Bearer ${newAccessToken}` } : {}),
+            };
+            const retryResponse = await fetch(url, { ...options, headers: retryHeaders });
+            lastResponse = retryResponse;
 
-          if (isRetryableError(retryResponse.status) && attempt < maxRetries) {
-            continue; // Retry on 5xx
+            if (isRetryableError(retryResponse.status) && attempt < maxRetries) {
+              continue; // Retry on 5xx
+            }
+
+            return await parseResponse<T>(retryResponse);
           }
-
-          return await parseResponse<T>(retryResponse);
+          // Refresh failed — session is dead; expireSession already fired inside handleTokenRefresh.
+          return sessionExpiredResult();
         }
+
+        // No refresh token to recover the session with — it's unrecoverable.
+        await useAuthStore.getState().expireSession();
+        return sessionExpiredResult();
       }
 
       lastResponse = response;
@@ -297,36 +306,58 @@ async function executeRequest<T>(
 
 // ── Token Refresh Helper ──────────────────────────────────────────
 
-async function handleTokenRefresh(
-  _endpoint: string,
-  _options: RequestInit,
-  _defaultHeaders: Record<string, string>
-): Promise<boolean> {
+let refreshInFlight: Promise<boolean> | null = null;
+
+function isAuthEndpoint(endpoint: string): boolean {
+  // Auth endpoints are pre-auth by design — a 401 there (e.g. bad login
+  // credentials) means the request failed, not that the session expired.
+  return endpoint.startsWith('/auth/');
+}
+
+async function handleTokenRefresh(): Promise<boolean> {
   const { refreshToken } = useAuthStore.getState();
   if (!refreshToken) return false;
 
-  try {
-    const refreshResponse = await fetch(`${BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
+  // Dedupe concurrent refreshes: many requests can 401 at once (e.g.
+  // dashboard), and they should share a single refresh call.
+  if (refreshInFlight) return refreshInFlight;
 
-    if (refreshResponse.ok) {
-      const result = await refreshResponse.json();
-      if (result.success && result.data) {
-        const { user, access_token, refresh_token } = result.data;
-        await useAuthStore.getState().setUser(user, access_token, refresh_token);
-        return true;
+  refreshInFlight = (async () => {
+    try {
+      const refreshResponse = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (refreshResponse.ok) {
+        const result = await refreshResponse.json();
+        if (result.success && result.data) {
+          const { user, access_token, refresh_token } = result.data;
+          await useAuthStore.getState().setUser(user, access_token, refresh_token);
+          return true;
+        }
       }
-    } else {
-      await useAuthStore.getState().clearAuth();
-    }
-  } catch (error) {
-    console.error('Token refresh error during apiRequest:', error);
-  }
 
-  return false;
+      // Server rejected the refresh token — session is genuinely dead.
+      await useAuthStore.getState().expireSession();
+      return false;
+    } catch (error) {
+      console.error('Token refresh error during apiRequest:', error);
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
+}
+
+function sessionExpiredResult(): { success: false; error: { code: string; message: string } } {
+  return {
+    success: false,
+    error: { code: 'SESSION_EXPIRED', message: ERROR_MESSAGES.SESSION_EXPIRED },
+  };
 }
 
 // ── Response Parser ───────────────────────────────────────────────
@@ -441,27 +472,35 @@ export async function apiFormDataRequest<T>(
       });
 
       // Handle 401 Unauthorized - attempt token refresh (only on first attempt)
-      if (response.status === 401 && refreshToken && attempt === 0) {
-        const refreshed = await handleTokenRefresh(endpoint, { method }, headers);
-        if (refreshed) {
-          const newAccessToken = useAuthStore.getState().accessToken;
-          const retryHeaders = {
-            ...headers,
-            ...(newAccessToken ? { Authorization: `Bearer ${newAccessToken}` } : {}),
-          };
-          response = await fetch(url, {
-            method,
-            headers: retryHeaders,
-            body: formData,
-          });
-          lastResponse = response;
+      if (response.status === 401 && attempt === 0 && !isAuthEndpoint(endpoint)) {
+        if (refreshToken) {
+          const refreshed = await handleTokenRefresh();
+          if (refreshed) {
+            const newAccessToken = useAuthStore.getState().accessToken;
+            const retryHeaders = {
+              ...headers,
+              ...(newAccessToken ? { Authorization: `Bearer ${newAccessToken}` } : {}),
+            };
+            response = await fetch(url, {
+              method,
+              headers: retryHeaders,
+              body: formData,
+            });
+            lastResponse = response;
 
-          if (isRetryableError(response.status) && attempt < retries) {
-            continue;
+            if (isRetryableError(response.status) && attempt < retries) {
+              continue;
+            }
+
+            return await parseResponse<T>(response);
           }
-
-          return await parseResponse<T>(response);
+          // Refresh failed — session is dead; expireSession already fired inside handleTokenRefresh.
+          return sessionExpiredResult();
         }
+
+        // No refresh token to recover the session with — it's unrecoverable.
+        await useAuthStore.getState().expireSession();
+        return sessionExpiredResult();
       }
 
       lastResponse = response;

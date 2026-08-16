@@ -45,7 +45,7 @@ const STEPS = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen paper-grain">
+    <div className="min-h-screen">
       {/* Header */}
       <header className="relative z-20 mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
         <Logo />
@@ -132,7 +132,7 @@ export default function Home() {
               {STEPS.map((s) => (
                 <li
                   key={s.n}
-                  className="rounded-xl border border-paper/15 bg-paper/5 p-6 backdrop-blur-sm transition hover:border-marigold-400/50 hover:bg-paper/10"
+                  className="rounded-lg border border-paper/15 bg-paper/5 p-6 backdrop-blur-sm transition hover:border-marigold-400/50 hover:bg-paper/10"
                 >
                   <span className="font-mono text-4xl font-bold text-marigold-400">#{s.n}</span>
                   <h3 className="mt-4 font-display text-lg font-bold text-paper">{s.title}</h3>
@@ -153,7 +153,7 @@ export default function Home() {
           </p>
           <a
             href="#join"
-            className="mt-9 inline-flex items-center gap-2 rounded bg-paddi-800 px-8 py-4 font-mono text-[13px] font-bold uppercase tracking-widest text-paper shadow-[4px_4px_0_rgba(239,184,78,0.9)] transition hover:translate-y-0.5 hover:shadow-[2px_2px_0_rgba(239,184,78,0.9)] active:scale-[0.96]"
+            className="mt-9 inline-flex items-center gap-2 rounded-lg bg-paddi-800 px-8 py-4 font-mono text-[13px] font-bold uppercase tracking-widest text-paper shadow-[4px_4px_0_rgba(240,128,128,0.9)] transition hover:translate-y-0.5 hover:shadow-[2px_2px_0_rgba(240,128,128,0.9)] active:scale-[0.96]"
           >
             Get early access ↑
           </a>

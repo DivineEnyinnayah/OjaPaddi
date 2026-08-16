@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { ArrowLeft, Camera, CaretUp, CaretDown, CheckCircle } from 'phosphor-react-native';
 import { withUniwind } from 'uniwind';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
@@ -16,7 +16,6 @@ const StyledText = withUniwind(Text);
 const StyledTouchableOpacity = withUniwind(TouchableOpacity);
 const StyledTextInput = withUniwind(TextInput);
 const StyledImage = withUniwind(Image);
-const StyledMaterialIcons = withUniwind(MaterialIcons);
 
 const BUSINESS_CATEGORIES = [
   'Clothing & Fashion',
@@ -148,7 +147,7 @@ export default function BusinessProfileScreen() {
     options?: { keyboardType?: 'default' | 'email-address' | 'phone-pad'; multiline?: boolean }
   ) => (
     <StyledView className="mb-4">
-      <StyledText className="text-label-caps font-semibold text-on-surface-variant mb-1.5">
+      <StyledText className="font-label-bold text-on-surface-variant mb-1.5">
         {label}
       </StyledText>
       <StyledTextInput
@@ -166,15 +165,15 @@ export default function BusinessProfileScreen() {
   );
 
   return (
-    <Container isScrollable={false} className="bg-background pt-12">
+    <Container isScrollable={false} className="bg-background">
       <StyledView className="flex-row items-center px-6 py-4 mb-2">
         <StyledTouchableOpacity
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-primary-container/20 justify-center items-center mr-4"
         >
-          <StyledMaterialIcons name="arrow-back" size={20} color={colors.primary} />
+          <ArrowLeft size={20} color={colors.primary} />
         </StyledTouchableOpacity>
-        <StyledText className="text-3xl font-black text-on-surface tracking-tight">
+        <StyledText className="font-h2 font-black text-on-surface text-balance">
           {copy.businessProfile.title}
         </StyledText>
       </StyledView>
@@ -198,24 +197,24 @@ export default function BusinessProfileScreen() {
               />
             ) : (
               <StyledView className="w-24 h-24 rounded-full bg-primary-container/15 justify-center items-center mb-3">
-                <StyledMaterialIcons name="camera-alt" size={32} color={colors.primary} />
+                <Camera size={32} color={colors.primary} />
               </StyledView>
             )}
-            <StyledText className="text-label-caps font-semibold text-primary">
+            <StyledText className="font-label-bold text-primary">
               {copy.businessProfile.logoHint}
             </StyledText>
           </StyledTouchableOpacity>
         </Surface>
 
         {/* Basic Info */}
-        <StyledText className="text-body font-bold text-on-surface mb-3">Basic Information</StyledText>
+        <StyledText className="font-h3 text-on-surface mb-3">Basic Information</StyledText>
         <Surface variant="primary" className="p-5 mb-6 rounded-2xl">
           {renderInputField(copy.businessProfile.nameLabel, form.name, copy.businessProfile.namePlaceholder, 'name')}
           {renderInputField(copy.businessProfile.descriptionLabel, form.description, copy.businessProfile.descriptionPlaceholder, 'description', { multiline: true })}
         </Surface>
 
         {/* Category */}
-        <StyledText className="text-body font-bold text-on-surface mb-3">Category</StyledText>
+        <StyledText className="font-h3 text-on-surface mb-3">Category</StyledText>
         <Surface variant="primary" className="p-5 mb-6 rounded-2xl">
           <StyledTouchableOpacity
             className="flex-row items-center justify-between bg-surface-container-highest rounded-xl px-4 py-3.5"
@@ -224,11 +223,11 @@ export default function BusinessProfileScreen() {
             <StyledText className={`text-body-lg ${form.category ? 'text-on-surface' : 'text-outline'}`}>
               {form.category || copy.businessProfile.categoryPlaceholder}
             </StyledText>
-            <StyledMaterialIcons
-              name={showCategoryPicker ? 'expand-less' : 'expand-more'}
-              size={24}
-              color={colors.outline}
-            />
+            {showCategoryPicker ? (
+              <CaretUp size={24} color={colors.outline} />
+            ) : (
+              <CaretDown size={24} color={colors.outline} />
+            )}
           </StyledTouchableOpacity>
           {showCategoryPicker && (
             <StyledView className="mt-2 bg-surface-container-highest rounded-xl overflow-hidden">
@@ -251,7 +250,7 @@ export default function BusinessProfileScreen() {
         </Surface>
 
         {/* Contact Info */}
-        <StyledText className="text-body font-bold text-on-surface mb-3">Contact Information</StyledText>
+        <StyledText className="font-h3 text-on-surface mb-3">Contact Information</StyledText>
         <Surface variant="primary" className="p-5 mb-6 rounded-2xl">
           {renderInputField(copy.businessProfile.phoneLabel, form.phone, copy.businessProfile.phonePlaceholder, 'phone', { keyboardType: 'phone-pad' })}
           {renderInputField(copy.businessProfile.emailLabel, form.email, copy.businessProfile.emailPlaceholder, 'email', { keyboardType: 'email-address' })}
@@ -259,7 +258,7 @@ export default function BusinessProfileScreen() {
         </Surface>
 
         {/* Location */}
-        <StyledText className="text-body font-bold text-on-surface mb-3">Location</StyledText>
+        <StyledText className="font-h3 text-on-surface mb-3">Location</StyledText>
         <Surface variant="primary" className="p-5 mb-8 rounded-2xl">
           {renderInputField(copy.businessProfile.addressLabel, form.address, copy.businessProfile.addressPlaceholder, 'address')}
           {renderInputField(copy.businessProfile.cityLabel, form.city, copy.businessProfile.cityPlaceholder, 'city')}
@@ -273,10 +272,10 @@ export default function BusinessProfileScreen() {
           disabled={isSaving || !isDirty}
         >
           {isSaving ? (
-            <ActivityIndicator color={colors.onPrimary} />
+            <StyledView className="w-5 h-5 rounded-full bg-on-primary/30 animate-pulse" />
           ) : saveSuccess ? (
             <StyledView className="flex-row items-center">
-              <StyledMaterialIcons name="check-circle" size={20} color={colors.onPrimary} />
+              <CheckCircle size={20} color={colors.onPrimary} />
               <StyledText className="text-on-primary font-bold text-lg ml-2">
                 {copy.businessProfile.saved}
               </StyledText>

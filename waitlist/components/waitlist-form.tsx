@@ -81,7 +81,7 @@ export function WaitlistForm() {
   if (status === "success") {
     return (
       <div
-        className="relative overflow-hidden rounded-2xl border-2 border-paddi-700 bg-white p-6 font-mono text-[13px] leading-relaxed text-ink shadow-[6px_6px_0_rgba(13,68,41,0.15)]"
+        className="relative overflow-hidden rounded-lg border-2 border-paddi-700 bg-white p-6 font-mono text-[13px] leading-relaxed text-ink shadow-[6px_6px_0_rgba(0,82,50,0.18)]"
         role="status"
         aria-live="polite"
       >
@@ -98,7 +98,7 @@ export function WaitlistForm() {
         </div>
         <div className="perf my-4" />
         <div className="relative mx-auto mt-4 w-fit">
-          <span className="block rounded border-2 border-paddi-700 px-4 py-1 text-center text-sm font-bold tracking-[0.3em] text-paddi-700 stamp-anim">
+          <span className="block rounded-lg border-2 border-paddi-700 px-4 py-1 text-center text-sm font-bold tracking-[0.3em] text-paddi-700 stamp-anim">
             VALID
           </span>
         </div>
@@ -112,7 +112,7 @@ export function WaitlistForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="relative overflow-hidden rounded-2xl border border-ink/15 bg-white p-6 font-mono text-[13px] text-ink shadow-[6px_6px_0_rgba(13,68,41,0.12)]"
+      className="relative overflow-hidden rounded-lg border border-ink/15 bg-white p-6 font-mono text-[13px] text-ink shadow-[6px_6px_0_rgba(0,82,50,0.15)]"
       aria-label="Get early access to OjaPaddi"
     >
       <p className="text-center text-xs font-bold tracking-[0.25em] text-paddi-800">
@@ -141,7 +141,7 @@ export function WaitlistForm() {
 
       {status === "error" && (
         <div
-          className="mb-3 rounded border border-red-300 bg-red-50 px-3 py-2 text-[11px] text-red-800"
+          className="mb-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-[11px] text-red-800"
           role="alert"
         >
           {errorMessage}
@@ -162,7 +162,7 @@ export function WaitlistForm() {
             maxLength={100}
             autoComplete="name"
             placeholder="Mama Tope"
-            className="mt-1 w-full rounded border border-ink/20 bg-paper px-3 py-2.5 font-mono text-[13px] text-ink placeholder:text-ink/30 focus:border-paddi-700 focus:outline-none focus:ring-2 focus:ring-paddi-700/20"
+            className="mt-1 w-full rounded-lg border border-ink/20 bg-paper px-3 py-2.5 font-mono text-[13px] text-ink placeholder:text-ink/30 focus:border-paddi-700 focus:outline-none focus:ring-2 focus:ring-paddi-700/20"
           />
         </div>
         <div>
@@ -176,7 +176,7 @@ export function WaitlistForm() {
             required
             autoComplete="email"
             placeholder="you@example.com"
-            className="mt-1 w-full rounded border border-ink/20 bg-paper px-3 py-2.5 font-mono text-[13px] text-ink placeholder:text-ink/30 focus:border-paddi-700 focus:outline-none focus:ring-2 focus:ring-paddi-700/20"
+            className="mt-1 w-full rounded-lg border border-ink/20 bg-paper px-3 py-2.5 font-mono text-[13px] text-ink placeholder:text-ink/30 focus:border-paddi-700 focus:outline-none focus:ring-2 focus:ring-paddi-700/20"
           />
         </div>
       </div>
@@ -190,7 +190,7 @@ export function WaitlistForm() {
       <button
         type="submit"
         disabled={status === "submitting"}
-        className="mt-5 w-full rounded bg-paddi-800 px-5 py-3.5 font-mono text-[13px] font-bold uppercase tracking-widest text-paper transition hover:bg-paddi-700 active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-70"
+        className="mt-5 w-full rounded-lg bg-paddi-800 px-5 py-3.5 font-mono text-[13px] font-bold uppercase tracking-widest text-paper transition hover:bg-paddi-700 active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-70"
       >
         {status === "submitting" ? "ISSUING…" : "ISSUE RECEIPT →"}
       </button>

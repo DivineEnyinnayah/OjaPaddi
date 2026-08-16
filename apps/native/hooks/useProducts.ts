@@ -27,6 +27,17 @@ export interface ProductsResponse {
   };
 }
 
+export interface ProductInput {
+  name: string;
+  description?: string;
+  sku?: string;
+  category?: string;
+  price: number;
+  costPrice?: number;
+  quantity: number;
+  lowStockThreshold?: number;
+}
+
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
@@ -80,16 +91,7 @@ export function useProducts() {
     }
   };
 
-  const addProduct = async (productData: {
-    name: string;
-    description?: string;
-    sku?: string;
-    category?: string;
-    price: number;
-    costPrice?: number;
-    quantity: number;
-    lowStockThreshold?: number;
-  }) => {
+  const addProduct = async (productData: ProductInput) => {
     setIsLoading(true);
     try {
       const result = await apiRequest<Product>('/products', {
@@ -112,7 +114,7 @@ export function useProducts() {
     }
   };
 
-  const updateProduct = async (productId: string, productData: Partial<Product>) => {
+  const updateProduct = async (productId: string, productData: Partial<ProductInput>) => {
     setIsLoading(true);
     try {
       const result = await apiRequest<Product>(`/products/${productId}`, {

@@ -16,16 +16,16 @@ export function Logo({ dark = false }: { dark?: boolean }) {
           width="29"
           height="29"
           rx="7"
-          fill={dark ? "#0d4429" : "#0d4429"}
+          fill={dark ? "#005232" : "#005232"}
         />
         {/* awning stripes */}
-        <path d="M5 12h22v5H5z" fill="#efb84e" />
-        <path d="M5 17h22v2H5z" fill="#f6f1e7" />
-        <path d="M5 12h4v7H5z" fill="#0d4429" />
-        <path d="M14 12h4v7h-4z" fill="#0d4429" />
-        <path d="M23 12h4v7h-4z" fill="#0d4429" />
+        <path d="M5 12h22v5H5z" fill="#f08080" />
+        <path d="M5 17h22v2H5z" fill="#f1fcf7" />
+        <path d="M5 12h4v7H5z" fill="#005232" />
+        <path d="M14 12h4v7h-4z" fill="#005232" />
+        <path d="M23 12h4v7h-4z" fill="#005232" />
         {/* counter */}
-        <rect x="8" y="22" width="16" height="3" rx="1.5" fill="#f6f1e7" />
+        <rect x="8" y="22" width="16" height="3" rx="1.5" fill="#f1fcf7" />
       </svg>
       <span
         className={`font-display text-lg font-bold tracking-tight ${

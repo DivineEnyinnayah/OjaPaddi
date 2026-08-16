@@ -35,17 +35,17 @@ export function buildReceiptMessage(sale: Sale, businessName?: string): string {
 
 export function buildProductShareMessage(product: Product): string {
   const price = parseFloat(product.price);
-  return `*${product.name}* \u{1F6CD}\nPrice: \u20A6${price.toLocaleString()}\n\nTap to view & order \u{1F447}\n${STORE_URL}/${product.id}`;
+  return `*${product.name}* 🛍️\nPrice: ₦${price.toLocaleString()}\n\nTap to view & order 👇\n${STORE_URL}/${product.id}`;
 }
 
 export function buildProductShareMessageWithSlug(product: Product, businessSlug: string): string {
   const price = parseFloat(product.price);
-  return `*${product.name}* \u{1F6CD}\nPrice: \u20A6${price.toLocaleString()}\n\nTap to view & order \u{1F447}\n${STORE_URL}/${businessSlug}/${product.id}`;
+  return `*${product.name}* 🛍️\nPrice: ₦${price.toLocaleString()}\n\nTap to view & order 👇\n${STORE_URL}/${businessSlug}/${product.id}`;
 }
 
 function formatCurrency(amount: number | string): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  return `\u20A6${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `₦${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export async function shareViaWhatsApp(message: string): Promise<void> {

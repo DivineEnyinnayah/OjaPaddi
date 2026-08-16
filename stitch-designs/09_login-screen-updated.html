@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>OjaPaddi - Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#291800",
+                    "on-surface-variant": "#404940",
+                    "on-background": "#181d19",
+                    "on-surface": "#181d19",
+                    "surface-container-highest": "#e0e4dd",
+                    "secondary-fixed-dim": "#ffb955",
+                    "on-secondary-container": "#6b4500",
+                    "primary-fixed": "#a5f4b8",
+                    "on-primary-fixed-variant": "#005229",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#f1fcf7",
+                    "surface-tint": "#1b6c3d",
+                    "surface": "#f1fcf7",
+                    "secondary-container": "#feae2c",
+                    "on-tertiary-container": "#ffcace",
+                    "inverse-surface": "#2d322d",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed-dim": "#89d89e",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#96434f",
+                    "inverse-on-surface": "#eef2eb",
+                    "tertiary-fixed": "#ffd9dc",
+                    "background": "#f1fcf7",
+                    "tertiary": "#782c38",
+                    "primary": "#2e8b57",
+                    "on-tertiary-fixed-variant": "#792d39",
+                    "secondary": "#835500",
+                    "on-secondary-fixed-variant": "#633f00",
+                    "secondary-fixed": "#ffddb4",
+                    "on-secondary": "#ffffff",
+                    "surface-variant": "#e0e4dd",
+                    "inverse-primary": "#89d89e",
+                    "surface-container": "#ebf6f1",
+                    "error": "#ba1a1a",
+                    "outline": "#707a70",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed-dim": "#ffb2b9",
+                    "surface-container-high": "#e6e9e2",
+                    "on-primary-fixed": "#00210d",
+                    "surface-dim": "#d1ddd8",
+                    "surface-container-low": "#ebf6f1",
+                    "on-primary-container": "#9ae9ae",
+                    "primary-container": "#1a6b3c",
+                    "outline-variant": "#bfc9be",
+                    "on-tertiary-fixed": "#3f0110"
+            },
+            "borderRadius": {
+                    "DEFAULT": "8px",
+                    "lg": "8px",
+                    "xl": "12px",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "xs": "4px",
+                    "margin": "16px",
+                    "gutter": "16px",
+                    "base": "8px",
+                    "lg": "24px"
+            },
+            "fontFamily": {
+                    "label-bold": ["Plus Jakarta Sans"],
+                    "h1": ["Plus Jakarta Sans"],
+                    "body-sm": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "label-caps": ["Plus Jakarta Sans"],
+                    "display": ["Plus Jakarta Sans"],
+                    "h2": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "label-bold": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "h1": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                    "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "label-caps": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "display": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "h2": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .floating-label-group {
+            position: relative;
+        }
+        .floating-label-group input:focus ~ label,
+        .floating-label-group input:not(:placeholder-shown) ~ label {
+            top: -10px;
+            left: 10px;
+            font-size: 11px;
+            background-color: white;
+            padding: 0 4px;
+            color: #2e8b57;
+            font-weight: 600;
+        }
+        .floating-label-group label {
+            position: absolute;
+            top: 14px;
+            left: 16px;
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-lg min-h-screen flex flex-col items-center justify-between py-12 px-6">
+<!-- Top Branding Section -->
+<header class="w-full flex flex-col items-center gap-base">
+<div class="w-20 h-20 flex items-center justify-center mb-4 overflow-hidden">
+<img alt="OjaPaddi Logo" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrp_m_nPleqB26Fr8qCgz2GDxhe5el79jC1oiBjyKal3xEAF9MBNd4eQjTrCdM9M1XgBTbkfAyV5Z5qmGP3KdYdC0RocABXOf-OVENPdK-Mpq41RE-W0dvVc5x0bNzKF1WeVfx9ajJ6wYhXpEqk39vAB_GTteKXSASbHJxl38iKwp_Cn9ipTHPVf54X5Ft8kIOFbQT2_92jKavj8pLvxsnvne_oCAFChX0NkpJn38HQn9kNyMSBgBlYuKR6K1_qyk6fpbPTI5l-veq"/>
+</div>
+<h1 class="font-h1 text-h1 text-primary">OjaPaddi</h1>
+</header>
+<!-- Main Content Canvas -->
+<main class="w-full max-w-sm flex flex-col gap-xl">
+<div class="text-center">
+<h2 class="font-display text-display text-on-surface mb-xs">Welcome Back</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Sign in to manage your shop and sales.</p>
+</div>
+<!-- Login Form -->
+<div class="bg-surface-container-lowest p-gutter rounded-[16px] shadow-[0px_4px_12px_rgba(0,0,0,0.05)] border border-outline-variant">
+<form class="flex flex-col gap-lg">
+<!-- Email Field -->
+<div class="floating-label-group">
+<input class="w-full h-12 px-md pt-sm pb-xs border border-outline rounded-[8px] bg-white text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="email" placeholder=" " type="email"/>
+<label class="font-label-bold text-label-bold text-outline" for="email">Email Address</label>
+</div>
+<!-- Password Field -->
+<div class="flex flex-col gap-xs">
+<div class="floating-label-group">
+<input class="w-full h-12 px-md pt-sm pb-xs border border-outline rounded-[8px] bg-white text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="password" placeholder=" " type="password"/>
+<label class="font-label-bold text-label-bold text-outline" for="password">Password</label>
+</div>
+<div class="flex justify-end">
+<a class="font-label-bold text-label-bold text-primary hover:underline" href="#">Forgot Password?</a>
+</div>
+</div>
+<!-- Action Button -->
+<button class="w-full h-12 bg-primary text-white font-h2 text-h2 rounded-[8px] shadow-sm hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-sm" type="submit">
+                    Sign In
+                    <span class="material-symbols-outlined" data-icon="login">login</span>
+</button>
+</form>
+</div>
+<!-- Social/Alternative Section -->
+<div class="flex items-center gap-sm px-md">
+<div class="flex-grow h-[1px] bg-outline-variant"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">OR SECURE ACCESS</span>
+<div class="flex-grow h-[1px] bg-outline-variant"></div>
+</div>
+<div class="grid grid-cols-2 gap-gutter">
+<button class="flex items-center justify-center gap-sm h-12 border border-outline rounded-[8px] bg-white font-label-bold text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-primary" data-icon="fingerprint">fingerprint</span>
+                Biometric
+            </button>
+<button class="flex items-center justify-center gap-sm h-12 border border-outline rounded-[8px] bg-white font-label-bold text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-primary" data-icon="qr_code_2">qr_code_2</span>
+                QR Code
+            </button>
+</div>
+</main>
+<!-- Footer Section -->
+<footer class="w-full max-w-sm text-center">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            New to OjaPaddi? 
+            <a class="font-label-bold text-label-bold text-primary underline decoration-2 underline-offset-4 ml-xs" href="#">Create Account</a>
+</p>
+</footer>
+<!-- Bottom Illustration -->
+<div class="fixed bottom-0 left-0 w-full h-32 -z-10 opacity-10 pointer-events-none">
+<div class="w-full h-full bg-gradient-to-t from-primary to-transparent"></div>
+</div>
+</body></html>

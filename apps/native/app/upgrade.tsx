@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { ArrowLeft, CheckCircle } from 'phosphor-react-native';
 import { withUniwind } from 'uniwind';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/components/ui/toast';
@@ -12,7 +12,6 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
 const StyledTouchableOpacity = withUniwind(TouchableOpacity);
-const StyledMaterialIcons = withUniwind(MaterialIcons);
 
 const PLAN_DATA = {
   free: {
@@ -74,15 +73,15 @@ export default function UpgradeScreen() {
   const isFree = currentPlan === 'free';
 
   return (
-    <Container isScrollable={true} withTabBar className="bg-background pt-12">
+    <Container isScrollable={true} withTabBar={false} className="bg-background">
       <StyledView className="flex-row items-center px-6 py-4 mb-6">
         <StyledTouchableOpacity 
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-primary-container/20 justify-center items-center mr-4"
         >
-          <StyledMaterialIcons name="arrow-back" size={20} color={colors.primary} />
+          <ArrowLeft size={20} color={colors.primary} />
         </StyledTouchableOpacity>
-        <StyledText className="text-3xl font-black text-on-surface tracking-tight">
+        <StyledText className="text-h2 font-black text-on-surface text-balance">
           {isFree ? 'Upgrade' : 'Subscription'}
         </StyledText>
       </StyledView>
@@ -121,7 +120,7 @@ export default function UpgradeScreen() {
                 key={index} 
                 className="flex-row items-center px-5 py-4 border-b border-outline-variant/50 last:border-b-0"
               >
-                <StyledMaterialIcons name="check-circle" size={20} color={colors.primary} />
+                <CheckCircle size={20} color={colors.primary} />
                 <StyledText className="flex-1 text-body-lg text-on-surface ml-3">
                   {feature}
                 </StyledText>

@@ -1,14 +1,15 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, Image, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useCustomers, type Customer } from '../../../hooks/useCustomers';
-import { useThemeColor } from '@/hooks/useThemeColor';
-import { Button } from '@/components/ui/button';
-import { Container } from '@/components/container';
-import { Surface } from '@/components/ui/surface';
-import { MaterialIcons } from '@expo/vector-icons';
-import { withUniwind } from 'uniwind';
-import { ILLUSTRATIONS } from '@/constants/illustrations';
+import React, { useEffect, useState, useMemo } from "react";
+import { View, Text, Image, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, TextInput } from "react-native";
+import { useRouter } from "expo-router";
+import { useCustomers, type Customer } from "../../../hooks/useCustomers";
+import { useThemeColor } from "@/hooks/useThemeColor";
+import { Button } from "@/components/ui/button";
+import { Container } from "@/components/container";
+import { Surface } from "@/components/ui/surface";
+import { MaterialIcons } from "@expo/vector-icons";
+import { withUniwind } from "uniwind";
+import { ILLUSTRATIONS } from "@/constants/illustrations";
+import { TAB_BAR_OFFSET } from "@/lib/tab-bar";
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -19,7 +20,7 @@ export default function CustomersScreen() {
   const router = useRouter();
   const { customers, isLoading, error, fetchCustomers } = useCustomers();
   const colors = useThemeColor();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchCustomers();
@@ -47,9 +48,9 @@ export default function CustomersScreen() {
   const renderCustomer = ({ item }: { item: Customer }) => {
     return (
       <StyledTouchableOpacity onPress={() => {}}>
-        <Surface variant="outline" className="flex-row items-center p-4 mb-3">
+        <Surface variant="primary" className="flex-row items-center p-4 mb-3 rounded-card">
           <StyledView className="w-12 h-12 rounded-full bg-primary-container justify-center items-center mr-4">
-            <StyledText className="text-white font-bold text-body-lg">{getInitials(item.name)}</StyledText>
+            <StyledText className="font-bold text-body-lg text-on-primary-container">{getInitials(item.name)}</StyledText>
           </StyledView>
           <StyledView className="flex-1">
             <StyledText className="text-base font-semibold text-on-surface mb-0.5">{item.name}</StyledText>
@@ -70,7 +71,7 @@ export default function CustomersScreen() {
 
   if (isLoading && customers?.length === 0) {
     return (
-      <Container isScrollable={false} withTabBar className="bg-background pt-12 items-center justify-center">
+      <Container isScrollable={false} withTabBar className="bg-background items-center justify-center">
         <ActivityIndicator size="large" color={colors.primary} />
       </Container>
     );
@@ -78,7 +79,7 @@ export default function CustomersScreen() {
 
   if (error && customers?.length === 0) {
     return (
-      <Container isScrollable={false} withTabBar className="bg-background pt-12 items-center justify-center p-6">
+      <Container isScrollable={false} withTabBar className="bg-background items-center justify-center p-6">
         <StyledText className="text-error text-center mb-4 text-body-lg">{error}</StyledText>
         <Button onPress={() => fetchCustomers()}>Retry</Button>
       </Container>
@@ -86,12 +87,12 @@ export default function CustomersScreen() {
   }
 
   return (
-    <Container isScrollable={false} withTabBar className="bg-background pt-12">
+    <Container isScrollable={false} withTabBar className="bg-background">
       <StyledView className="px-6 py-4 mt-2">
-        <StyledText className="text-4xl font-black text-on-surface tracking-tight">Customers</StyledText>
+        <StyledText className="text-h1 font-bold text-on-surface">Customers</StyledText>
       </StyledView>
 
-      <StyledView className="mx-6 mb-4 flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-input px-4 h-12">
+      <StyledView className="mx-6 mb-4 flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-lg px-4 h-12">
         <MaterialIcons name="search" size={20} color={colors.outline} style={{ marginRight: 8 }} />
         <StyledTextInput
           className="flex-1 text-body-lg text-on-surface"
@@ -104,11 +105,20 @@ export default function CustomersScreen() {
         />
       </StyledView>
 
+      <StyledView className="mx-6 mb-2 flex-row items-center justify-between">
+        <StyledText className="text-label-caps font-semibold text-on-surface-variant">
+          All Customers
+        </StyledText>
+        <StyledText className="text-label-caps text-on-surface-variant">
+          {filteredCustomers.length}
+        </StyledText>
+      </StyledView>
+
       <FlatList
         data={filteredCustomers}
         keyExtractor={(item) => item.id}
         renderItem={renderCustomer}
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 96 }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={fetchCustomers} tintColor={colors.primary} colors={[colors.primary]} />
         }
@@ -120,7 +130,7 @@ export default function CustomersScreen() {
               resizeMode="contain"
             />
             <StyledText className="text-base text-on-surface-variant mt-4 text-center">
-              {search.trim() ? 'No customers match your search.' : 'No customers yet. Add your first customer!'}
+              {search.trim() ? "No customers match your search." : "No customers yet. Add your first customer!"}
             </StyledText>
             {!search.trim() && (
               <Button size="lg" className="mt-6" onPress={() => {}}>
@@ -132,7 +142,8 @@ export default function CustomersScreen() {
       />
 
       <StyledTouchableOpacity
-        className="absolute bottom-8 right-6 w-14 h-14 rounded-full bg-primary justify-center items-center shadow-md shadow-black/30 elevation-5"
+        className="absolute right-4 w-14 h-14 rounded-full bg-primary justify-center items-center shadow-md shadow-black/30 elevation-5"
+        style={{ bottom: TAB_BAR_OFFSET + 12 }}
         onPress={() => {}}
       >
         <MaterialIcons name="add" size={28} color={colors.onPrimary} />

@@ -20,20 +20,25 @@ export function Container({
   className,
   isScrollable = true,
   withTabBar = false,
-  withSafeAreaTop = false,
+  withSafeAreaTop = true,
   scrollViewProps,
   ...props
 }: PropsWithChildren<Props>) {
   const insets = useSafeAreaInsets();
 
-  const extraBottom = withTabBar ? TAB_BAR_OFFSET : 0;
+  const topPadding = withSafeAreaTop ? Math.max(insets.top, 16) : 0;
+  const bottomPadding = isScrollable
+    ? 0
+    : withTabBar
+    ? 0
+    : insets.bottom;
 
   return (
     <StyledView
       className={cn("flex-1 bg-background", className)}
       style={{
-        paddingTop: withSafeAreaTop ? insets.top : 8,
-        paddingBottom: isScrollable ? insets.bottom : insets.bottom + extraBottom,
+        paddingTop: topPadding,
+        paddingBottom: bottomPadding,
       }}
       {...props}
     >
@@ -41,7 +46,7 @@ export function Container({
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
-            ...(withTabBar ? { paddingBottom: TAB_BAR_OFFSET } : {}),
+            paddingBottom: withTabBar ? TAB_BAR_OFFSET + insets.bottom : insets.bottom + 16,
           }}
           keyboardShouldPersistTaps="handled"
           contentInsetAdjustmentBehavior="never"
@@ -55,3 +60,4 @@ export function Container({
     </StyledView>
   );
 }
+

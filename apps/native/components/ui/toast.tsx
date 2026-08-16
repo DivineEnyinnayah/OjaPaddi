@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Animated, Modal, Pressable, Text, View } from 'react-native';
 import { withUniwind } from 'uniwind';
-import { MaterialIcons } from '@expo/vector-icons';
+import { CheckCircle, WarningCircle, Info, X } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/contexts/app-theme-context';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -63,10 +63,10 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 let nextId = 1;
 
-const TOAST_ICONS: Record<ToastType, keyof typeof MaterialIcons.glyphMap> = {
-  success: 'check-circle',
-  error: 'error-outline',
-  info: 'info-outline',
+const TOAST_ICONS: Record<ToastType, React.ComponentType<{ size?: number; color?: string }>> = {
+  success: CheckCircle,
+  error: WarningCircle,
+  info: Info,
 };
 
 function ToastCard({
@@ -96,9 +96,11 @@ function ToastCard({
       ? isDark ? '#66bb6a' : '#2e7d32'
       : toast.type === 'error'
         ? colors.error
-        : colors.primary;
+      : colors.primary;
 
-  return (
+    const ToastIcon = TOAST_ICONS[toast.type];
+
+    return (
     <Animated.View
       style={{
         opacity: anim,
@@ -113,7 +115,7 @@ function ToastCard({
         onPress={() => onDismiss(toast.id)}
         className="flex-row items-center gap-3 px-4 py-3.5 rounded-full bg-inverse-surface shadow-lg shadow-black/25 max-w-[92%] mx-auto"
       >
-        <MaterialIcons name={TOAST_ICONS[toast.type]} size={22} color={iconColor} />
+        <ToastIcon size={22} color={iconColor} />
         <StyledView className="flex-1 pr-2">
           {toast.title ? (
             <StyledText className="text-body-lg font-bold text-inverse-on-surface">
@@ -129,7 +131,7 @@ function ToastCard({
             {toast.message}
           </StyledText>
         </StyledView>
-        <MaterialIcons name="close" size={18} color={colors.outline} />
+        <X size={18} color={colors.outline} />
       </StyledPressable>
     </Animated.View>
   );
@@ -208,7 +210,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
       <StyledView
         pointerEvents="box-none"
-        className="absolute left-0 right-0 z-50 items-center"
+        className="absolute left-0 right-0 z-[var(--z-toast)] items-center"
         style={{ top: insets.top + 8, gap: 8 }}
       >
         {toasts.map((toast) => (

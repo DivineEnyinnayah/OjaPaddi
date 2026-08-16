@@ -1,12 +1,8 @@
 import React from "react";
-import { TextInput, View, Text, type TextInputProps } from "react-native";
-import { withUniwind } from "uniwind";
+import { type TextInput, type TextInputProps } from "react-native";
 import { cn } from "../../lib/utils";
 import { useThemeColor } from "@/hooks/useThemeColor";
-
-const StyledTextInput = withUniwind(TextInput);
-const StyledView = withUniwind(View);
-const StyledText = withUniwind(Text);
+import { StyledView, StyledText, StyledTextInput } from "./styled";
 
 export interface InputProps extends TextInputProps {
   label?: string;

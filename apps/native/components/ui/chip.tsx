@@ -1,10 +1,6 @@
-import React from "react";
-import { View, Text, type ViewProps } from "react-native";
-import { withUniwind } from "uniwind";
+import { type ViewProps } from "react-native";
 import { cn } from "../../lib/utils";
-
-const StyledView = withUniwind(View);
-const StyledText = withUniwind(Text);
+import { StyledView, StyledText } from "./styled";
 
 export interface ChipProps extends ViewProps {
   variant?: "success" | "warning" | "error" | "default";

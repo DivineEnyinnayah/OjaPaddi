@@ -13,6 +13,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   REGISTRATION_FAILED: "Registration failed. Please try again.",
   LOGIN_FAILED: "Invalid email or password.",
   REFRESH_FAILED: "Your session has expired. Please log in again.",
+  SESSION_EXPIRED: "Your session has expired. Please log in again.",
   RECEIPT_FETCH_FAILED: "Could not load receipt. Please try again.",
   PRODUCT_FETCH_FAILED: "Could not load product details.",
   INSUFFICIENT_STOCK: "Not enough stock for this product.",

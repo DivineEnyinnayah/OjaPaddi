@@ -75,13 +75,13 @@ export interface ThemeColors {
 
 const LIGHT_COLORS: ThemeColors = {
   // Core surfaces
-  background: '#f7faf3',
-  surface: '#f7faf3',
-  surfaceDim: '#d7dbd4',
+  background: '#f1fcf7',
+  surface: '#f1fcf7',
+  surfaceDim: '#d1ddd8',
   surfaceContainerLowest: '#ffffff',
-  surfaceContainerLow: '#f1f5ee',
-  surfaceContainer: '#ebefe8',
-  surfaceContainerHigh: '#e6e9e2',
+  surfaceContainerLow: '#ebf6f1',
+  surfaceContainer: '#e5f0eb',
+  surfaceContainerHigh: '#dfeae5',
   surfaceContainerHighest: '#e0e4dd',
   surfaceVariant: '#e0e4dd',
 
@@ -92,13 +92,13 @@ const LIGHT_COLORS: ThemeColors = {
 
   // Outline
   outline: '#707a70',
-  outlineVariant: '#bfc9be',
+  outlineVariant: '#bfc9c2',
 
   // Primary
-  primary: '#005129',
+  primary: '#2e8b57',
   onPrimary: '#ffffff',
-  primaryContainer: '#1a6b3c',
-  onPrimaryContainer: '#9ae9ae',
+  primaryContainer: '#bdf3d8',
+  onPrimaryContainer: '#002111',
 
   // Secondary
   secondary: '#835500',
@@ -124,10 +124,10 @@ const LIGHT_COLORS: ThemeColors = {
   inversePrimary: '#89d89e',
 
   // Special semantic
-  tabActiveIcon: '#1A6B3C',
+  tabActiveIcon: '#2E8B57',
   tabInactiveIcon: '#9CA3AF',
   tabBarBg: '#ffffff',
-  tabIndicatorBg: 'rgba(26, 107, 60, 0.1)',
+  tabIndicatorBg: 'rgba(46, 139, 87, 0.1)',
   tabBarShadowColor: '#000000',
   tabBarShadowOpacity: 0.12,
   tabBarElevation: 10,
@@ -139,42 +139,42 @@ const LIGHT_COLORS: ThemeColors = {
 
 const DARK_COLORS: ThemeColors = {
   // Core surfaces
-  background: '#101411',
-  surface: '#101411',
-  surfaceDim: '#101411',
-  surfaceContainerLowest: '#0a0f0c',
-  surfaceContainerLow: '#181d19',
-  surfaceContainer: '#1c211d',
-  surfaceContainerHigh: '#262b27',
-  surfaceContainerHighest: '#313632',
-  surfaceVariant: '#404940',
+  background: '#121414',
+  surface: '#121414',
+  surfaceDim: '#121414',
+  surfaceContainerLowest: '#0e0e0e',
+  surfaceContainerLow: '#1a1c1c',
+  surfaceContainer: '#1e2020',
+  surfaceContainerHigh: '#282b2b',
+  surfaceContainerHighest: '#333535',
+  surfaceVariant: '#404943',
 
   // On-surface
-  onBackground: '#e0e4dd',
-  onSurface: '#e0e4dd',
-  onSurfaceVariant: '#bfc9be',
+  onBackground: '#e1e3e0',
+  onSurface: '#e1e3e0',
+  onSurfaceVariant: '#bfc9c1',
 
   // Outline
-  outline: '#8a9389',
-  outlineVariant: '#404940',
+  outline: '#8a938c',
+  outlineVariant: '#404943',
 
   // Primary
-  primary: '#89d89e',
-  onPrimary: '#00391a',
-  primaryContainer: '#005229',
-  onPrimaryContainer: '#a5f4b8',
+  primary: '#238546',
+  onPrimary: '#ffffff',
+  primaryContainer: '#114223',
+  onPrimaryContainer: '#a7f3c4',
 
   // Secondary
-  secondary: '#ffb955',
-  onSecondary: '#452b00',
-  secondaryContainer: '#633f00',
-  onSecondaryContainer: '#ffddb4',
+  secondary: '#ebc23e',
+  onSecondary: '#3c2f00',
+  secondaryContainer: '#574500',
+  onSecondaryContainer: '#ffe087',
 
   // Tertiary
-  tertiary: '#ffb2b9',
-  onTertiary: '#680016',
-  tertiaryContainer: '#792d39',
-  onTertiaryContainer: '#ffd9dc',
+  tertiary: '#c8c6c5',
+  onTertiary: '#303030',
+  tertiaryContainer: '#9d9b9a',
+  onTertiaryContainer: '#333333',
 
   // Error
   error: '#ffb4ab',
@@ -183,19 +183,19 @@ const DARK_COLORS: ThemeColors = {
   onErrorContainer: '#ffdad6',
 
   // Inverse
-  inverseSurface: '#e0e4dd',
+  inverseSurface: '#e1e3e0',
   inverseOnSurface: '#2d322d',
-  inversePrimary: '#005129',
+  inversePrimary: '#006e1c',
 
   // Special semantic
-  tabActiveIcon: '#89d89e',
-  tabInactiveIcon: '#8a9389',
-  tabBarBg: '#1c211d',
-  tabIndicatorBg: 'rgba(137, 216, 158, 0.12)',
+  tabActiveIcon: '#78dc77',
+  tabInactiveIcon: '#8a938c',
+  tabBarBg: '#1e2020',
+  tabIndicatorBg: 'rgba(120, 220, 119, 0.12)',
   tabBarShadowColor: '#000000',
   tabBarShadowOpacity: 0.25,
   tabBarElevation: 12,
-  emptyStateIcon: '#404940',
+  emptyStateIcon: '#404943',
 
   // StatusBar
   statusBarStyle: 'light',

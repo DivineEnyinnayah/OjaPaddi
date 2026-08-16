@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>OjaPaddi | Customer Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface": "#f1fcf7",
+                    "secondary-fixed-dim": "#ffb3b1",
+                    "inverse-primary": "#7ed99e",
+                    "secondary-fixed": "#ffdad8",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed-dim": "#ffb599",
+                    "surface-container-high": "#dfebe6",
+                    "primary-fixed": "#9af6b8",
+                    "outline": "#6f7a70",
+                    "primary-fixed-dim": "#7ed99e",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#28332f",
+                    "inverse-on-surface": "#e8f3ee",
+                    "tertiary-fixed": "#ffdbce",
+                    "tertiary-container": "#b05e3c",
+                    "surface-bright": "#f1fcf7",
+                    "on-primary": "#ffffff",
+                    "background": "#f1fcf7",
+                    "on-secondary-fixed": "#410007",
+                    "on-surface": "#141e1b",
+                    "primary": "#006a3b",
+                    "on-secondary-fixed-variant": "#7f292c",
+                    "surface-tint": "#006d3d",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary": "#924626",
+                    "secondary-container": "#fc8a8a",
+                    "on-primary-fixed-variant": "#00522d",
+                    "surface-variant": "#dae5e0",
+                    "on-secondary-container": "#752226",
+                    "on-primary-fixed": "#00210f",
+                    "primary-container": "#268451",
+                    "on-tertiary-container": "#fffbff",
+                    "error-container": "#ffdad6",
+                    "surface-container-low": "#ebf6f1",
+                    "on-background": "#141e1b",
+                    "outline-variant": "#becabe",
+                    "on-tertiary-fixed": "#370e00",
+                    "on-tertiary-fixed-variant": "#773214",
+                    "on-primary-container": "#f6fff4",
+                    "surface-container": "#e5f0eb",
+                    "on-tertiary": "#ffffff",
+                    "secondary": "#9d4042",
+                    "on-error-container": "#93000a",
+                    "surface-dim": "#d1ddd8",
+                    "surface-container-highest": "#dae5e0",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#3f4941"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "80px",
+                    "sm": "12px",
+                    "md": "24px",
+                    "lg": "48px",
+                    "xs": "4px",
+                    "margin-desktop": "64px",
+                    "margin-mobile": "16px",
+                    "base": "8px",
+                    "gutter": "20px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "headline-xl": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "body-lg": ["Be Vietnam Pro"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "label-md": ["Be Vietnam Pro"],
+                    "label-sm": ["Be Vietnam Pro"],
+                    "body-md": ["Be Vietnam Pro"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #f1fcf7; }
+        .organic-shadow { box-shadow: 0 4px 20px -2px rgba(46, 139, 87, 0.08); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface-container-low dark:bg-surface-container-low shadow-sm flex justify-between items-center px-margin-mobile h-16 w-full">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 transition-transform duration-200 hover:bg-surface-container-high p-2 rounded-full">
+<span class="material-symbols-outlined text-primary">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary">OjaPaddi</h1>
+</div>
+<button class="active:scale-95 transition-transform duration-200 hover:bg-surface-container-high p-2 rounded-full">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+</header>
+<main class="pt-20 px-margin-mobile">
+<!-- Header Section -->
+<section class="mt-4 mb-6">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2">Customers</h2>
+<p class="font-body-md text-on-surface-variant">Manage and track your customer base efficiently.</p>
+</section>
+<!-- Search and Action Area -->
+<section class="flex flex-col gap-4 mb-8">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-on-surface-variant">search</span>
+<input class="w-full pl-12 pr-4 py-3 bg-surface-container-lowest border-none rounded-xl font-label-md organic-shadow focus:ring-2 focus:ring-primary transition-all outline-none" placeholder="Search by name or email..." type="text"/>
+</div>
+<button class="flex items-center justify-center gap-2 bg-primary text-on-primary py-4 px-6 rounded-xl font-label-md font-bold organic-shadow active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined">person_add</span>
+                Add New Customer
+            </button>
+</section>
+<!-- Insights Bento Section -->
+<section class="grid grid-cols-2 gap-4 mb-8">
+<div class="bg-primary-container/20 p-4 rounded-2xl border border-primary/10">
+<span class="font-label-sm text-primary uppercase tracking-wider">Total Customers</span>
+<p class="font-headline-md text-on-surface mt-1">1,284</p>
+</div>
+<div class="bg-tertiary-container/10 p-4 rounded-2xl border border-tertiary/10">
+<span class="font-label-sm text-tertiary uppercase tracking-wider">Active This Month</span>
+<p class="font-headline-md text-on-surface mt-1">452</p>
+</div>
+</section>
+<!-- Customer List -->
+<section class="space-y-4">
+<!-- Customer Card 1 -->
+<div class="bg-surface-container-lowest p-4 rounded-2xl organic-shadow border border-surface-variant/30 flex items-center gap-4 active:scale-[0.99] transition-transform cursor-pointer">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-variant shrink-0">
+<img alt="Customer Profile" class="w-full h-full object-cover" data-alt="A high-quality professional portrait of a young man with a warm smile, set against a clean, softly lit studio background. The lighting is gentle and even, characteristic of a high-end mobile application's customer profile. The image conveys a sense of trust, community, and modern professionalism, aligning with the OjaPaddi brand's friendly and dependable identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBl6QDl6gPp5F_Ws3dIYLkxvFxo9peqePFSuKUFBTawUqbf-XVHqe-3-Im1PsaI-BgI1bmioLeRDdhiJq9bSkXuCWaHtNju-LhEFnn-a8GdBsfgLMiEIGzUO--HOsxd1eA0buHfylXLT98D5ggeKCFNfN9PXS5HaaRYUa3wG1rukaj49_6sHUirh4JuoidGZAcfAyHwseRsRGzKJTPka9EHI5X2pulBtxf9OEKR878hJ91Xj6D0HdKUQCwjlG23qbQeBwEF2UC7LGU1"/>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-label-md font-bold text-on-surface truncate">Adewale Johnson</h3>
+<p class="font-label-sm text-on-surface-variant">Last visit: 2 hours ago</p>
+</div>
+<div class="text-right">
+<p class="font-label-md font-bold text-primary">₦45,200</p>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant/60 tracking-tighter">Total Value</span>
+</div>
+</div>
+<!-- Customer Card 2 -->
+<div class="bg-surface-container-lowest p-4 rounded-2xl organic-shadow border border-surface-variant/30 flex items-center gap-4 active:scale-[0.99] transition-transform cursor-pointer">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-variant shrink-0">
+<img alt="Customer Profile" class="w-full h-full object-cover" data-alt="A stunning portrait of a middle-aged woman with elegant features, radiating a welcoming and reliable vibe. The lighting is warm and natural, suggesting a peaceful afternoon in a vibrant community setting. The color palette is soft and approachable, perfectly mirroring the communal and modern organic style of the OjaPaddi digital marketplace platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4lfONWzTxL-o-w75sLABhVCdbUq7jmLrCMjEtJ6DYyrTmPy01IHKGbkpr6USZC1QRs-qypSQjzm10IhydXPXyAvMwmZlU5vX9uRnjRPZXsHCAU3SVvWexWxnzEObx4h7esQXzleXkaaLp8E6dxBAY5NDX0wTwdzjHdLu_IUMtMODo-AYe2qcHO9_jeuirsT_1RMChnqyTa_wIS2Y_gT5qyTwwprR4cJvOzx9gihdPBbiNRMJ5hURD39HnlY0iZQEBCVGGsZB0og8t"/>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-label-md font-bold text-on-surface truncate">Chioma Okoro</h3>
+<p class="font-label-sm text-on-surface-variant">Last visit: Oct 12, 2023</p>
+</div>
+<div class="text-right">
+<p class="font-label-md font-bold text-primary">₦128,750</p>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant/60 tracking-tighter">Total Value</span>
+</div>
+</div>
+<!-- Customer Card 3 -->
+<div class="bg-surface-container-lowest p-4 rounded-2xl organic-shadow border border-surface-variant/30 flex items-center gap-4 active:scale-[0.99] transition-transform cursor-pointer">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-variant shrink-0">
+<img alt="Customer Profile" class="w-full h-full object-cover" data-alt="An authentic, high-resolution close-up portrait of an elderly man with kind eyes and a grey beard, looking directly into the camera. The atmosphere is one of wisdom and established trust. The image is bathed in soft, bright light that creates a clean, premium aesthetic, suitable for a modern marketplace's VIP customer list, with subtle green tones reflecting the brand's primary color." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfhDsd086VwqySAIDMD0AC7WfWZijEZIWthfcb5ZorsK6urDIxMe1vCLeKbKNCdmg9Js6O0Oj4KBAh_ca8_G892kQCAyBEFV1f4nBYy8jKGM9uZgtR_-iGVnDDMxlneHCbNvFVV9Bl8_d0k1G2KzFJje6cIN2NuKlYSNQ4bazLWzSHoFo8OeSu4qzFLV--XjRH6mt6mMzXXNjEgmLfVCIfGDk_WJzoUmHHlQjBvl3UjwxyPqU8Bl49WSfmPh8JrYINDxIBQ6EWmMYO"/>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-label-md font-bold text-on-surface truncate">Ibrahim Musa</h3>
+<p class="font-label-sm text-on-surface-variant">Last visit: Yesterday</p>
+</div>
+<div class="text-right">
+<p class="font-label-md font-bold text-primary">₦12,400</p>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant/60 tracking-tighter">Total Value</span>
+</div>
+</div>
+<!-- Customer Card 4 -->
+<div class="bg-surface-container-lowest p-4 rounded-2xl organic-shadow border border-surface-variant/30 flex items-center gap-4 active:scale-[0.99] transition-transform cursor-pointer">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-variant shrink-0">
+<img alt="Customer Profile" class="w-full h-full object-cover" data-alt="A bright and vibrant portrait of a young professional woman in a modern urban environment. She exudes confidence and digital literacy. The composition uses shallow depth of field to focus on her friendly expression, while the background consists of soft, blurred architectural elements in a clean, high-key lighting style that complements a vibrant and dependable brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsLK-vVxA579ICVUcoQTIb2r_NZ81uih6zcDoiZ1o7SadHbVBkjo7rXeAQxntut4gDByQ3wJZeQhOBpDrGyIb_SO7lgE87AjP6GCskZqqwXv_NuyUEeZyvMPs4L1Ehft9xmv2RFqAjyGCCMvwVG7ubGHNtCDSXzgmuUDlzPEaU_5Jvym65EXJ7roGT9wXR6uI-Eyo6RXSz1Wb3zxV8_6QKSPS76-STcUmEC7TXA_olgrSfpo1Y0Ctr6KLEXd2deA9WBZv4uLgv2a21"/>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-label-md font-bold text-on-surface truncate">Amara Eze</h3>
+<p class="font-label-sm text-on-surface-variant">Last visit: Oct 05, 2023</p>
+</div>
+<div class="text-right">
+<p class="font-label-md font-bold text-primary">₦89,000</p>
+<span class="text-[10px] uppercase font-bold text-on-surface-variant/60 tracking-tighter">Total Value</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Bottom Navigation -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] z-50 bg-surface-container-lowest shadow-lg rounded-full flex justify-around items-center px-4 py-3 border border-primary/5">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-variant/50 rounded-full w-12 h-12 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-variant/50 rounded-full w-12 h-12 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-variant/50 rounded-full w-12 h-12 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full w-12 h-12 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">group</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-variant/50 rounded-full w-12 h-12 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">more_horiz</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for search focus
+        const searchInput = document.querySelector('input');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary');
+        });
+
+        // Simple scale effect for cards
+        document.querySelectorAll('.cursor-pointer').forEach(card => {
+            card.addEventListener('touchstart', () => card.style.transform = 'scale(0.98)');
+            card.addEventListener('touchend', () => card.style.transform = 'scale(1)');
+        });
+    </script>
+</body></html>

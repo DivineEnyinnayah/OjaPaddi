@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { Person, CreditCard, Bank, DotsThree, FileText, Trash } from 'phosphor-react-native';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
@@ -13,16 +14,17 @@ import { Chip } from '@/components/ui/chip';
 import { useSales, type Sale, type SaleItem } from '../../../hooks/useSales';
 import { withUniwind } from 'uniwind';
 import { formatCurrency } from '@/lib/currency';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
 const StyledTouchableOpacity = withUniwind(TouchableOpacity);
 
-const PAYMENT_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
-  cash: 'payments',
-  transfer: 'account-balance',
-  pos: 'credit-card',
-  other: 'more-horiz',
+const PAYMENT_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
+  cash: CreditCard,
+  transfer: Bank,
+  pos: CreditCard,
+  other: DotsThree,
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -85,15 +87,36 @@ export default function SaleDetailScreen() {
 
   if (isLoading && !sale) {
     return (
-      <Container isScrollable={false} className="bg-background pt-12 items-center justify-center">
-        <ActivityIndicator size="large" color={colors.primary} />
+      <Container isScrollable={false} className="bg-background px-margin">
+        <StyledView className="flex-col gap-2 mb-4">
+          <Skeleton className="h-10 w-3/4 mb-2" />
+          <Skeleton className="h-12 w-full rounded-lg" />
+        </StyledView>
+        <StyledView className="flex-col gap-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Surface key={i} variant="outline" className="p-4 mb-3">
+              <StyledView className="flex-row justify-between items-start mb-2">
+                <StyledView className="flex-1 mr-3">
+                  <Skeleton className="h-4 w-20 mb-1" />
+                  <Skeleton className="h-6 w-32 mb-1" />
+                  <Skeleton className="h-3 w-20" />
+                </StyledView>
+                <Skeleton className="h-6 w-16" />
+              </StyledView>
+              <StyledView className="flex-row justify-between items-center mt-2 pt-2 border-t border-outline-variant/50">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-6 w-16 rounded-full" />
+              </StyledView>
+            </Surface>
+          ))}
+        </StyledView>
       </Container>
     );
   }
 
   if (!sale) {
     return (
-      <Container isScrollable={false} className="bg-background pt-12 items-center justify-center">
+      <Container isScrollable={false} className="bg-background items-center justify-center">
         <StyledText className="text-base text-on-surface-variant mb-4">Sale not found</StyledText>
         <Button onPress={() => router.back()}>Go Back</Button>
       </Container>
@@ -105,10 +128,11 @@ export default function SaleDetailScreen() {
   const discount = parseFloat(sale.discount);
   const amountPaid = parseFloat(sale.amountPaid);
   const balance = total - amountPaid;
+  const PaymentIcon = PAYMENT_ICONS[sale.paymentMethod] || DotsThree;
 
   return (
     <Container isScrollable={false} className="bg-background">
-      <StyledView className="absolute top-12 left-6 z-10 w-12 h-12 bg-surface rounded-full justify-center items-center shadow-sm shadow-black/10 elevation-2">
+      <StyledView className="absolute top-4 left-6 z-10 w-12 h-12 bg-surface rounded-full justify-center items-center shadow-sm shadow-black/10 elevation-2">
         <StyledTouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
         </StyledTouchableOpacity>
@@ -130,7 +154,7 @@ export default function SaleDetailScreen() {
             </StyledView>
             <StyledView className="h-[1px] bg-outline-variant/30 my-3" />
             <StyledView className="flex-row items-center">
-              <MaterialIcons name="person-outline" size={20} color={colors.onSurfaceVariant} />
+              <Person size={20} color={colors.onSurfaceVariant} />
               <StyledText className="text-base text-on-surface ml-2">
                 {sale.customerId ? 'Customer Sale' : 'Walk-in Customer'}
               </StyledText>
@@ -139,7 +163,7 @@ export default function SaleDetailScreen() {
 
           <Surface variant="outline" className="p-4 mb-4">
             <StyledView className="flex-row items-center mb-2">
-              <MaterialIcons name={PAYMENT_ICONS[sale.paymentMethod] || 'more-horiz'} size={20} color={colors.primary} />
+              <PaymentIcon size={20} color={colors.primary} />
               <StyledText className="text-base font-semibold text-on-surface ml-2">
                 {PAYMENT_LABELS[sale.paymentMethod] || sale.paymentMethod}
               </StyledText>
@@ -205,27 +229,24 @@ export default function SaleDetailScreen() {
           {sale.notes ? (
             <Surface variant="outline" className="p-4 mb-4">
               <StyledView className="flex-row items-center mb-2">
-                <MaterialIcons name="notes" size={20} color={colors.onSurfaceVariant} />
+                <FileText size={20} color={colors.onSurfaceVariant} />
                 <StyledText className="text-base font-semibold text-on-surface ml-2">Notes</StyledText>
               </StyledView>
               <StyledText className="text-body-sm text-on-surface-variant leading-5">{sale.notes}</StyledText>
             </Surface>
           ) : null}
+
+          <StyledView className="mt-4 pt-4 border-t border-outline-variant/20">
+            <StyledTouchableOpacity
+              className="w-full py-3.5 rounded-button border-2 border-error bg-error/10 justify-center items-center flex-row active:opacity-80"
+              onPress={handleVoidSale}
+            >
+              <Trash size={20} color={colors.error} />
+              <StyledText className="text-base font-semibold text-error ml-2">Void Sale</StyledText>
+            </StyledTouchableOpacity>
+          </StyledView>
         </StyledView>
       </ScrollView>
-
-      <StyledView
-        className="absolute left-0 right-0 px-5 py-4 bg-surface border-t border-outline-variant/20"
-        style={{ bottom: insets.bottom + TAB_BAR_OFFSET }}
-      >
-        <StyledTouchableOpacity
-          className="w-full py-3.5 rounded-button border-2 border-error justify-center items-center flex-row active:opacity-80"
-          onPress={handleVoidSale}
-        >
-          <MaterialIcons name="delete-outline" size={20} color={colors.error} />
-          <StyledText className="text-base font-semibold text-error ml-2">Void Sale</StyledText>
-        </StyledTouchableOpacity>
-      </StyledView>
     </Container>
   );
 }

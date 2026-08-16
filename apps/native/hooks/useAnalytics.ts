@@ -16,6 +16,12 @@ export interface AnalyticsSummary {
   totalProducts: number;
 }
 
+export interface RevenueChartPoint {
+  date: string;
+  revenue: number;
+  count: number;
+}
+
 export function useAnalytics() {
   const { accessToken } = useAuthStore();
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
@@ -49,10 +55,33 @@ export function useAnalytics() {
     }
   }, [accessToken]);
 
+  const fetchRevenueChart = useCallback(async (query: { from?: string; to?: string } = {}) => {
+    try {
+      const queryString = new URLSearchParams(query as Record<string, string>).toString();
+      const result = await apiRequest<RevenueChartPoint[]>(
+        `/analytics/revenue-chart${queryString ? `?${queryString}` : ''}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (result.success && result.data) {
+        return result.data;
+      }
+      return null;
+    } catch (err: unknown) {
+      return null;
+    }
+  }, [accessToken]);
+
   return {
     summary,
     isLoading,
     error,
     fetchSummary,
+    fetchRevenueChart,
   };
 }

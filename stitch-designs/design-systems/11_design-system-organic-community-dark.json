@@ -1,0 +1,135 @@
+{
+  "name": "assets/3decd8bc49434eb8b6f0d2632cb5f286",
+  "designSystem": {
+    "displayName": "Organic Community Dark",
+    "styleGuidelines": "## Brand & Style\n\nThis design system centers on a \"Modern Organic\" aesthetic, designed to feel grounded, community-focused, and accessible. It bridges the gap between digital efficiency and natural, human-centric commerce. \n\nThe brand personality is **reliable yet approachable**. The target audience includes modern shoppers and local vendors who value quality and community connection. The UI evokes a sense of **sustainable sophistication** through a dark-mode first approach that minimizes eye strain and emphasizes the vibrant colors of fresh products.\n\nThe design style utilizes **Modern Corporate** foundations with **Minimalist** flourishes. It avoids starkness by using deep charcoal neutrals and soft, rounded geometry inspired by the fluid loops in the new logo. Whitespace is used intentionally to create a premium, editorial feel that allows imagery to lead the experience.\n\n## Layout & Spacing\n\nThe layout follows a **fluid grid** model based on a 4px baseline unit. \n\n- **Desktop:** 12-column grid with 24px gutters. Content is contained within a max-width of 1280px to maintain readability.\n- **Tablet:** 8-column grid with 16px gutters and 32px side margins.\n- **Mobile:** 4-column grid with 16px gutters and 16px side margins.\n\nSpacing follows a geometric scale (4, 8, 16, 24, 32, 48, 64). Components should prioritize vertical rhythm to create a clean, organized flow that mirrors the \"organic\" but structured nature of the brand.\n\n## Elevation & Depth\n\nThis design system uses **Tonal Layers** and **Ambient Shadows** to establish hierarchy. \n\nIn the dark theme, depth is primarily communicated through color shifts. The further \"forward\" an object is in the Z-space, the lighter its surface color becomes. \n- **Level 0 (Background):** #121414\n- **Level 1 (Cards/Lists):** #1E2121\n- **Level 2 (Modals/Popovers):** #2A2D2D\n\nShadows are used sparingly. They are soft, highly diffused, and tinted with the primary green (e.g., `rgba(35, 133, 70, 0.15)`) to create a subtle glow effect rather than a traditional drop shadow. This reinforces the brand color even in the shadows.\n\n## Components\n\n- **Buttons:** Primary buttons use the Primary Green background with white text. Secondary buttons use a ghost style with a Tertiary Brown border and the Secondary Coral text.\n- **Input Fields:** Use the Level 1 surface color with a subtle 1px border in Tertiary Brown. Focus states should transition the border to Primary Green.\n- **Chips:** Always pill-shaped. Use low-opacity versions of the Secondary Coral for category tags and Primary Green for \"Available\" statuses.\n- **Cards:** Utilize a 1rem corner radius. Content should have 24px internal padding. Background color is #1E2121.\n- **Iconography:** Icons should follow a \"Line-Art\" style with a 2px stroke weight, mirroring the weight of the logo's line. Avoid filled icons unless in an active/selected state.\n- **Lists:** Items are separated by subtle horizontal rules in #2A2D2D. Interactive list items should have a Primary Green \"indicator\" bar (4px wide) that appears on the left during hover/active states.",
+    "theme": {
+      "colorMode": "DARK",
+      "font": "PLUS_JAKARTA_SANS",
+      "roundness": "ROUND_EIGHT",
+      "customColor": "#238546",
+      "headlineFont": "PLUS_JAKARTA_SANS",
+      "bodyFont": "MANROPE",
+      "labelFont": "MANROPE",
+      "namedColors": {
+        "background": "#121414",
+        "error": "#ffb4ab",
+        "error_container": "#93000a",
+        "inverse_on_surface": "#2f3131",
+        "inverse_primary": "#006d33",
+        "inverse_surface": "#e2e2e2",
+        "on_background": "#e2e2e2",
+        "on_error": "#690005",
+        "on_error_container": "#ffdad6",
+        "on_primary": "#003917",
+        "on_primary_container": "#f6fff3",
+        "on_primary_fixed": "#00210b",
+        "on_primary_fixed_variant": "#005225",
+        "on_secondary": "#601406",
+        "on_secondary_container": "#ff9a86",
+        "on_secondary_fixed": "#3e0400",
+        "on_secondary_fixed_variant": "#7f2a1a",
+        "on_surface": "#e2e2e2",
+        "on_surface_variant": "#becabc",
+        "on_tertiary": "#5b1b00",
+        "on_tertiary_container": "#fffbff",
+        "on_tertiary_fixed": "#380d00",
+        "on_tertiary_fixed_variant": "#793012",
+        "outline": "#889487",
+        "outline_variant": "#3f493f",
+        "primary": "#7cda91",
+        "primary_container": "#238546",
+        "primary_fixed": "#98f7ab",
+        "primary_fixed_dim": "#7cda91",
+        "secondary": "#ffb4a5",
+        "secondary_container": "#7f2a1a",
+        "secondary_fixed": "#ffdad3",
+        "secondary_fixed_dim": "#ffb4a5",
+        "surface": "#121414",
+        "surface_bright": "#383939",
+        "surface_container": "#1e2020",
+        "surface_container_high": "#282a2a",
+        "surface_container_highest": "#333535",
+        "surface_container_low": "#1a1c1c",
+        "surface_container_lowest": "#0d0f0f",
+        "surface_dim": "#121414",
+        "surface_tint": "#7cda91",
+        "surface_variant": "#333535",
+        "tertiary": "#ffb59a",
+        "tertiary_container": "#b35c3a",
+        "tertiary_fixed": "#ffdbcf",
+        "tertiary_fixed_dim": "#ffb59a"
+      },
+      "designMd": "---\nname: Organic Community Dark\ncolors:\n  surface: '#121414'\n  surface-dim: '#121414'\n  surface-bright: '#383939'\n  surface-container-lowest: '#0d0f0f'\n  surface-container-low: '#1a1c1c'\n  surface-container: '#1e2020'\n  surface-container-high: '#282a2a'\n  surface-container-highest: '#333535'\n  on-surface: '#e2e2e2'\n  on-surface-variant: '#becabc'\n  inverse-surface: '#e2e2e2'\n  inverse-on-surface: '#2f3131'\n  outline: '#889487'\n  outline-variant: '#3f493f'\n  surface-tint: '#7cda91'\n  primary: '#7cda91'\n  on-primary: '#003917'\n  primary-container: '#238546'\n  on-primary-container: '#f6fff3'\n  inverse-primary: '#006d33'\n  secondary: '#ffb4a5'\n  on-secondary: '#601406'\n  secondary-container: '#7f2a1a'\n  on-secondary-container: '#ff9a86'\n  tertiary: '#ffb59a'\n  on-tertiary: '#5b1b00'\n  tertiary-container: '#b35c3a'\n  on-tertiary-container: '#fffbff'\n  error: '#ffb4ab'\n  on-error: '#690005'\n  error-container: '#93000a'\n  on-error-container: '#ffdad6'\n  primary-fixed: '#98f7ab'\n  primary-fixed-dim: '#7cda91'\n  on-primary-fixed: '#00210b'\n  on-primary-fixed-variant: '#005225'\n  secondary-fixed: '#ffdad3'\n  secondary-fixed-dim: '#ffb4a5'\n  on-secondary-fixed: '#3e0400'\n  on-secondary-fixed-variant: '#7f2a1a'\n  tertiary-fixed: '#ffdbcf'\n  tertiary-fixed-dim: '#ffb59a'\n  on-tertiary-fixed: '#380d00'\n  on-tertiary-fixed-variant: '#793012'\n  background: '#121414'\n  on-background: '#e2e2e2'\n  surface-variant: '#333535'\ntypography:\n  headline-xl:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 48px\n    fontWeight: '700'\n    lineHeight: 56px\n    letterSpacing: -0.02em\n  headline-lg:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 32px\n    fontWeight: '700'\n    lineHeight: 40px\n  headline-md:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 24px\n    fontWeight: '600'\n    lineHeight: 32px\n  body-lg:\n    fontFamily: Manrope\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: 28px\n  body-md:\n    fontFamily: Manrope\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  label-md:\n    fontFamily: Manrope\n    fontSize: 14px\n    fontWeight: '600'\n    lineHeight: 20px\n    letterSpacing: 0.01em\n  label-sm:\n    fontFamily: Manrope\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: 16px\n  headline-lg-mobile:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 28px\n    fontWeight: '700'\n    lineHeight: 36px\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  unit: 4px\n  gutter: 16px\n  margin-mobile: 16px\n  margin-desktop: 64px\n  container-max: 1280px\n---\n\n## Brand & Style\n\nThis design system centers on a \"Modern Organic\" aesthetic, designed to feel grounded, community-focused, and accessible. It bridges the gap between digital efficiency and natural, human-centric commerce. \n\nThe brand personality is **reliable yet approachable**. The target audience includes modern shoppers and local vendors who value quality and community connection. The UI evokes a sense of **sustainable sophistication** through a dark-mode first approach that minimizes eye strain and emphasizes the vibrant colors of fresh products.\n\nThe design style utilizes **Modern Corporate** foundations with **Minimalist** flourishes. It avoids starkness by using deep charcoal neutrals and soft, rounded geometry inspired by the fluid loops in the new logo. Whitespace is used intentionally to create a premium, editorial feel that allows imagery to lead the experience.\n\n## Colors\n\nThe palette is derived directly from the new brand assets, optimized for a deep-theme environment.\n\n- **Primary (#238546):** A lush, vibrant green used for high-importance actions and brand reinforcement.\n- **Secondary (#F2816A):** A soft terracotta/coral tone used for accents, highlights, and secondary interactive elements, providing a warm contrast to the green.\n- **Tertiary (#B15B39):** A grounded earth-brown used for subtle borders, underlines, and decorative strokes, inspired by the logo's organic underline.\n- **Neutral (#121414):** A near-black charcoal base that provides depth without the harshness of pure black.\n\nSurface colors utilize tonal layering: background surfaces use the base neutral, while cards and containers use a slightly lighter grey (#1E2121) to create depth.\n\n## Typography\n\nThe typographic system uses a pairing of **Plus Jakarta Sans** for headlines and **Manrope** for body and UI elements. \n\nPlus Jakarta Sans provides a friendly, contemporary geometric feel that complements the rounded nature of the logo. Manrope offers exceptional legibility in dark mode and a professional, modern tone for functional text.\n\nFor mobile layouts, headlines scale down to ensure no more than 3-4 words per line in high-impact areas. Body text maintains a comfortable 16px baseline to ensure accessibility across all demographics.\n\n## Layout & Spacing\n\nThe layout follows a **fluid grid** model based on a 4px baseline unit. \n\n- **Desktop:** 12-column grid with 24px gutters. Content is contained within a max-width of 1280px to maintain readability.\n- **Tablet:** 8-column grid with 16px gutters and 32px side margins.\n- **Mobile:** 4-column grid with 16px gutters and 16px side margins.\n\nSpacing follows a geometric scale (4, 8, 16, 24, 32, 48, 64). Components should prioritize vertical rhythm to create a clean, organized flow that mirrors the \"organic\" but structured nature of the brand.\n\n## Elevation & Depth\n\nThis design system uses **Tonal Layers** and **Ambient Shadows** to establish hierarchy. \n\nIn the dark theme, depth is primarily communicated through color shifts. The further \"forward\" an object is in the Z-space, the lighter its surface color becomes. \n- **Level 0 (Background):** #121414\n- **Level 1 (Cards/Lists):** #1E2121\n- **Level 2 (Modals/Popovers):** #2A2D2D\n\nShadows are used sparingly. They are soft, highly diffused, and tinted with the primary green (e.g., `rgba(35, 133, 70, 0.15)`) to create a subtle glow effect rather than a traditional drop shadow. This reinforces the brand color even in the shadows.\n\n## Shapes\n\nThe shape language is **Rounded**, echoing the fluid, infinite-loop curves of the logo icon. \n\nStandard components (inputs, buttons) use a 0.5rem (8px) radius. Larger containers and cards use a 1rem (16px) radius to feel more inviting. Fully pill-shaped elements (radius: 999px) are reserved for \"Status Chips\" and \"Search Bars\" to distinguish them from primary action buttons.\n\n## Components\n\n- **Buttons:** Primary buttons use the Primary Green background with white text. Secondary buttons use a ghost style with a Tertiary Brown border and the Secondary Coral text.\n- **Input Fields:** Use the Level 1 surface color with a subtle 1px border in Tertiary Brown. Focus states should transition the border to Primary Green.\n- **Chips:** Always pill-shaped. Use low-opacity versions of the Secondary Coral for category tags and Primary Green for \"Available\" statuses.\n- **Cards:** Utilize a 1rem corner radius. Content should have 24px internal padding. Background color is #1E2121.\n- **Iconography:** Icons should follow a \"Line-Art\" style with a 2px stroke weight, mirroring the weight of the logo's line. Avoid filled icons unless in an active/selected state.\n- **Lists:** Items are separated by subtle horizontal rules in #2A2D2D. Interactive list items should have a Primary Green \"indicator\" bar (4px wide) that appears on the left during hover/active states.",
+      "colorVariant": "FIDELITY",
+      "overridePrimaryColor": "#238546",
+      "overrideSecondaryColor": "#f2816a",
+      "overrideTertiaryColor": "#b15b39",
+      "overrideNeutralColor": "#121414",
+      "spacingScale": 2,
+      "typography": {
+        "body-lg": {
+          "fontFamily": "Manrope",
+          "fontSize": "18px",
+          "fontWeight": "400",
+          "lineHeight": "28px"
+        },
+        "body-md": {
+          "fontFamily": "Manrope",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "24px"
+        },
+        "headline-lg": {
+          "fontFamily": "Plus Jakarta Sans",
+          "fontSize": "32px",
+          "fontWeight": "700",
+          "lineHeight": "40px"
+        },
+        "headline-lg-mobile": {
+          "fontFamily": "Plus Jakarta Sans",
+          "fontSize": "28px",
+          "fontWeight": "700",
+          "lineHeight": "36px"
+        },
+        "headline-md": {
+          "fontFamily": "Plus Jakarta Sans",
+          "fontSize": "24px",
+          "fontWeight": "600",
+          "lineHeight": "32px"
+        },
+        "headline-xl": {
+          "fontFamily": "Plus Jakarta Sans",
+          "fontSize": "48px",
+          "fontWeight": "700",
+          "lineHeight": "56px",
+          "letterSpacing": "-0.02em"
+        },
+        "label-md": {
+          "fontFamily": "Manrope",
+          "fontSize": "14px",
+          "fontWeight": "600",
+          "lineHeight": "20px",
+          "letterSpacing": "0.01em"
+        },
+        "label-sm": {
+          "fontFamily": "Manrope",
+          "fontSize": "12px",
+          "fontWeight": "500",
+          "lineHeight": "16px"
+        }
+      },
+      "spacing": {
+        "container-max": "1280px",
+        "gutter": "16px",
+        "margin-desktop": "64px",
+        "margin-mobile": "16px",
+        "unit": "4px"
+      },
+      "headlineFontFamily": "Plus Jakarta Sans",
+      "bodyFontFamily": "Manrope",
+      "labelFontFamily": "Manrope"
+    }
+  },
+  "version": "1"
+}

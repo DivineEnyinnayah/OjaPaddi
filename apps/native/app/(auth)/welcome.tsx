@@ -1,122 +1,75 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, FlatList, NativeSyntheticEvent, NativeScrollEvent, useWindowDimensions } from 'react-native';
+import React from 'react';
+import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialIcons } from '@expo/vector-icons';
+import { TrendUp, Handshake, ArrowRight } from 'phosphor-react-native';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
-import { withUniwind } from 'uniwind';
+import { StyledView, StyledText, StyledImage } from '@/components/ui/styled';
 import { ILLUSTRATIONS } from '@/constants/illustrations';
-
-const StyledView = withUniwind(View);
-const StyledText = withUniwind(Text);
-const StyledImage = withUniwind(Image);
-
-const ONBOARDING_SLIDES = [
-  {
-    id: '1',
-    title: 'Your Market Friend',
-    description: 'Easily manage your products, track sales, and keep your business organized in one place.',
-    image: ILLUSTRATIONS.welcomeStore,
-  },
-  {
-    id: '2',
-    title: 'WhatsApp Native',
-    description: 'Share your product catalog and individual items directly to your customers via WhatsApp.',
-    image: ILLUSTRATIONS.welcomeChat,
-  },
-  {
-    id: '3',
-    title: 'Grow Smarter',
-    description: 'Get clear insights into your best-selling products and business growth with simple analytics.',
-    image: ILLUSTRATIONS.welcomeGrowth,
-  },
-  {
-    id: '4',
-    title: 'Free Forever',
-    description: 'Start for free and grow. Our generous free tier is built for every Nigerian retail seller.',
-    image: ILLUSTRATIONS.welcomeGift,
-  },
-];
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { width: screenWidth } = useWindowDimensions();
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const slideWidth = screenWidth - 48; // Total width minus px-6 on both sides
-
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetX = event.nativeEvent.contentOffset.x;
-    const index = Math.round(offsetX / slideWidth);
-    if (index !== currentIndex) {
-      setCurrentIndex(index);
-    }
-  };
+  const colors = useThemeColor();
 
   return (
-    <Container isScrollable={false} withSafeAreaTop={true} className="flex justify-between px-6 py-6">
+    <Container isScrollable={false} withSafeAreaTop={true} className="flex justify-between px-4 py-6">
       <StyledView className="flex-1 items-center justify-center">
-        <StyledView style={{ width: slideWidth }} className="h-[380px]">
-          <FlatList
-            data={ONBOARDING_SLIDES}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-            keyExtractor={(item) => item.id}
-            getItemLayout={(_, index) => ({
-              length: slideWidth,
-              offset: slideWidth * index,
-              index,
-            })}
-            renderItem={({ item }) => (
-              <StyledView style={{ width: slideWidth }} className="items-center justify-center px-4">
-                <StyledView className="w-[140px] h-[140px] rounded-[40px] bg-primary-container/20 justify-center items-center mb-6">
-                  <StyledImage
-                    source={{ uri: item.image }}
-                    className="w-[100px] h-[100px]"
-                    resizeMode="contain"
-                  />
-                </StyledView>
-                <StyledText className="text-[26px] text-on-surface text-center mb-3 font-bold tracking-tight">
-                  {item.title}
-                </StyledText>
-                <StyledText className="text-body-lg text-on-surface-variant text-center leading-6 px-2">
-                  {item.description}
-                </StyledText>
-              </StyledView>
-            )}
+        <StyledView className="w-32 h-32 rounded-full bg-surface-container items-center justify-center p-4 mb-6">
+          <StyledImage
+            source={require('@/assets/images/logo.png')}
+            className="w-full h-full"
+            resizeMode="contain"
           />
         </StyledView>
+        <StyledText className="text-display font-bold text-primary mb-2">
+          OjaPaddi
+        </StyledText>
+        <StyledText className="text-h2 text-on-surface-variant" style={{ fontStyle: 'italic' }}>
+          "Your Market Friend"
+        </StyledText>
+      </StyledView>
 
-        <StyledView className="flex-row gap-2 mt-4">
-          {ONBOARDING_SLIDES.map((_, index) => (
-            <StyledView
-              key={index}
-              className={`h-2 rounded-full transition-all duration-200 ${
-                index === currentIndex ? 'w-8 bg-primary' : 'w-2 bg-outline-variant'
-              }`}
-            />
-          ))}
+      <StyledView className="flex-row gap-4 my-6">
+        <StyledView className="flex-1 h-40 bg-surface-container rounded-xl overflow-hidden border border-outline-variant/20 items-center justify-center p-3">
+          <StyledImage
+            source={{ uri: ILLUSTRATIONS.welcomeStore }}
+            className="w-full h-full"
+            resizeMode="contain"
+          />
+        </StyledView>
+        <StyledView className="flex-1 gap-4">
+          <StyledView className="flex-1 bg-surface-container-high rounded-xl border border-outline-variant/30 items-center justify-center">
+            <TrendUp size={24} color={colors.primary} />
+            <StyledText className="text-label-bold text-primary mt-1">Growth</StyledText>
+          </StyledView>
+          <StyledView className="flex-1 bg-surface-container-high rounded-xl border border-outline-variant/30 items-center justify-center">
+            <Handshake size={24} color={colors.secondary} />
+            <StyledText className="text-label-bold text-secondary mt-1">Trust</StyledText>
+          </StyledView>
         </StyledView>
       </StyledView>
 
-      <StyledView className="gap-3 mb-4 mt-6">
-        <Button size="lg" variant="primary" onPress={() => router.push('/register')}>
-          Get Started
+      <StyledView className="gap-4 mb-4">
+        <Button size="lg" variant="primary" onPress={() => router.push('/register')} className="w-full">
+          <StyledView className="flex-row items-center gap-2">
+            <StyledText className="text-h1 text-on-primary font-bold">Get Started</StyledText>
+            <ArrowRight size={22} color={colors.onPrimary} />
+          </StyledView>
         </Button>
 
         <TouchableOpacity
-          className="items-center py-2.5"
+          className="items-center justify-center h-12"
           onPress={() => router.push('/login')}
           activeOpacity={0.7}
         >
-          <StyledText className="text-body-lg text-primary font-semibold">
-            I already have an account
-          </StyledText>
+          <StyledText className="text-label-bold text-primary">I have an account</StyledText>
         </TouchableOpacity>
       </StyledView>
+
+      <StyledText className="text-label-caps text-on-surface-variant text-center opacity-70">
+        Empowering Retail Entrepreneurs Everywhere
+      </StyledText>
     </Container>
   );
 }

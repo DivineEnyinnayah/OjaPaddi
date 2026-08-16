@@ -5,20 +5,12 @@ import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
 import { useToast } from '@/components/ui/toast';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Storefront, Folder, CaretUp, CaretDown, Check, Phone, MapPin, MapTrifold, CameraPlus } from 'phosphor-react-native';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { apiRequest, apiFormDataRequest } from '../../lib/api';
 import { useAuthStore, type User } from '../../stores/authStore';
-import { withUniwind } from 'uniwind';
+import { StyledView, StyledText, StyledTouchableOpacity, StyledTextInput, StyledImage, StyledScrollView, StyledKeyboardAvoidingView } from '@/components/ui/styled';
 import { ILLUSTRATIONS } from '@/constants/illustrations';
-
-const StyledView = withUniwind(View);
-const StyledText = withUniwind(Text);
-const StyledKeyboardAvoidingView = withUniwind(KeyboardAvoidingView);
-const StyledTouchableOpacity = withUniwind(TouchableOpacity);
-const StyledTextInput = withUniwind(TextInput);
-const StyledImage = withUniwind(Image);
-const StyledScrollView = withUniwind(ScrollView);
 
 interface FormErrors {
   businessName?: string;
@@ -281,7 +273,7 @@ export default function OnboardingScreen() {
       <StyledView className="w-full mb-4">
         <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">Business Name</StyledText>
         <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
-          <MaterialIcons name="storefront" size={20} color={colors.outline} style={{ marginRight: 10 }} />
+          <Storefront size={20} color={colors.outline} style={{ marginRight: 10 }} />
           <StyledTextInput
             className="flex-1 text-body-lg text-on-surface"
             placeholder="e.g., Tope's Fashion Hub"
@@ -300,11 +292,11 @@ export default function OnboardingScreen() {
           className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12"
           onPress={() => setShowCategoryPicker(!showCategoryPicker)}
         >
-          <MaterialIcons name="category" size={20} color={colors.outline} style={{ marginRight: 10 }} />
+          <Folder size={20} color={colors.outline} style={{ marginRight: 10 }} />
           <StyledText className={`flex-1 text-body-lg ${formData.category ? 'text-on-surface' : 'text-on-surface-variant'}`}>
             {formData.category || 'Select a category'}
           </StyledText>
-          <MaterialIcons name={showCategoryPicker ? 'keyboard-arrow-up' : 'keyboard-arrow-down'} size={20} color={colors.outline} />
+          {showCategoryPicker ? <CaretUp size={20} color={colors.outline} /> : <CaretDown size={20} color={colors.outline} />}
         </StyledTouchableOpacity>
         {showCategoryPicker && (
           <StyledView className="mt-2 rounded-xl bg-surface border border-outline-variant max-h-[220px] overflow-hidden">
@@ -318,12 +310,12 @@ export default function OnboardingScreen() {
                     setShowCategoryPicker(false);
                   }}
                 >
-                  <MaterialIcons name="category" size={18} color={formData.category === category ? colors.primary : colors.outline} style={{ marginRight: 10 }} />
+                  <Folder size={18} color={formData.category === category ? colors.primary : colors.outline} style={{ marginRight: 10 }} />
                   <StyledText className={`flex-1 text-body-lg ${formData.category === category ? 'font-semibold text-primary' : ''}`}>
                     {category}
                   </StyledText>
                   {formData.category === category && (
-                    <MaterialIcons name="check" size={18} color={colors.primary} />
+                    <Check size={18} color={colors.primary} />
                   )}
                 </StyledTouchableOpacity>
               ))}
@@ -347,7 +339,7 @@ export default function OnboardingScreen() {
       <StyledView className="w-full mb-4">
         <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">WhatsApp Number</StyledText>
         <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
-          <MaterialIcons name="phone" size={20} color={colors.outline} style={{ marginRight: 8 }} />
+          <Phone size={20} color={colors.outline} style={{ marginRight: 8 }} />
           <StyledView className="flex-row items-center pr-3 mr-3">
             <StyledText className="text-body-lg text-on-surface font-medium">+234</StyledText>
           </StyledView>
@@ -367,7 +359,7 @@ export default function OnboardingScreen() {
       <StyledView className="w-full mb-4">
         <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">City</StyledText>
         <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
-          <MaterialIcons name="location-on" size={20} color={colors.outline} style={{ marginRight: 10 }} />
+          <MapPin size={20} color={colors.outline} style={{ marginRight: 10 }} />
           <StyledTextInput
             className="flex-1 text-body-lg text-on-surface"
             placeholder="e.g., Lagos"
@@ -382,7 +374,7 @@ export default function OnboardingScreen() {
       <StyledView className="w-full mb-4">
         <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">State</StyledText>
         <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
-          <MaterialIcons name="map" size={20} color={colors.outline} style={{ marginRight: 10 }} />
+          <MapTrifold size={20} color={colors.outline} style={{ marginRight: 10 }} />
           <StyledTextInput
             className="flex-1 text-body-lg text-on-surface"
             placeholder="e.g., Lagos"
@@ -414,7 +406,7 @@ export default function OnboardingScreen() {
             <StyledImage source={{ uri: formData.logoUri }} className="w-full h-full rounded-[18px]" />
           ) : (
             <StyledView className="items-center">
-              <MaterialIcons name="add-a-photo" size={28} color={colors.outline} />
+              <CameraPlus size={28} color={colors.outline} />
               <StyledText className="text-body-sm mt-1 text-outline">Logo</StyledText>
             </StyledView>
           )}
@@ -428,19 +420,19 @@ export default function OnboardingScreen() {
 
       <StyledView className="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 mb-4">
         <StyledView className="flex-row items-center mb-3 pb-3 border-b border-outline-variant/30">
-          <MaterialIcons name="storefront" size={18} color={colors.primary} />
+          <Storefront size={18} color={colors.primary} />
           <StyledText className="flex-1 text-body-lg text-on-surface font-semibold ml-3">{formData.businessName || 'Your Business'}</StyledText>
         </StyledView>
         <StyledView className="flex-row items-center mb-2">
-          <MaterialIcons name="category" size={16} color={colors.outline} />
+          <Folder size={16} color={colors.outline} />
           <StyledText className="text-body-sm text-on-surface-variant ml-3">{formData.category || 'Not set'}</StyledText>
         </StyledView>
         <StyledView className="flex-row items-center mb-2">
-          <MaterialIcons name="phone" size={16} color={colors.outline} />
+          <Phone size={16} color={colors.outline} />
           <StyledText className="text-body-sm text-on-surface-variant ml-3">+234 {formData.whatsappNumber || 'Not set'}</StyledText>
         </StyledView>
         <StyledView className="flex-row items-center">
-          <MaterialIcons name="location-on" size={16} color={colors.outline} />
+          <MapPin size={16} color={colors.outline} />
           <StyledText className="text-body-sm text-on-surface-variant ml-3">{formData.city || 'Not set'}{formData.state ? `, ${formData.state}` : ''}</StyledText>
         </StyledView>
       </StyledView>
@@ -462,8 +454,8 @@ export default function OnboardingScreen() {
             {renderStepIndicator()}
 
             <StyledView className="mb-6">
-              <StyledText className="text-[28px] font-bold text-on-surface mb-1">{STEPS[currentStep - 1].title}</StyledText>
-              <StyledText className="text-body-lg text-on-surface-variant">{STEPS[currentStep - 1].subtitle}</StyledText>
+              <StyledText className="text-h1 font-bold text-on-surface mb-1 text-balance">{STEPS[currentStep - 1].title}</StyledText>
+              <StyledText className="text-body-lg text-on-surface-variant text-pretty">{STEPS[currentStep - 1].subtitle}</StyledText>
             </StyledView>
           </StyledView>
 
@@ -498,14 +490,6 @@ export default function OnboardingScreen() {
           </StyledView>
         </ScrollView>
       </StyledKeyboardAvoidingView>
-      {currentStep > 1 && (
-        <StyledTouchableOpacity
-          className="absolute top-12 left-4 w-10 h-10 items-center justify-center rounded-full bg-surface-container z-50"
-          onPress={handleBack}
-        >
-          <MaterialIcons name="arrow-back" size={24} color={colors.onSurface} />
-        </StyledTouchableOpacity>
-      )}
     </Container>
   );
 }

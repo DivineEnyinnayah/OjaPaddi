@@ -5,7 +5,6 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   Modal,
   Pressable,
   Animated,
@@ -20,11 +19,26 @@ import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
-import { MaterialIcons } from '@expo/vector-icons';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Bank,
+  CaretRight,
+  CreditCard,
+  DotsThree,
+  MagnifyingGlass,
+  Minus,
+  Plus,
+  ShoppingCart,
+  User,
+  UserPlus,
+  X,
+} from 'phosphor-react-native';
 import { useCartStore } from '@/stores/cartStore';
 import { withUniwind } from 'uniwind';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
+import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -36,11 +50,18 @@ const StyledImage = withUniwind(Image);
 type PaymentMethod = 'cash' | 'transfer' | 'pos' | 'other';
 type PaymentStatus = 'paid' | 'partial' | 'unpaid';
 
-const PAYMENT_METHODS: { key: PaymentMethod; label: string; icon: React.ComponentProps<typeof MaterialIcons>['name'] }[] = [
-  { key: 'cash', label: 'Cash', icon: 'payments' },
-  { key: 'transfer', label: 'Transfer', icon: 'account-balance' },
-  { key: 'pos', label: 'POS', icon: 'credit-card' },
-  { key: 'other', label: 'Other', icon: 'more-horiz' },
+const PAYMENT_METHOD_ICONS: Record<PaymentMethod, React.ComponentType<any>> = {
+  cash: CreditCard,
+  transfer: Bank,
+  pos: CreditCard,
+  other: DotsThree,
+};
+
+const PAYMENT_METHODS: { key: PaymentMethod; label: string }[] = [
+  { key: 'cash', label: 'Cash' },
+  { key: 'transfer', label: 'Transfer' },
+  { key: 'pos', label: 'POS' },
+  { key: 'other', label: 'Other' },
 ];
 
 const PAYMENT_STATUSES: { key: PaymentStatus; label: string; color: string }[] = [
@@ -333,7 +354,7 @@ export default function RecordSaleScreen() {
                 className="w-8 h-8 rounded-full bg-primary items-center justify-center active:opacity-80"
                 onPress={() => updateQuantity(product.id, cartQty - 1)}
               >
-                <MaterialIcons name="remove" size={16} color="#FFFFFF" />
+                <Minus size={16} color="#FFFFFF" />
               </StyledTouchableOpacity>
               <StyledView className="w-8 h-8 items-center justify-center">
                 <StyledText className="text-sm font-bold text-on-surface">
@@ -348,8 +369,7 @@ export default function RecordSaleScreen() {
                 onPress={() => addToCart(product)}
                 disabled={atMaxStock}
               >
-                <MaterialIcons
-                  name="add"
+                <Plus
                   size={16}
                   color={atMaxStock ? colors.outline : colors.primary}
                 />
@@ -360,7 +380,7 @@ export default function RecordSaleScreen() {
               className="w-9 h-9 rounded-lg bg-primary items-center justify-center active:opacity-80"
               onPress={() => addToCart(product)}
             >
-              <MaterialIcons name="add" size={20} color="#FFFFFF" />
+              <Plus size={20} color="#FFFFFF" />
             </StyledTouchableOpacity>
           )}
         </StyledView>
@@ -393,11 +413,11 @@ export default function RecordSaleScreen() {
                 Select Customer
               </StyledText>
               <StyledTouchableOpacity onPress={() => setCustomerModalVisible(false)}>
-                <MaterialIcons name="close" size={24} color={colors.onSurface} />
+                <X size={24} color={colors.onSurface} />
               </StyledTouchableOpacity>
             </StyledView>
             <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-11">
-              <MaterialIcons name="search" size={20} color={colors.outline} />
+              <MagnifyingGlass size={20} color={colors.outline} />
               <StyledTextInput
                 className="flex-1 ml-2 text-body-md text-on-surface"
                 placeholder="Search customers..."
@@ -419,7 +439,7 @@ export default function RecordSaleScreen() {
                   }}
                 >
                   <StyledView className="w-10 h-10 rounded-full bg-surface-container items-center justify-center">
-                    <MaterialIcons name="person-outline" size={20} color={colors.outline} />
+                    <User size={20} color={colors.outline} />
                   </StyledView>
                   <StyledView>
                     <StyledText className="text-sm font-semibold text-on-surface">
@@ -463,7 +483,7 @@ export default function RecordSaleScreen() {
                   onPress={() => setShowAddCustomer(true)}
                 >
                   <StyledView className="flex-row items-center gap-2">
-                    <MaterialIcons name="person-add" size={20} color={colors.primary} />
+                    <UserPlus size={20} color={colors.primary} />
                     <StyledText className="text-sm font-semibold text-primary">
                       Add New Customer
                     </StyledText>
@@ -573,7 +593,7 @@ export default function RecordSaleScreen() {
                         onPress={() => updateQuantity(item.product.id, 0)}
                         className="w-7 h-7 rounded-full bg-error/10 items-center justify-center active:opacity-70"
                       >
-                        <MaterialIcons name="close" size={14} color={colors.error} />
+                        <X size={14} color={colors.error} />
                       </StyledTouchableOpacity>
                     </StyledView>
                   </StyledView>
@@ -593,7 +613,7 @@ export default function RecordSaleScreen() {
               <Surface variant="primary" className="flex-row items-center justify-between">
                 <StyledView className="flex-row items-center gap-3">
                   <StyledView className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center">
-                    <MaterialIcons name="person" size={20} color={colors.primary} />
+                    <User size={20} color={colors.primary} />
                   </StyledView>
                   <StyledView>
                     <StyledText className="text-sm font-semibold text-on-surface">
@@ -604,7 +624,7 @@ export default function RecordSaleScreen() {
                     </StyledText>
                   </StyledView>
                 </StyledView>
-                <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
+                <CaretRight size={20} color={colors.outline} />
               </Surface>
             </StyledTouchableOpacity>
 
@@ -614,6 +634,7 @@ export default function RecordSaleScreen() {
             <StyledView className="flex-row gap-2 mb-4">
               {PAYMENT_METHODS.map((method) => {
                 const isSelected = selectedPayment === method.key;
+                const IconComponent = PAYMENT_METHOD_ICONS[method.key];
                 return (
                   <StyledTouchableOpacity
                     key={method.key}
@@ -625,8 +646,7 @@ export default function RecordSaleScreen() {
                     )}
                     onPress={() => setSelectedPayment(method.key)}
                   >
-                    <MaterialIcons
-                      name={method.icon}
+                    <IconComponent
                       size={20}
                       color={isSelected ? '#FFFFFF' : colors.onSurfaceVariant}
                     />
@@ -777,15 +797,15 @@ export default function RecordSaleScreen() {
               className="w-10 h-10 rounded-full bg-surface-container items-center justify-center active:opacity-70"
               onPress={() => router.back()}
             >
-              <MaterialIcons name="arrow-back" size={22} color={colors.onSurface} />
+              <ArrowLeft size={22} color={colors.onSurface} />
             </StyledTouchableOpacity>
-            <StyledText className="text-2xl font-black text-on-surface tracking-tight">
+            <StyledText className="text-h2 font-black text-on-surface text-balance">
               Record Sale
             </StyledText>
           </StyledView>
 
           <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-11">
-            <MaterialIcons name="search" size={20} color={colors.outline} />
+            <MagnifyingGlass size={20} color={colors.outline} />
             <StyledTextInput
               className="flex-1 ml-2 text-body-md text-on-surface"
               placeholder="Search products..."
@@ -795,7 +815,7 @@ export default function RecordSaleScreen() {
             />
             {searchQuery.length > 0 && (
               <StyledTouchableOpacity onPress={() => setSearchQuery('')}>
-                <MaterialIcons name="close" size={18} color={colors.outline} />
+                <X size={18} color={colors.outline} />
               </StyledTouchableOpacity>
             )}
           </StyledView>
@@ -857,7 +877,7 @@ export default function RecordSaleScreen() {
           </StyledScrollView>
         ) : filteredProducts.length === 0 ? (
           <StyledView className="flex-1 items-center justify-center px-6">
-            <MaterialIcons name="search-off" size={48} color={colors.emptyStateIcon} />
+            <MagnifyingGlass size={48} color={colors.emptyStateIcon} />
             <StyledText className="text-base text-on-surface-variant mt-4 text-center">
               {searchQuery
                 ? 'No products match your search'
@@ -870,7 +890,7 @@ export default function RecordSaleScreen() {
           <StyledScrollView
             className="flex-1 px-5"
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: cartItemCount > 0 ? 100 : 20 }}
+            contentContainerStyle={{ paddingBottom: cartItemCount > 0 ? TAB_BAR_OFFSET + 80 : TAB_BAR_OFFSET + 20 }}
             contentInsetAdjustmentBehavior="never"
           >
             {filteredProducts.map(renderProductCard)}
@@ -878,11 +898,14 @@ export default function RecordSaleScreen() {
         )}
 
         {cartItemCount > 0 && (
-          <StyledView className="absolute bottom-0 left-0 right-0 px-5 pb-6 pt-3 bg-background/95 border-t border-outline-variant/20">
+          <StyledView
+            className="absolute left-0 right-0 px-5 py-3 bg-surface/95 border-t border-outline-variant/20 shadow-lg z-10"
+            style={{ bottom: TAB_BAR_OFFSET }}
+          >
             <StyledView className="flex-row items-center justify-between">
               <StyledView className="flex-row items-center gap-3">
                 <StyledView className="relative">
-                  <MaterialIcons name="shopping-cart" size={24} color={colors.primary} />
+                  <ShoppingCart size={24} color={colors.primary} />
                   <StyledView className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary items-center justify-center">
                     <StyledText className="text-[10px] font-bold text-on-primary">
                       {cartItemCount}
@@ -905,7 +928,7 @@ export default function RecordSaleScreen() {
                 <StyledText className="text-sm font-bold text-on-primary">
                   Review
                 </StyledText>
-                <MaterialIcons name="arrow-forward" size={18} color="#FFFFFF" />
+                <ArrowRight size={18} color="#FFFFFF" />
               </StyledTouchableOpacity>
             </StyledView>
           </StyledView>
@@ -916,9 +939,11 @@ export default function RecordSaleScreen() {
       {renderCheckoutSheet()}
 
       {isSubmitting && (
-        <StyledView className="absolute inset-0 bg-black/40 items-center justify-center z-50">
+        <StyledView className="absolute inset-0 bg-black/40 items-center justify-center z-[var(--z-modal)]">
           <StyledView className="bg-surface-container-lowest rounded-2xl p-8 items-center gap-3">
-            <ActivityIndicator size="large" color={colors.primary} />
+            <StyledView className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center">
+              <StyledView className="w-8 h-8 rounded-full bg-primary/20 animate-pulse" />
+            </StyledView>
             <StyledText className="text-base font-semibold text-on-surface">
               Recording sale...
             </StyledText>

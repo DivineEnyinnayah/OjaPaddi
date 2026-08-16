@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>OjaPaddi | Products Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#b05e3c",
+                        "surface-container": "#e5f0eb",
+                        "primary-fixed": "#9af6b8",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb599",
+                        "on-secondary-container": "#752226",
+                        "surface-tint": "#006d3d",
+                        "surface-container-high": "#dfebe6",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#3f4941",
+                        "surface-bright": "#f1fcf7",
+                        "on-tertiary-container": "#fffbff",
+                        "on-secondary-fixed-variant": "#7f292c",
+                        "on-secondary-fixed": "#410007",
+                        "surface": "#f1fcf7",
+                        "inverse-surface": "#28332f",
+                        "primary-fixed-dim": "#7ed99e",
+                        "on-primary-container": "#f6fff4",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed": "#370e00",
+                        "inverse-on-surface": "#e8f3ee",
+                        "secondary-fixed": "#ffdad8",
+                        "outline-variant": "#becabe",
+                        "secondary-fixed-dim": "#ffb3b1",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#dae5e0",
+                        "on-background": "#141e1b",
+                        "surface-container-low": "#ebf6f1",
+                        "primary-container": "#268451",
+                        "outline": "#6f7a70",
+                        "on-surface": "#141e1b",
+                        "tertiary": "#924626",
+                        "background": "#f1fcf7",
+                        "inverse-primary": "#7ed99e",
+                        "tertiary-fixed": "#ffdbce",
+                        "error-container": "#ffdad6",
+                        "secondary": "#9d4042",
+                        "on-primary-fixed-variant": "#00522d",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#dae5e0",
+                        "surface-dim": "#d1ddd8",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#fc8a8a",
+                        "on-tertiary-fixed-variant": "#773214",
+                        "primary": "#006a3b",
+                        "on-primary-fixed": "#00210f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "12px",
+                        "xl": "80px",
+                        "margin-mobile": "16px",
+                        "base": "8px",
+                        "md": "24px",
+                        "gutter": "20px",
+                        "margin-desktop": "64px",
+                        "lg": "48px",
+                        "xs": "4px",
+                        "margin": "24px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Be Vietnam Pro"],
+                        "label-md": ["Be Vietnam Pro"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-lg": ["Be Vietnam Pro"],
+                        "headline-xl": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-sm": ["Be Vietnam Pro"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "label-bold": ["Be Vietnam Pro"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "label-bold": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav-pill {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .product-card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -10px rgba(46, 139, 87, 0.15);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #becabe; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md custom-scrollbar overflow-x-hidden">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-40 bg-surface/80 backdrop-blur-md">
+<div class="flex justify-between items-center w-full px-margin h-16 max-w-7xl mx-auto">
+<div class="flex items-center gap-3">
+<img alt="OjaPaddi Logo" class="h-10 w-10 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsxP56lMeOrjn6zHlEpwLjarZqwRMvijHerZv6kO6GBEyJL1kWzGVLoa1F7U6j9kjRgDqmI3Dp3-Se8gHutmNof8P9XkMcqQKL_kOroBLLv8q4NIStRvHRl128hmxZVZsGIyJY6ooECAfkN376_xxBbFP8VTLD9536YdWA72osWjNTa_Zi-kobGtogqEGGbzE1-FYP50CfvO2gTr-ksT5FaszngsmLKZYh4WyZtCA1GkoQzc4-31FBiDm0YujFjnjDW6usjtNEAhly"/>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">OjaPaddi</h1>
+</div>
+<div class="hidden md:flex flex-1 max-w-md mx-8">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl py-2 pl-10 pr-4 focus:ring-2 focus:ring-primary/20 text-body-md outline-none" placeholder="Search products..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors relative">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-secondary rounded-full"></span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border-2 border-primary-container/20">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a friendly Nigerian male business owner in a clean linen shirt, looking directly into the camera with a warm, confident smile. The background is a soft-focus modern office environment with warm morning sunlight filtering through, creating a bright and trustworthy atmosphere that aligns with the marketplace brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOuUAsHFN2_uFf7SduiiN7r-PmrSw90JJMEAIMHBhtuiVzlwBmnidqSZv4nxcW46IeGjj4i49bv5GptHeG3ROsBnWQPphr3fZlBmzcbhcO4g8FZkagiPwNBkAA6pv6nD99IAqhnFRDUf7o6tnV4Y1-_Xg716oMG4-occQTKvnxcKd53ts29qQa34OVVBKmeyMTJEtCrMmpwzzRowVYjXHvWaSRtYGzFKk2q6kVPLSqOzDIImNIEIGjN2BtqOUcGj3kNpwFgIe2eO3V"/>
+</div>
+</div>
+</div>
+<!-- Mobile Search -->
+<div class="md:hidden px-margin pb-4">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl py-2 pl-10 pr-4 focus:ring-2 focus:ring-primary/20 text-label-md outline-none" placeholder="Search products..." type="text"/>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-margin pt-6 pb-32">
+<!-- Summary Section -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+<!-- Total Inventory Card -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/30 flex items-center justify-between overflow-hidden relative">
+<div class="z-10">
+<p class="text-label-md font-label-md text-on-surface-variant mb-1">Total Inventory Value</p>
+<h2 class="text-headline-lg font-headline-lg text-on-surface">₦ 4,850,000.00</h2>
+<div class="mt-2 flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="trending_up">trending_up</span>
+<span class="text-label-sm font-label-sm">+12% from last month</span>
+</div>
+</div>
+<div class="bg-primary-container/10 p-4 rounded-full z-10">
+<span class="material-symbols-outlined text-primary text-[32px]" data-icon="account_balance_wallet">account_balance_wallet</span>
+</div>
+<!-- Organic background shape -->
+<div class="absolute -right-8 -bottom-8 w-32 h-32 bg-primary-container/5 rounded-full blur-2xl"></div>
+</div>
+<!-- Low Stock Card -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/30 flex items-center justify-between overflow-hidden relative">
+<div class="z-10">
+<p class="text-label-md font-label-md text-on-surface-variant mb-1">Low Stock Items</p>
+<h2 class="text-headline-lg font-headline-lg text-on-surface">14 Items</h2>
+<div class="mt-2 flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-[18px]" data-icon="warning">warning</span>
+<span class="text-label-sm font-label-sm">Requires immediate attention</span>
+</div>
+</div>
+<div class="bg-secondary-container/10 p-4 rounded-full z-10">
+<span class="material-symbols-outlined text-secondary text-[32px]" data-icon="inventory">inventory</span>
+</div>
+<!-- Organic background shape -->
+<div class="absolute -right-8 -bottom-8 w-32 h-32 bg-secondary-container/5 rounded-full blur-2xl"></div>
+</div>
+</section>
+<!-- Product Grid Header -->
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-headline-md font-headline-md text-on-surface">Inventory List</h3>
+<div class="flex gap-2">
+<button class="flex items-center gap-1 px-3 py-2 rounded-lg bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">
+<span class="material-symbols-outlined text-[20px]" data-icon="filter_list">filter_list</span>
+<span class="text-label-md font-label-md">Filter</span>
+</button>
+<button class="flex items-center gap-1 px-3 py-2 rounded-lg bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">
+<span class="material-symbols-outlined text-[20px]" data-icon="sort">sort</span>
+<span class="text-label-md font-label-md">Sort</span>
+</button>
+</div>
+</div>
+<!-- Product Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<!-- Product 1: In Stock -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/20 shadow-sm product-card-hover transition-all duration-300 group">
+<div class="h-48 relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A close-up, high-quality photograph of golden brown long-grain parboiled rice in a woven sisal basket. The lighting is soft and natural, emphasizing the texture of each grain. The background is a clean, modern kitchen surface in soft greens and creams, maintaining a fresh and organic marketplace aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOuUAsHFN2_uFf7SduiiN7r-PmrSw90JJMEAIMHBhtuiVzlwBmnidqSZv4nxcW46IeGjj4i49bv5GptHeG3ROsBnWQPphr3fZlBmzcbhcO4g8FZkagiPwNBkAA6pv6nD99IAqhnFRDUf7o6tnV4Y1-_Xg716oMG4-occQTKvnxcKd53ts29qQa34OVVBKmeyMTJEtCrMmpwzzRowVYjXHvWaSRtYGzFKk2q6kVPLSqOzDIImNIEIGjN2BtqOUcGj3kNpwFgIe2eO3V"/>
+<div class="absolute top-3 right-3 bg-primary-container/90 text-white px-2 py-1 rounded-lg text-label-sm backdrop-blur-sm">
+                        In Stock
+                    </div>
+</div>
+<div class="p-4">
+<h4 class="font-headline-md text-body-lg font-semibold text-on-surface mb-1">Mama's Gold Rice (50kg)</h4>
+<p class="text-on-surface-variant text-label-md mb-3">Category: Grains &amp; Cereals</p>
+<div class="flex items-center justify-between">
+<span class="text-headline-md font-bold text-primary">₦ 72,500</span>
+<span class="text-label-sm text-outline">Stock: 45 units</span>
+</div>
+</div>
+</div>
+<!-- Product 2: Low Stock -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/20 shadow-sm product-card-hover transition-all duration-300 group">
+<div class="h-48 relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A vibrant and clear overhead shot of premium groundnut oil in a transparent bottle, capturing the rich golden-amber liquid. Soft reflections of light dance on the bottle's surface. Set against a minimalist, warm wooden background with a few raw peanuts scattered artfully, evoking a sense of purity and traditional quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOuUAsHFN2_uFf7SduiiN7r-PmrSw90JJMEAIMHBhtuiVzlwBmnidqSZv4nxcW46IeGjj4i49bv5GptHeG3ROsBnWQPphr3fZlBmzcbhcO4g8FZkagiPwNBkAA6pv6nD99IAqhnFRDUf7o6tnV4Y1-_Xg716oMG4-occQTKvnxcKd53ts29qQa34OVVBKmeyMTJEtCrMmpwzzRowVYjXHvWaSRtYGzFKk2q6kVPLSqOzDIImNIEIGjN2BtqOUcGj3kNpwFgIe2eO3V"/>
+<div class="absolute top-3 right-3 bg-secondary/90 text-white px-2 py-1 rounded-lg text-label-sm backdrop-blur-sm">
+                        Low Stock
+                    </div>
+</div>
+<div class="p-4">
+<h4 class="font-headline-md text-body-lg font-semibold text-on-surface mb-1">Golden Sun Oil (5L)</h4>
+<p class="text-on-surface-variant text-label-md mb-3">Category: Cooking Oils</p>
+<div class="flex items-center justify-between">
+<span class="text-headline-md font-bold text-primary">₦ 12,800</span>
+<span class="text-label-sm text-secondary font-bold">Stock: 5 units</span>
+</div>
+</div>
+</div>
+<!-- Product 3: Out of Stock -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/20 shadow-sm product-card-hover transition-all duration-300 group opacity-80">
+<div class="h-48 relative overflow-hidden">
+<img class="w-full h-full object-cover grayscale group-hover:scale-105 transition-transform duration-500" data-alt="A high-contrast studio photograph of a classic soft drink bottle chilled with visible condensation beads on the surface. The background is a sophisticated deep emerald green that fades to black at the edges. The lighting is sharp, highlighting the crisp silhouette and refreshing appeal of the beverage." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOuUAsHFN2_uFf7SduiiN7r-PmrSw90JJMEAIMHBhtuiVzlwBmnidqSZv4nxcW46IeGjj4i49bv5GptHeG3ROsBnWQPphr3fZlBmzcbhcO4g8FZkagiPwNBkAA6pv6nD99IAqhnFRDUf7o6tnV4Y1-_Xg716oMG4-occQTKvnxcKd53ts29qQa34OVVBKmeyMTJEtCrMmpwzzRowVYjXHvWaSRtYGzFKk2q6kVPLSqOzDIImNIEIGjN2BtqOUcGj3kNpwFgIe2eO3V"/>
+<div class="absolute top-3 right-3 bg-inverse-surface/90 text-inverse-on-surface px-2 py-1 rounded-lg text-label-sm backdrop-blur-sm">
+                        Out of Stock
+                    </div>
+</div>
+<div class="p-4">
+<h4 class="font-headline-md text-body-lg font-semibold text-on-surface mb-1">Refresh Cola (Pack of 12)</h4>
+<p class="text-on-surface-variant text-label-md mb-3">Category: Beverages</p>
+<div class="flex items-center justify-between">
+<span class="text-headline-md font-bold text-primary">₦ 4,200</span>
+<span class="text-label-sm text-error font-bold">Stock: 0 units</span>
+</div>
+</div>
+</div>
+<!-- Product 4: In Stock -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/20 shadow-sm product-card-hover transition-all duration-300 group">
+<div class="h-48 relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A rustic and inviting photo of multiple varieties of organic beans in wooden bowls, including black-eyed peas and kidney beans. The shot is well-lit with warm, diffused sunlight, emphasizing the smooth textures and natural colors of the pulses. The aesthetic is earthy and communal, suggesting fresh market sourcing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOuUAsHFN2_uFf7SduiiN7r-PmrSw90JJMEAIMHBhtuiVzlwBmnidqSZv4nxcW46IeGjj4i49bv5GptHeG3ROsBnWQPphr3fZlBmzcbhcO4g8FZkagiPwNBkAA6pv6nD99IAqhnFRDUf7o6tnV4Y1-_Xg716oMG4-occQTKvnxcKd53ts29qQa34OVVBKmeyMTJEtCrMmpwzzRowVYjXHvWaSRtYGzFKk2q6kVPLSqOzDIImNIEIGjN2BtqOUcGj3kNpwFgIe2eO3V"/>
+<div class="absolute top-3 right-3 bg-primary-container/90 text-white px-2 py-1 rounded-lg text-label-sm backdrop-blur-sm">
+                        In Stock
+                    </div>
+</div>
+<div class="p-4">
+<h4 class="font-headline-md text-body-lg font-semibold text-on-surface mb-1">Brown Beans (Oloyin)</h4>
+<p class="text-on-surface-variant text-label-md mb-3">Category: Grains &amp; Cereals</p>
+<div class="flex items-center justify-between">
+<span class="text-headline-md font-bold text-primary">₦ 1,500 / kg</span>
+<span class="text-label-sm text-outline">Stock: 120 units</span>
+</div>
+</div>
+</div>
+<!-- Product 5: In Stock -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/20 shadow-sm product-card-hover transition-all duration-300 group">
+<div class="h-48 relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="An assortment of fresh, vibrant vegetables including ripe tomatoes, onions, and bell peppers displayed in a clean, modern market stall. The colors are saturated and natural, with soft light highlighting the freshness of the produce. The background is slightly blurred, focusing on the quality and abundance of the ingredients." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOuUAsHFN2_uFf7SduiiN7r-PmrSw90JJMEAIMHBhtuiVzlwBmnidqSZv4nxcW46IeGjj4i49bv5GptHeG3ROsBnWQPphr3fZlBmzcbhcO4g8FZkagiPwNBkAA6pv6nD99IAqhnFRDUf7o6tnV4Y1-_Xg716oMG4-occQTKvnxcKd53ts29qQa34OVVBKmeyMTJEtCrMmpwzzRowVYjXHvWaSRtYGzFKk2q6kVPLSqOzDIImNIEIGjN2BtqOUcGj3kNpwFgIe2eO3V"/>
+<div class="absolute top-3 right-3 bg-primary-container/90 text-white px-2 py-1 rounded-lg text-label-sm backdrop-blur-sm">
+                        In Stock
+                    </div>
+</div>
+<div class="p-4">
+<h4 class="font-headline-md text-body-lg font-semibold text-on-surface mb-1">Fresh Tomato Basket</h4>
+<p class="text-on-surface-variant text-label-md mb-3">Category: Fresh Produce</p>
+<div class="flex items-center justify-between">
+<span class="text-headline-md font-bold text-primary">₦ 25,000</span>
+<span class="text-label-sm text-outline">Stock: 12 units</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB for Add Product -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg hover:bg-surface-tint hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center z-50 group">
+<span class="material-symbols-outlined text-[32px]" data-icon="add">add</span>
+<span class="absolute right-full mr-4 bg-inverse-surface text-inverse-on-surface px-3 py-1 rounded-lg text-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Add Product</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-lg z-50">
+<div class="bg-surface/80 backdrop-blur-xl border border-outline-variant/30 shadow-xl rounded-full py-2 px-6 flex justify-between items-center">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-3 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-label-sm font-label-bold">Home</span>
+</a>
+<!-- Products (Active) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed bg-primary-container/10 rounded-full px-4 py-1 active-nav-pill" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2" data-weight="fill" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="text-label-sm font-label-bold">Products</span>
+</a>
+<!-- Sales -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-3 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="text-label-sm font-label-bold">Sales</span>
+</a>
+<!-- Customers -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-3 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="text-label-sm font-label-bold">Customers</span>
+</a>
+<!-- More -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-3 py-1 hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+<span class="text-label-sm font-label-bold">More</span>
+</a>
+</div>
+</nav>
+<script>
+        // Simple micro-interaction for active state scaling
+        document.querySelectorAll('nav a').forEach(item => {
+            item.addEventListener('click', function(e) {
+                this.classList.add('scale-90');
+                setTimeout(() => this.classList.remove('scale-90'), 200);
+            });
+        });
+
+        // Search highlight interaction
+        const searchInput = document.querySelector('input');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary/20');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary/20');
+        });
+    </script>
+</body></html>

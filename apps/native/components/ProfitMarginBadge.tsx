@@ -37,10 +37,10 @@ export function ProfitMarginBadge({ sellingPrice, costPrice }: ProfitMarginBadge
 
   return (
     <StyledView className={`flex-row items-center justify-between p-2 rounded-lg border ${badgeColor} mb-2`}>
-      <StyledText className={`text-xs font-semibold ${textColor}`}>
+      <StyledText className={`text-xs font-semibold ${textColor} tabular-nums`}>
         Profit: ₦{profit.toFixed(2)} ({marginPercentage.toFixed(1)}%)
       </StyledText>
-      <StyledText className={`text-[10px] font-bold uppercase tracking-wider ${textColor}`}>
+      <StyledText className={`text-[10px] font-bold uppercase ${textColor}`}>
         {marginText}
       </StyledText>
     </StyledView>

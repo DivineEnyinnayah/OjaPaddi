@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#78dc77",
+                        "on-secondary-fixed-variant": "#574500",
+                        "on-primary-fixed-variant": "#005313",
+                        "primary-fixed": "#94f990",
+                        "on-surface-variant": "#becab9",
+                        "secondary-fixed": "#ffe087",
+                        "tertiary-container": "#9d9b9a",
+                        "tertiary-fixed": "#e5e2e1",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-tertiary-fixed-variant": "#474746",
+                        "primary-container": "#4caf50",
+                        "on-surface": "#e5e2e1",
+                        "on-secondary-fixed": "#241a00",
+                        "on-error": "#690005",
+                        "surface-container-low": "#1c1b1b",
+                        "surface-container-highest": "#353534",
+                        "secondary-fixed-dim": "#ebc23e",
+                        "on-primary-fixed": "#002204",
+                        "on-background": "#e5e2e1",
+                        "on-secondary": "#3c2f00",
+                        "outline": "#899484",
+                        "surface-container": "#201f1f",
+                        "background": "#131313",
+                        "on-primary": "#00390a",
+                        "primary-fixed-dim": "#78dc77",
+                        "on-tertiary-fixed": "#1b1b1c",
+                        "surface-variant": "#353534",
+                        "surface": "#131313",
+                        "outline-variant": "#3f4a3c",
+                        "on-primary-container": "#003c0b",
+                        "secondary": "#ebc23e",
+                        "inverse-on-surface": "#313030",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "on-tertiary": "#303030",
+                        "surface-bright": "#393939",
+                        "inverse-surface": "#e5e2e1",
+                        "surface-container-high": "#2a2a2a",
+                        "secondary-container": "#b69200",
+                        "on-error-container": "#ffdad6",
+                        "surface-dim": "#131313",
+                        "error-container": "#93000a",
+                        "primary": "#78dc77",
+                        "error": "#ffb4ab",
+                        "tertiary": "#c8c6c5",
+                        "on-secondary-container": "#3a2d00",
+                        "on-tertiary-container": "#333333",
+                        "inverse-primary": "#006e1c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px",
+                        "xs": "4px",
+                        "lg": "24px",
+                        "unit": "4px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "xl": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "display-lg": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "title-md": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "label-bold": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-bold": ["14px", {"lineHeight": "20px", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary-container">
+<!-- Suppressed Shell: Linear Transactional Page -->
+<main class="flex-grow flex flex-col items-center justify-center px-margin-mobile py-xl w-full max-w-md mx-auto">
+<!-- Header Section -->
+<div class="w-full text-center mb-xl">
+<div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-container mb-md">
+<span class="material-symbols-outlined text-on-primary-container text-4xl" data-icon="storefront">storefront</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">OjaPaddi</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-xs">Your Market Friend</p>
+</div>
+<!-- Login Form Card -->
+<div class="w-full bg-surface-container-low rounded-2xl p-lg border border-outline-variant/30">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-lg">Welcome Back</h2>
+<form class="space-y-md">
+<!-- Email Field -->
+<div class="space-y-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant ml-xs">Email Address</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-on-surface-variant text-[20px]" data-icon="mail">mail</span>
+<input class="w-full h-14 pl-12 pr-4 bg-surface-container-highest border-none rounded-xl text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary transition-all" placeholder="Enter your email" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-xs">
+<div class="flex justify-between items-center ml-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Password</label>
+<a class="font-label-sm text-label-sm text-primary hover:underline" href="#">Forgot Password?</a>
+</div>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-on-surface-variant text-[20px]" data-icon="lock">lock</span>
+<input class="w-full h-14 pl-12 pr-12 bg-surface-container-highest border-none rounded-xl text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary transition-all" placeholder="Enter your password" type="password"/>
+<button class="absolute right-4 text-on-surface-variant" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+<!-- Primary CTA -->
+<button class="w-full h-14 bg-primary text-on-primary font-label-bold text-label-bold rounded-xl flex items-center justify-center gap-sm active:scale-95 transition-transform mt-lg" type="submit">
+                    Sign In
+                    <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</form>
+<!-- Divider -->
+<div class="flex items-center my-lg gap-md">
+<div class="h-[1px] flex-grow bg-outline-variant"></div>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-widest">OR</span>
+<div class="h-[1px] flex-grow bg-outline-variant"></div>
+</div>
+<!-- Secondary Actions -->
+<div class="grid grid-cols-2 gap-md">
+<button class="flex flex-col items-center justify-center p-md bg-surface-container-highest rounded-xl border border-outline-variant hover:border-primary/50 transition-colors group">
+<span class="material-symbols-outlined text-primary mb-xs group-hover:scale-110 transition-transform" data-icon="fingerprint">fingerprint</span>
+<span class="font-label-sm text-label-sm text-on-surface">Biometric</span>
+</button>
+<button class="flex flex-col items-center justify-center p-md bg-surface-container-highest rounded-xl border border-outline-variant hover:border-primary/50 transition-colors group">
+<span class="material-symbols-outlined text-primary mb-xs group-hover:scale-110 transition-transform" data-icon="qr_code_scanner">qr_code_scanner</span>
+<span class="font-label-sm text-label-sm text-on-surface">QR Code</span>
+</button>
+</div>
+</div>
+<!-- Footer Link -->
+<div class="mt-xl text-center">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                New to OjaPaddi? 
+                <a class="text-primary font-bold hover:underline ml-xs" href="#">Create Account</a>
+</p>
+</div>
+<!-- Decorative Element -->
+<div class="mt-xl opacity-20 w-32 h-1 bg-gradient-to-r from-transparent via-primary to-transparent rounded-full"></div>
+</main>
+<!-- Visual Polish: Soft Glow background -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+<div class="absolute -top-24 -left-24 w-96 h-96 bg-primary-container/10 blur-[120px] rounded-full"></div>
+<div class="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary-container/10 blur-[120px] rounded-full"></div>
+</div>
+</body></html>

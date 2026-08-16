@@ -5,7 +5,6 @@ import {
   Image,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
   TextInput,
   ScrollView,
@@ -16,9 +15,10 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MagnifyingGlass, Plus } from 'phosphor-react-native';
 import { withUniwind } from 'uniwind';
-import { ILLUSTRATIONS } from '@/constants/illustrations';
+import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -82,7 +82,7 @@ export default function ProductsScreen() {
             })
           }
         >
-          <Surface variant="primary" className="p-0 overflow-hidden">
+          <Surface variant="primary" className="p-0 overflow-hidden rounded-xl border border-outline-variant/20 shadow-sm">
             <StyledView className="h-28 bg-surface-container items-center justify-center">
               {item.imageUrl ? (
                 <StyledImage source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
@@ -94,7 +94,7 @@ export default function ProductsScreen() {
             </StyledView>
             <StyledView className="p-3 gap-1">
               <StyledText
-                className="text-sm font-semibold text-on-surface leading-tight"
+                className="text-base font-semibold text-on-surface leading-tight text-balance"
                 numberOfLines={1}
               >
                 {item.name}
@@ -104,12 +104,12 @@ export default function ProductsScreen() {
                   {item.category || 'General'}
                 </StyledText>
               </StyledView>
-              <StyledText className="text-base font-bold text-primary mt-1">
+              <StyledText className="text-base font-bold text-primary mt-1 tabular-nums">
                 ₦{price.toLocaleString()}
               </StyledText>
               <StyledView className="flex-row items-center gap-1">
                 <StyledText
-                  className={`text-xs ${isLowStock ? 'text-error font-semibold' : 'text-on-surface-variant'}`}
+                  className={`text-xs ${isLowStock ? 'text-error font-semibold' : 'text-on-surface-variant'} tabular-nums`}
                 >
                   {item.quantity} in stock
                 </StyledText>
@@ -139,8 +139,37 @@ export default function ProductsScreen() {
 
   if (isLoading && products.length === 0) {
     return (
-      <Container isScrollable={false} withTabBar className="items-center justify-center">
-        <ActivityIndicator size="large" color={colors.primary} />
+      <Container isScrollable={false} withTabBar className="px-margin">
+        <StyledView className="flex-col gap-2 mb-4">
+          <Skeleton className="h-10 w-3/4 mb-2" />
+          <Skeleton className="h-11 w-full rounded-input" />
+        </StyledView>
+        <StyledView className="flex-row gap-2 mb-4">
+          <Skeleton className="h-8 w-16 rounded-md" />
+          <Skeleton className="h-8 w-20 rounded-md" />
+          <Skeleton className="h-8 w-24 rounded-md" />
+        </StyledView>
+        <Surface variant="primary" className="flex-row justify-between items-center mb-4">
+          <StyledView className="flex-1 items-center">
+            <Skeleton className="h-4 w-20 mb-1" />
+            <Skeleton className="h-6 w-8" />
+          </StyledView>
+          <StyledView className="w-px h-10 bg-outline-variant/50" />
+          <StyledView className="flex-1 items-center">
+            <Skeleton className="h-4 w-20 mb-1" />
+            <Skeleton className="h-6 w-16" />
+          </StyledView>
+        </Surface>
+        <StyledView className="flex-row gap-1.5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <StyledView key={i} className="flex-1 m-1">
+              <Skeleton className="h-28 rounded-xl mb-2" />
+              <Skeleton className="h-4 w-3/4 mb-1" />
+              <Skeleton className="h-3 w-1/2 mb-1" />
+              <Skeleton className="h-5 w-1/3" />
+            </StyledView>
+          ))}
+        </StyledView>
       </Container>
     );
   }
@@ -158,23 +187,17 @@ export default function ProductsScreen() {
 
   return (
     <Container isScrollable={false} withTabBar>
-      <StyledView className="flex-row justify-between items-center px-6 pt-14 pb-2">
-        <StyledText className="text-3xl font-black text-on-surface tracking-tight">
+      <StyledView className="flex-row justify-between items-center px-margin pt-4 pb-2">
+        <StyledText className="text-h2 font-bold text-on-surface text-balance">
           Products
         </StyledText>
-        <StyledTouchableOpacity
-          className="w-10 h-10 rounded-full bg-primary items-center justify-center"
-          onPress={() => router.push('/products/add')}
-        >
-          <MaterialIcons name="add" size={24} color="#FFFFFF" />
-        </StyledTouchableOpacity>
       </StyledView>
 
-      <StyledView className="px-6 pb-2">
-        <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-input px-4 h-11">
-          <MaterialIcons name="search" size={20} color={colors.outline} />
+      <StyledView className="px-margin pb-2">
+        <StyledView className="flex-row items-center bg-surface-container-low rounded-xl border border-outline-variant px-4 h-11">
+          <MagnifyingGlass size={20} color={colors.outline} />
           <StyledTextInput
-            className="flex-1 ml-2 text-body-md text-on-surface"
+            className="flex-1 text-body-md text-on-surface ml-2"
             placeholder="Search products..."
             placeholderTextColor={colors.outline}
             value={searchQuery}
@@ -186,7 +209,7 @@ export default function ProductsScreen() {
       <StyledScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="px-6 mb-2"
+        className="px-margin mb-2"
         contentContainerStyle={{ gap: 6 }}
       >
         {categories.map((category) => {
@@ -194,8 +217,10 @@ export default function ProductsScreen() {
           return (
             <StyledTouchableOpacity
               key={category}
-              className={`items-center justify-center rounded-md px-4 h-8 ${isSelected ? 'bg-primary' : 'border border-outline-variant'}`}
+              className={`items-center justify-center rounded-full px-4 h-8 ${isSelected ? 'bg-primary' : 'border border-outline-variant'}`}
               onPress={() => setSelectedCategory(category)}
+              accessibilityLabel={`Select category: ${category}`}
+              accessibilityRole="button"
             >
               <StyledText
                 className={`justify-center items-center flex text-sm font-medium ${isSelected ? 'text-on-primary' : 'text-on-surface-variant'}`}
@@ -207,13 +232,13 @@ export default function ProductsScreen() {
         })}
       </StyledScrollView>
 
-      <StyledView className="px-6 pb-3">
-        <Surface variant="primary" className="flex-row justify-between items-center">
+      <StyledView className="px-margin pb-3">
+        <Surface variant="primary" className="flex-row justify-between items-center rounded-xl border border-outline-variant/30 p-md">
           <StyledView className="flex-1 items-center">
             <StyledText className="text-xs text-on-surface-variant">
               Total Products
             </StyledText>
-            <StyledText className="text-xl font-bold text-on-surface">
+            <StyledText className="text-xl font-bold text-on-surface tabular-nums">
               {products.length}
             </StyledText>
           </StyledView>
@@ -222,7 +247,7 @@ export default function ProductsScreen() {
             <StyledText className="text-xs text-on-surface-variant">
               Total Value
             </StyledText>
-            <StyledText className="text-xl font-bold text-primary">
+            <StyledText className="text-xl font-bold text-primary tabular-nums">
               ₦{totalValue.toLocaleString()}
             </StyledText>
           </StyledView>
@@ -234,7 +259,7 @@ export default function ProductsScreen() {
         keyExtractor={(item) => item.id}
         renderItem={renderProductCard}
         numColumns={2}
-        contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
@@ -250,7 +275,7 @@ export default function ProductsScreen() {
               style={{ width: 80, height: 80 }}
               resizeMode="contain"
             />
-            <StyledText className="text-base text-on-surface-variant mt-4 text-center">
+            <StyledText className="text-base text-on-surface-variant mt-4 text-center text-pretty">
               No products yet
             </StyledText>
             <Button
@@ -265,10 +290,13 @@ export default function ProductsScreen() {
       />
 
       <StyledTouchableOpacity
-        className="absolute bottom-8 right-6 w-14 h-14 rounded-full bg-primary justify-center items-center shadow-lg shadow-black/30 elevation-5"
+        className="absolute right-4 size-14 rounded-full bg-primary justify-center items-center shadow-lg z-[var(--z-fab)] active:scale-95"
+        style={{ bottom: TAB_BAR_OFFSET + 12 }}
         onPress={() => router.push('/products/add')}
+        accessibilityLabel="Add new product"
+        accessibilityRole="button"
       >
-        <MaterialIcons name="add" size={28} color="#FFFFFF" />
+        <Plus size={28} color={colors.onPrimary} />
       </StyledTouchableOpacity>
     </Container>
   );

@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  /* OjaPaddi palette — deep market green, paper cream, marigold */
-  --color-paper: #f6f1e7;
-  --color-paper-2: #efe8d8;
-  --color-ink: #1c1c1a;
-  --color-ink-soft: #5a5a52;
-  --color-paddi-600: #1a7a4f;
-  --color-paddi-700: #135e3c;
-  --color-paddi-800: #0d4429;
-  --color-paddi-900: #082c1a;
-  --color-marigold-300: #f5cf85;
-  --color-marigold-400: #efb84e;
-  --color-marigold-500: #e09d24;
-  --color-marigold-600: #b87c12;
+  /* OjaPaddi app palette — mint surface, brand green, coral accents (M3 tokens) */
+  --color-paper: #f1fcf7;
+  --color-paper-2: #e5f0eb;
+  --color-ink: #171d1a;
+  --color-ink-soft: #516359;
+  --color-paddi-600: #2e8b57;
+  --color-paddi-700: #1d7347;
+  --color-paddi-800: #005232;
+  --color-paddi-900: #0f1a16;
+  --color-marigold-300: #ffdad8;
+  --color-marigold-400: #f08080;
+  --color-marigold-500: #9d4042;
+  --color-marigold-600: #713341;
 
-  --font-display: var(--font-grotesk), system-ui, sans-serif;
-  --font-mono: var(--font-spacemono), ui-monospace, monospace;
+  --font-display: var(--font-jakarta), system-ui, sans-serif;
+  --font-mono: var(--font-be-vietnam), system-ui, sans-serif;
 }
 
 html {
@@ -27,11 +27,6 @@ body {
   background-color: var(--color-paper);
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
-}
-
-/* Paper grain — subtle, not noisy */
-.paper-grain {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
 }
 
 /* Dashed "perforation" lines for the receipt */
