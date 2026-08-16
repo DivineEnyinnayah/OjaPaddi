@@ -10,6 +10,7 @@ import {
   Star,
   Users,
   Question,
+  Receipt,
   FileText,
   SignOut,
 } from 'phosphor-react-native';
@@ -102,6 +103,17 @@ export default function MoreScreen() {
               <ChartBar size={20} color={colors.primary} />
             </StyledView>
             <StyledText className="flex-1 text-body-lg font-semibold text-on-surface text-balance">Analytics</StyledText>
+            <CaretRight size={22} color={colors.outline} />
+          </StyledTouchableOpacity>
+
+          <StyledTouchableOpacity
+            className="flex-row items-center px-5 py-4 border-b border-outline-variant/50"
+            onPress={() => router.push('/expenses')}
+          >
+            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4">
+              <Receipt size={20} color={colors.primary} />
+            </StyledView>
+            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface text-balance">Expenses</StyledText>
             <CaretRight size={22} color={colors.outline} />
           </StyledTouchableOpacity>
 

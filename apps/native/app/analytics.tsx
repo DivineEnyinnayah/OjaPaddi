@@ -259,13 +259,22 @@ export default function AnalyticsScreen() {
           </StyledTouchableOpacity>
           <StyledText className="text-h2 text-on-surface text-balance">Analytics</StyledText>
         </StyledView>
-        <StyledTouchableOpacity
-          onPress={handleExportCSV}
-          className="flex-row items-center gap-1.5 px-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-full"
-        >
-          <ShareIcon size={16} color={colors.primary} />
-          <StyledText className="text-primary font-semibold text-xs">Export CSV</StyledText>
-        </StyledTouchableOpacity>
+        <StyledView className="flex-row items-center gap-2">
+          <StyledTouchableOpacity
+            onPress={() => router.push('/expenses')}
+            className="flex-row items-center gap-1 px-3 py-1.5 bg-primary-container/20 border border-primary/30 rounded-full"
+          >
+            <Receipt size={16} color={colors.primary} />
+            <StyledText className="text-primary font-semibold text-xs">Expenses</StyledText>
+          </StyledTouchableOpacity>
+          <StyledTouchableOpacity
+            onPress={handleExportCSV}
+            className="flex-row items-center gap-1.5 px-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-full"
+          >
+            <ShareIcon size={16} color={colors.primary} />
+            <StyledText className="text-primary font-semibold text-xs">Export</StyledText>
+          </StyledTouchableOpacity>
+        </StyledView>
       </StyledView>
 
       <ScrollView

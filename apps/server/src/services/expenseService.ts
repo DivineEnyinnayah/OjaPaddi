@@ -1,13 +1,14 @@
 import type { Database } from "@ojapaddi/db";
 import { expenses } from "@ojapaddi/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc, ilike } from "drizzle-orm";
 
 export async function getExpenses(db: Database, businessId: string, query: {
   from?: string;
   to?: string;
   category?: string;
+  search?: string;
 }) {
-  const { from, to, category } = query;
+  const { from, to, category, search } = query;
 
   let filters = [eq(expenses.businessId, businessId)];
 
@@ -17,11 +18,18 @@ export async function getExpenses(db: Database, businessId: string, query: {
   if (to) {
     filters.push(sql`${expenses.incurredAt} <= ${new Date(to)}`);
   }
-  if (category) {
+  if (category && category !== 'All') {
     filters.push(eq(expenses.category, category));
   }
+  if (search && search.trim() !== '') {
+    filters.push(ilike(expenses.description, `%${search.trim()}%`));
+  }
 
-  const result = await db.select().from(expenses).where(and(...filters));
+  const result = await db
+    .select()
+    .from(expenses)
+    .where(and(...filters))
+    .orderBy(desc(expenses.incurredAt));
 
   return result;
 }
@@ -30,14 +38,24 @@ export async function createExpense(db: Database, businessId: string, data: {
   description: string;
   amount: number;
   category?: string;
-  incurredAt: Date;
+  isRecurring?: boolean;
+  recurringFrequency?: string;
+  dueDate?: string | Date;
+  isPaid?: boolean;
+  reminderDaysBefore?: number;
+  incurredAt?: string | Date;
 }) {
   const [newExpense] = await db.insert(expenses).values({
     businessId,
     description: data.description,
     amount: data.amount.toString(),
     category: data.category,
-    incurredAt: data.incurredAt,
+    isRecurring: data.isRecurring ?? false,
+    recurringFrequency: data.recurringFrequency,
+    dueDate: data.dueDate ? new Date(data.dueDate) : null,
+    isPaid: data.isPaid ?? true,
+    reminderDaysBefore: data.reminderDaysBefore ?? 3,
+    incurredAt: data.incurredAt ? new Date(data.incurredAt) : new Date(),
   }).returning();
   return newExpense;
 }

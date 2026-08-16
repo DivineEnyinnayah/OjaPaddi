@@ -4,7 +4,12 @@ export const CreateExpenseSchema = z.object({
   description: z.string().min(1, "Description is required"),
   amount: z.coerce.number().min(0.01, "Amount must be at least ₦0.01"),
   category: z.string().optional(),
-  incurredAt: z.string().datetime("Invalid date format"),
+  isRecurring: z.boolean().optional(),
+  recurringFrequency: z.string().optional(),
+  dueDate: z.string().optional(),
+  isPaid: z.boolean().optional(),
+  reminderDaysBefore: z.number().optional(),
+  incurredAt: z.string().optional(),
 });
 
 export const UpdateExpenseSchema = CreateExpenseSchema.partial();

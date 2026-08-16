@@ -96,6 +96,7 @@ function RootLayoutInner() {
         <Stack.Screen name="analytics" />
         <Stack.Screen name="receipt" />
         <Stack.Screen name="business-profile" />
+        <Stack.Screen name="expenses" />
       </Stack>
     </>
   );

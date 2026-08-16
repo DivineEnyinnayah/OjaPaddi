@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { apiRequest } from '../lib/api';
 
 export interface Expense {
@@ -6,10 +6,15 @@ export interface Expense {
   description: string;
   amount: string;
   category?: string;
+  isRecurring?: boolean;
+  recurringFrequency?: 'weekly' | 'monthly' | 'yearly';
+  dueDate?: string | null;
+  isPaid?: boolean;
+  reminderDaysBefore?: number;
   incurredAt: string;
   businessId: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export function useExpenses() {
@@ -17,7 +22,7 @@ export function useExpenses() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchExpenses = async (query: Record<string, string> = {}) => {
+  const fetchExpenses = useCallback(async (query: Record<string, string> = {}) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -39,13 +44,18 @@ export function useExpenses() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const createExpense = async (expenseData: {
+  const createExpense = useCallback(async (expenseData: {
     description: string;
     amount: number;
     category?: string;
-    incurredAt: string;
+    isRecurring?: boolean;
+    recurringFrequency?: 'weekly' | 'monthly' | 'yearly';
+    dueDate?: string;
+    isPaid?: boolean;
+    reminderDaysBefore?: number;
+    incurredAt?: string;
   }) => {
     setIsLoading(true);
     try {
@@ -66,9 +76,9 @@ export function useExpenses() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchExpenses]);
 
-  const getExpenseById = async (expenseId: string) => {
+  const getExpenseById = useCallback(async (expenseId: string) => {
     setIsLoading(true);
     try {
       const result = await apiRequest<Expense>(`/expenses/${expenseId}`, {
@@ -86,9 +96,9 @@ export function useExpenses() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const updateExpense = async (expenseId: string, expenseData: Partial<Expense>) => {
+  const updateExpense = useCallback(async (expenseId: string, expenseData: Partial<Expense>) => {
     setIsLoading(true);
     try {
       const result = await apiRequest<Expense>(`/expenses/${expenseId}`, {
@@ -108,9 +118,9 @@ export function useExpenses() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchExpenses]);
 
-  const deleteExpense = async (expenseId: string) => {
+  const deleteExpense = useCallback(async (expenseId: string) => {
     setIsLoading(true);
     try {
       const result = await apiRequest<null>(`/expenses/${expenseId}`, {
@@ -129,7 +139,7 @@ export function useExpenses() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchExpenses]);
 
   return {
     expenses,

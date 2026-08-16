@@ -49,10 +49,6 @@ export default function Home() {
       {/* Header */}
       <header className="relative z-20 mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
         <Logo />
-        <span className="hidden items-center gap-2 rounded-full border border-paddi-700/30 bg-paddi-700/5 px-4 py-1.5 font-mono text-[11px] font-bold uppercase tracking-widest text-paddi-700 sm:inline-flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-paddi-600" aria-hidden="true" />
-          Opening soon
-        </span>
       </header>
 
       <main>

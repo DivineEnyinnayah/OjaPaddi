@@ -376,11 +376,30 @@ function handleGetExpenses(endpoint: string): ApiResponse<Expense[]> {
   const queryString = endpoint.split('?')[1] || '';
   const params = new URLSearchParams(queryString);
   const category = params.get('category');
+  const search = params.get('search');
+  const from = params.get('from');
+  const to = params.get('to');
 
   let filtered = [...mockExpenses];
-  if (category) {
-    filtered = filtered.filter((e) => e.category === category);
+  if (category && category !== 'All') {
+    filtered = filtered.filter((e) => e.category?.toLowerCase() === category.toLowerCase());
   }
+  if (search) {
+    const q = search.toLowerCase();
+    filtered = filtered.filter(
+      (e) => e.description.toLowerCase().includes(q) || e.category?.toLowerCase().includes(q)
+    );
+  }
+  if (from) {
+    const fromDate = new Date(from);
+    filtered = filtered.filter((e) => new Date(e.incurredAt) >= fromDate);
+  }
+  if (to) {
+    const toDate = new Date(to);
+    filtered = filtered.filter((e) => new Date(e.incurredAt) <= toDate);
+  }
+
+  filtered.sort((a, b) => new Date(b.incurredAt).getTime() - new Date(a.incurredAt).getTime());
 
   return { success: true, data: filtered };
 }

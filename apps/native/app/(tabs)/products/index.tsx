@@ -18,6 +18,7 @@ import { Surface } from '@/components/ui/surface';
 import { MagnifyingGlass, Plus } from 'phosphor-react-native';
 import { withUniwind } from 'uniwind';
 import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
+import { ILLUSTRATIONS } from '@/constants/illustrations';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const StyledView = withUniwind(View);

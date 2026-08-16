@@ -115,9 +115,9 @@ export default function HomeScreen() {
           <>
             <StyledView className="flex-col gap-1 mb-gutter">
               <StyledText className="font-extrabold text-2xl text-on-surface text-balance">
-                {getGreeting()}, {user?.fullName?.split(' ')[0] || 'Seller'} welcome back
+                {getGreeting()}, {user?.fullName?.split(' ')[0] || 'Seller'}
               </StyledText>
-              <StyledText className="font-body-lg text-on-surface-variant text-pretty">Here's how your shop is performing today.</StyledText>
+              {/* <StyledText className="font-body-lg text-on-surface-variant text-pretty">Here's how your shop is performing today.</StyledText> */}
             </StyledView>
 
             <StyledView className="flex-col gap-gutter mb-gutter">
