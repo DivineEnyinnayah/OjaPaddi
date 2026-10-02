@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "01e04008-fa62-4bf6-ab0d-15726beab31f"
+      }
+    },
+    "android": {
+      "package": "com.iamdivine.ojapaddi"
+    }
+  }
+}

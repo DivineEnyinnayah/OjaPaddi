@@ -16,4 +16,4 @@ echo "   https://$(npx wrangler deployments list --json 2>/dev/null | head -1 | 
 echo ""
 echo "📋 Next steps:"
 echo "   1. Update EXPO_PUBLIC_SERVER_URL in apps/native/.env to the URL above + /v1"
-echo "   2. Run: bun run dev:native"
+echo "   2. Run: pnpm dev:native"

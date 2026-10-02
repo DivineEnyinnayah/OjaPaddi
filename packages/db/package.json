@@ -12,10 +12,10 @@
     }
   },
   "scripts": {
-    "db:push": "bun --env-file=../../apps/server/.env drizzle-kit push",
-    "db:generate": "bun --env-file=../../apps/server/.env drizzle-kit generate",
-    "db:studio": "bun --env-file=../../apps/server/.env drizzle-kit studio",
-    "db:migrate": "bun --env-file=../../apps/server/.env drizzle-kit migrate"
+    "db:push": "dotenv -e ../../apps/server/.env -- drizzle-kit push",
+    "db:generate": "dotenv -e ../../apps/server/.env -- drizzle-kit generate",
+    "db:studio": "dotenv -e ../../apps/server/.env -- drizzle-kit studio",
+    "db:migrate": "dotenv -e ../../apps/server/.env -- drizzle-kit migrate"
   },
   "dependencies": {
     "@ojapaddi/env": "workspace:*",
@@ -25,8 +25,10 @@
   },
   "devDependencies": {
     "@ojapaddi/config": "workspace:*",
+    "@types/node": "catalog:",
     "@types/pg": "^8.16.0",
+    "dotenv-cli": "^8.0.0",
     "drizzle-kit": "^0.31.8",
-    "typescript": "^6"
+    "typescript": "catalog:"
   }
 }

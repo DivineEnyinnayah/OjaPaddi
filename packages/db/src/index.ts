@@ -5,7 +5,7 @@ import * as schema from "./schema";
 
 export type Database = NodePgDatabase<typeof schema>;
 
-// Long-lived singleton pool, used only for local Bun dev (bun run dev),
+// Long-lived singleton pool, used only for local Node dev (pnpm dev:server),
 // where there's no per-request Hyperdrive binding and no benefit to
 // tearing the connection down between requests.
 let poolInstance: Pool | null = null;
@@ -15,7 +15,7 @@ let poolInstance: Pool | null = null;
  *
  * Use this when you need to close the pool after the request finishes
  * (i.e. the Cloudflare Workers / Hyperdrive path). If connectionString is
- * omitted, falls back to the local Bun singleton pool, which is intentionally
+ * omitted, falls back to the local dev singleton pool, which is intentionally
  * never closed.
  */
 export function createDbWithPool(connectionString?: string): { db: Database; pool: Pool } {

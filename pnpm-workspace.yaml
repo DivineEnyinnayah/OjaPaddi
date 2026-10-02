@@ -1,0 +1,9 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "waitlist"
+catalog:
+  dotenv: ^17.2.2
+  zod: ^4.1.13
+  typescript: ^6.0.0
+  "@types/node": ^22.10.0

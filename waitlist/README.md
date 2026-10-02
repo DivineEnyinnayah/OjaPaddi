@@ -12,8 +12,8 @@ googleapis (service account).
 ## Quick start
 
 ```bash
-bun install
-bun run dev
+pnpm install
+pnpm dev
 ```
 
 Open http://localhost:3000

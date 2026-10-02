@@ -8,7 +8,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "typescript": "^6",
+    "typescript": "catalog:",
     "@ojapaddi/config": "workspace:*"
   }
 }

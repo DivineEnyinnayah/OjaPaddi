@@ -23,7 +23,7 @@ const uniwindConfig = withUniwindConfig(config, {
   dtsFile: "./uniwind-types.d.ts",
 });
 
-// Packages that need explicit resolution due to package exports + Bun symlinks
+// Packages that need explicit resolution due to package exports + pnpm symlinks
 const EXPLICIT_RESOLUTIONS = {
   "uniwind": path.resolve(projectRoot, "node_modules/uniwind/src/index.ts"),
   "culori": path.resolve(projectRoot, "node_modules/culori/bundled/culori.cjs"),

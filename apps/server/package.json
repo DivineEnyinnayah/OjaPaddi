@@ -1,17 +1,17 @@
 {
-  "name": "server",
+  "name": "@ojapaddi/server",
   "type": "module",
   "main": "src/server.ts",
   "scripts": {
-    "build": "bun build ./src/server.ts --outdir dist --target bun",
+    "build": "tsdown",
     "check-types": "tsc -b",
-    "compile": "bun build --compile --minify --sourcemap --bytecode ./src/server.ts --outfile server",
-    "dev": "bun --env-file=.env run --hot src/server.ts",
+    "compile": "tsdown --format=node --platform=node --minify --sourcemap",
+    "dev": "tsx watch --env-file=.env src/server.ts",
     "dev:wrangler": "wrangler dev",
     "wrangler tail": "wrangler tail",
-    "deploy": "wrangler secret bulk .dev.vars && wrangler deploy",
+    "deploy": "pnpm run secrets:deploy && wrangler deploy",
     "secrets:deploy": "wrangler secret bulk .dev.vars",
-    "start": "bun run dist/server.js"
+    "start": "node dist/server.js"
   },
   "dependencies": {
     "@ojapaddi/db": "workspace:*",
@@ -23,11 +23,10 @@
   },
   "devDependencies": {
     "@ojapaddi/config": "workspace:*",
-    "@types/bun": "catalog:",
-    "typescript": "^6",
+    "@types/node": "catalog:",
+    "tsdown": "^0.6.0",
+    "tsx": "^4.19.0",
+    "typescript": "catalog:",
     "wrangler": "^3.114.0"
-  },
-  "trustedDependencies": [
-    "supabase"
-  ]
+  }
 }

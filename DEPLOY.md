@@ -41,7 +41,7 @@ EXPO_PUBLIC_DEV_MODE=false
 
 ### 5. Run Native App
 ```bash
-bun run dev:native
+pnpm dev:native
 ```
 
 ## Redeploying (after code changes)

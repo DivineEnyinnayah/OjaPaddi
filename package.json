@@ -1,26 +1,15 @@
 {
   "name": "ojapaddi",
   "private": true,
-  "workspaces": {
-    "packages": [
-      "apps/*",
-      "packages/*"
-    ],
-    "catalog": {
-      "dotenv": "^17.2.2",
-      "zod": "^4.1.13",
-      "@types/bun": "^1.3.4"
-    }
-  },
   "type": "module",
   "scripts": {
     "dev": "turbo -F native dev",
     "dev:all": "turbo dev",
     "dev:native": "turbo -F native dev",
-    "dev:server": "bun --env-file=apps/server/.env run --hot apps/server/src/server.ts",
-    "wrangler": "bun --cwd apps/server wrangler",
-    "deploy": "bun --cwd apps/server run deploy",
-    "secrets:deploy": "bun --cwd apps/server wrangler secret bulk .dev.vars",
+    "dev:server": "pnpm --filter @ojapaddi/server dev",
+    "wrangler": "pnpm --filter @ojapaddi/server wrangler",
+    "deploy": "pnpm --filter @ojapaddi/server deploy",
+    "secrets:deploy": "pnpm --filter @ojapaddi/server secrets:deploy",
     "build": "turbo build",
     "check-types": "turbo check-types",
     "db:push": "turbo -F @ojapaddi/db db:push",
@@ -33,21 +22,33 @@
     "dotenv": "catalog:",
     "zod": "catalog:"
   },
-  "overrides": {
-    "expo": "^55.0.26",
-    "@expo/metro-runtime": "~55.0.11",
-    "@expo/vector-icons": "^15.1.1",
-    "expo-constants": "~55.0.16",
-    "expo-font": "~55.0.8",
-    "expo-linking": "~55.0.15",
-    "@expo/log-box": "~55.0.12",
-    "@expo/dom-webview": "~55.0.6"
-  },
   "devDependencies": {
     "@ojapaddi/config": "workspace:*",
-    "@types/bun": "^1.3.14",
+    "@types/node": "catalog:",
     "turbo": "^2.8.12",
     "typescript": "~5.9.2"
   },
-  "packageManager": "bun@1.3.10"
+  "pnpm": {
+    "overrides": {
+      "expo": "^55.0.26",
+      "@expo/metro-runtime": "~55.0.11",
+      "@expo/vector-icons": "^15.1.1",
+      "expo-constants": "~55.0.16",
+      "expo-font": "~55.0.8",
+      "expo-linking": "~55.0.15",
+      "@expo/log-box": "~55.0.12",
+      "@expo/dom-webview": "~55.0.6",
+      "rolldown": "1.0.0-beta.7"
+    },
+    "onlyBuiltDependencies": [
+      "sharp",
+      "unrs-resolver",
+      "supabase",
+      "esbuild"
+    ]
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  }
 }

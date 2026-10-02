@@ -21,24 +21,24 @@
 
 ---
 
-## Commands (all via `bun`)
+## Commands (all via `pnpm`)
 
 | Command | What |
 |---|---|
-| `bun run dev` | Start all apps (turbo) |
-| `bun run dev:server` | Hono server only, hot reload |
-| `bun run dev:native` | Expo dev only |
-| `bun run check-types` | Typecheck across all packages (turbo) |
-| `bun run db:push` | Push Drizzle schema to DB |
-| `bun run db:generate` | Generate Drizzle migrations |
-| `bun run db:migrate` | Run pending migrations |
-| `bun run db:studio` | Open Drizzle Studio |
-| `bun run build` | Build all apps |
+| `pnpm dev` | Start all apps (turbo) |
+| `pnpm dev:server` | Hono server only, hot reload |
+| `pnpm dev:native` | Expo dev only |
+| `pnpm check-types` | Typecheck across all packages (turbo) |
+| `pnpm db:push` | Push Drizzle schema to DB |
+| `pnpm db:generate` | Generate Drizzle migrations |
+| `pnpm db:migrate` | Run pending migrations |
+| `pnpm db:studio` | Open Drizzle Studio |
+| `pnpm build` | Build all apps |
 
 **Server dev server:** runs on `http://0.0.0.0:3001` (configurable via `PORT` env).
 **Native dev server:** via Expo on `http://localhost:8081`.
 
-**Server runs with:** `bun --env-file=.env run --hot src/server.ts`
+**Server runs with:** `tsx watch --env-file=.env src/server.ts`
 **DB commands inherit env from:** `apps/server/.env`
 
 ---
@@ -95,3 +95,14 @@ Project scaffolded by [Better-T-Stack](https://github.com/AmanVarshney01/create-
 - Error: `{ success: false, error: { code: string, message: string } }`
 - Pagination: `?page=1&limit=20`
 - Error codes: `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `VALIDATION_ERROR`, `PLAN_LIMIT_REACHED`, `CONFLICT`, `TOO_MANY_REQUESTS`
+
+<!-- BEGIN:turborepo-agent-rules -->
+
+# This is NOT the Turborepo you know
+
+Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
+
+Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
+
+This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+<!-- END:turborepo-agent-rules -->
