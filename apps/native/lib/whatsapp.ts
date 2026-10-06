@@ -6,18 +6,35 @@ const STORE_URL = 'store.ojapaddi.com';
 
 export function buildReceiptMessage(sale: Sale, businessName?: string): string {
   const lines: string[] = [];
-  lines.push(`\uD83E\uDDFE *Receipt${businessName ? ` - ${businessName}` : ''}*`);
+  const isSupermarket = sale.orderType === 'supermarket';
+
+  lines.push(isSupermarket ? `📋 *INVOICE / SUPPLY NOTE${businessName ? ` - ${businessName}` : ''}*` : `🧾 *Receipt${businessName ? ` - ${businessName}` : ''}*`);
+  lines.push(`Ref: ${sale.reference}`);
+  if (isSupermarket && sale.expectedPaymentDate) {
+    lines.push(`Due Date: ${new Date(sale.expectedPaymentDate).toLocaleDateString()}`);
+  }
   lines.push('');
 
   for (const item of sale.items) {
-    lines.push(`\u2022 ${item.productName}`);
-    lines.push(
-      `  ${item.quantity} \u00D7 ${formatCurrency(item.unitPrice)} = ${formatCurrency(item.total)}`
-    );
+    const ret = item.returnedQuantity || 0;
+    const netQty = item.quantity - ret;
+    lines.push(`• ${item.productName}`);
+    if (ret > 0) {
+      lines.push(
+        `  Supplied: ${item.quantity} | Returned: ${ret} | Net: ${netQty} × ${formatCurrency(item.unitPrice)} = ${formatCurrency(netQty * item.unitPrice)}`
+      );
+    } else {
+      lines.push(
+        `  ${item.quantity} × ${formatCurrency(item.unitPrice)} = ${formatCurrency(item.total)}`
+      );
+    }
   }
 
   lines.push('');
-  lines.push(`\uD83D\uDCCA *Total: ${formatCurrency(sale.total)}*`);
+  if (parseFloat(sale.returnedAmount || '0') > 0) {
+    lines.push(`Returned Value: -${formatCurrency(sale.returnedAmount || '0')}`);
+  }
+  lines.push(`📊 *Net Total: ${formatCurrency(sale.total)}*`);
 
   if (parseFloat(sale.discount) > 0) {
     lines.push(`Discount: -${formatCurrency(sale.discount)}`);
@@ -25,10 +42,14 @@ export function buildReceiptMessage(sale: Sale, businessName?: string): string {
 
   if (sale.amountPaid) {
     lines.push(`Amount Paid: ${formatCurrency(sale.amountPaid)}`);
+    const balance = parseFloat(sale.total) - parseFloat(sale.amountPaid);
+    if (balance > 0) {
+      lines.push(`Balance Due: ${formatCurrency(balance)}`);
+    }
   }
 
   lines.push('');
-  lines.push('Thank you for your patronage!');
+  lines.push(isSupermarket ? 'Thank you for your business!' : 'Thank you for your patronage!');
 
   return lines.join('\n');
 }

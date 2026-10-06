@@ -12,5 +12,6 @@ export const saleItems = pgTable("sale_items", {
   unitPrice: decimal("unit_price", { precision: 12, scale: 2 }).notNull(),
   costPrice: decimal("cost_price", { precision: 12, scale: 2 }),
   quantity: integer("quantity").notNull(),
+  returnedQuantity: integer("returned_quantity").default(0).notNull(),
   total: decimal("total", { precision: 12, scale: 2 }).notNull(),
 });

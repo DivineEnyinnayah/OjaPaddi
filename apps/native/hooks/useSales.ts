@@ -3,22 +3,33 @@ import { apiRequest } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 
 export interface SaleItem {
+  id?: string;
   productId: string;
   productName: string;
   unitPrice: number;
   costPrice?: number;
   quantity: number;
+  returnedQuantity?: number;
   total: number;
 }
 
 export interface Sale {
   id: string;
   reference: string;
+  orderType?: 'customer' | 'supermarket';
   customerId?: string;
+  customer?: {
+    id: string;
+    name: string;
+    phone?: string;
+    address?: string;
+  };
+  expectedPaymentDate?: string;
   subtotal: string;
   discount: string;
+  returnedAmount?: string;
   total: string;
-  paymentMethod: 'cash' | 'transfer' | 'pos' | 'other';
+  paymentMethod: 'cash' | 'transfer' | 'pos' | 'cheque' | 'other';
   paymentStatus: 'paid' | 'partial' | 'unpaid';
   amountPaid: string;
   notes?: string;
@@ -66,6 +77,7 @@ export function useSales() {
   };
 
   const createSale = async (saleData: {
+    orderType?: 'customer' | 'supermarket';
     customerId?: string;
     items: {
       productId: string;
@@ -73,9 +85,10 @@ export function useSales() {
       unitPrice: number;
     }[];
     discount?: number;
-    paymentMethod: 'cash' | 'transfer' | 'pos' | 'other';
+    paymentMethod: 'cash' | 'transfer' | 'pos' | 'cheque' | 'other';
     paymentStatus: 'paid' | 'partial' | 'unpaid';
     amountPaid: number;
+    expectedPaymentDate?: string;
     notes?: string;
   }) => {
     setIsLoading(true);
@@ -90,6 +103,34 @@ export function useSales() {
         return result.data;
       } else {
         throw new Error(result.error?.message || 'Failed to create sale');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const returnProducts = async (
+    saleId: string,
+    returnData: {
+      returns: { saleItemId: string; quantity: number }[];
+      notes?: string;
+    }
+  ) => {
+    setIsLoading(true);
+    try {
+      const result = await apiRequest<Sale>(`/sales/${saleId}/returns`, {
+        method: 'POST',
+        body: JSON.stringify(returnData),
+      });
+
+      if (result.success && result.data) {
+        await fetchSales();
+        return result.data;
+      } else {
+        throw new Error(result.error?.message || 'Failed to process return');
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -146,6 +187,7 @@ export function useSales() {
     error,
     fetchSales,
     createSale,
+    returnProducts,
     getSaleById,
     voidSale,
   };

@@ -6,8 +6,9 @@ export async function getCustomers(db: Database, businessId: string, query: {
   page?: number;
   limit?: number;
   search?: string;
+  customerType?: "individual" | "supermarket";
 }) {
-  const { page = 1, limit = 20, search } = query;
+  const { page = 1, limit = 20, search, customerType } = query;
   const offset = (page - 1) * limit;
 
   let filters = [eq(customers.businessId, businessId)];
@@ -15,8 +16,11 @@ export async function getCustomers(db: Database, businessId: string, query: {
   if (search) {
     filters.push(like(customers.name, `%${search}%`));
   }
+  if (customerType) {
+    filters.push(eq(customers.customerType, customerType));
+  }
 
-  const result = await db.select().from(customers).where(and(...filters)).limit(limit).offset(offset);
+  const result = await db.select().from(customers).where(and(...filters)).limit(limit).offset(offset).orderBy(sql`${customers.createdAt} DESC`);
   const total = await db.select({ count: sql<number>`count(*)` }).from(customers).where(and(...filters));
 
   return {
@@ -35,6 +39,9 @@ export async function createCustomer(db: Database, businessId: string, data: {
   email?: string;
   address?: string;
   notes?: string;
+  customerType?: "individual" | "supermarket";
+  expectedPaymentPeriodDays?: number;
+  suppliedProductIds?: string[];
 }) {
   if (data.phone) {
     const existing = await db
@@ -51,6 +58,7 @@ export async function createCustomer(db: Database, businessId: string, data: {
 
   const [newCustomer] = await db.insert(customers).values({
     businessId,
+    customerType: data.customerType || "individual",
     ...data,
   }).returning();
   return newCustomer;

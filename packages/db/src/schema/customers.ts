@@ -1,6 +1,8 @@
-import { pgTable, uuid, varchar, text, decimal, integer, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, decimal, integer, timestamp, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
 import { businesses } from "./businesses";
 import { sql } from "drizzle-orm";
+
+export const customerTypeEnum = ["individual", "supermarket"] as const;
 
 export const customers = pgTable(
   "customers",
@@ -14,6 +16,9 @@ export const customers = pgTable(
     email: varchar("email", { length: 255 }),
     address: text("address"),
     notes: text("notes"),
+    customerType: varchar("customer_type", { length: 50 }).default("individual").notNull(),
+    expectedPaymentPeriodDays: integer("expected_payment_period_days"),
+    suppliedProductIds: jsonb("supplied_product_ids").$type<string[]>().default([]),
     totalSpent: decimal("total_spent", { precision: 12, scale: 2 }).default("0").notNull(),
     orderCount: integer("order_count").default(0).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),

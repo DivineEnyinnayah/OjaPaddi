@@ -17,6 +17,7 @@ customerRoutes.get("/", async (c) => {
       page: c.req.query("page") ? parseInt(c.req.query("page")!) : undefined,
       limit: c.req.query("limit") ? parseInt(c.req.query("limit")!) : undefined,
       search: c.req.query("search"),
+      customerType: c.req.query("customerType") as any,
     };
     const result = await getCustomers(db, businessId, query);
     return c.json({ success: true, data: result }, 200);

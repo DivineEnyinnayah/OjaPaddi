@@ -23,13 +23,17 @@ import {
   ArrowLeft,
   ArrowRight,
   Bank,
+  Buildings,
+  Calendar,
   CaretRight,
   CreditCard,
   DotsThree,
   MagnifyingGlass,
   Minus,
+  Money,
   Plus,
   ShoppingCart,
+  Storefront,
   User,
   UserPlus,
   X,
@@ -47,21 +51,20 @@ const StyledTouchableOpacity = withUniwind(TouchableOpacity);
 const StyledScrollView = withUniwind(ScrollView);
 const StyledImage = withUniwind(Image);
 
-type PaymentMethod = 'cash' | 'transfer' | 'pos' | 'other';
+type OrderType = 'customer' | 'supermarket';
+type PaymentMethod = 'cash' | 'transfer' | 'pos' | 'cheque' | 'other';
 type PaymentStatus = 'paid' | 'partial' | 'unpaid';
 
-const PAYMENT_METHOD_ICONS: Record<PaymentMethod, React.ComponentType<any>> = {
-  cash: CreditCard,
-  transfer: Bank,
-  pos: CreditCard,
-  other: DotsThree,
-};
+const CUSTOMER_PAYMENT_METHODS: { key: PaymentMethod; label: string; icon: React.ComponentType<any> }[] = [
+  { key: 'cash', label: 'Cash', icon: CreditCard },
+  { key: 'transfer', label: 'Transfer', icon: Bank },
+  { key: 'pos', label: 'POS', icon: CreditCard },
+  { key: 'other', label: 'Other', icon: DotsThree },
+];
 
-const PAYMENT_METHODS: { key: PaymentMethod; label: string }[] = [
-  { key: 'cash', label: 'Cash' },
-  { key: 'transfer', label: 'Transfer' },
-  { key: 'pos', label: 'POS' },
-  { key: 'other', label: 'Other' },
+const SUPERMARKET_PAYMENT_METHODS: { key: PaymentMethod; label: string; icon: React.ComponentType<any> }[] = [
+  { key: 'transfer', label: 'Bank Transfer', icon: Bank },
+  { key: 'cheque', label: 'Cheque', icon: Money },
 ];
 
 const PAYMENT_STATUSES: { key: PaymentStatus; label: string; color: string }[] = [
@@ -123,6 +126,10 @@ export default function RecordSaleScreen() {
     getTotal,
   } = useCartStore();
 
+  const [orderType, setOrderType] = useState<OrderType>('customer');
+  const [expectedPaymentDays, setExpectedPaymentDays] = useState('14');
+  const [invoiceNumber, setInvoiceNumber] = useState(`INV-${Date.now().toString().slice(-6)}`);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -131,6 +138,7 @@ export default function RecordSaleScreen() {
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerAddress, setNewCustomerAddress] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutVisible, setCheckoutVisible] = useState(false);
@@ -172,8 +180,12 @@ export default function RecordSaleScreen() {
 
   const filteredCustomers = useMemo(() => {
     const query = customerSearch.toLowerCase();
-    return customers.filter((c) => c.name.toLowerCase().includes(query));
-  }, [customers, customerSearch]);
+    return customers.filter((c) => {
+      const matchesSearch = c.name.toLowerCase().includes(query);
+      const isSuper = (c.customerType || 'individual') === 'supermarket';
+      return matchesSearch && (orderType === 'supermarket' ? isSuper : !isSuper);
+    });
+  }, [customers, customerSearch, orderType]);
 
   const cartItemCount = useMemo(
     () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
@@ -198,16 +210,20 @@ export default function RecordSaleScreen() {
       const customer = await createCustomer({
         name: newCustomerName.trim(),
         phone: newCustomerPhone.trim() || undefined,
+        address: newCustomerAddress.trim() || undefined,
+        customerType: orderType === 'supermarket' ? 'supermarket' : 'individual',
+        expectedPaymentPeriodDays: orderType === 'supermarket' ? parseInt(expectedPaymentDays) || 14 : undefined,
       });
       setSelectedCustomer(customer);
       setShowAddCustomer(false);
       setNewCustomerName('');
       setNewCustomerPhone('');
+      setNewCustomerAddress('');
       setCustomerModalVisible(false);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to add customer');
     }
-  }, [newCustomerName, newCustomerPhone, createCustomer, setSelectedCustomer]);
+  }, [newCustomerName, newCustomerPhone, newCustomerAddress, orderType, expectedPaymentDays, createCustomer, setSelectedCustomer]);
 
   const handleCompleteSale = useCallback(async () => {
     if (isCartEmpty) return;
@@ -234,9 +250,26 @@ export default function RecordSaleScreen() {
       return;
     }
 
+    if (orderType === 'supermarket' && !selectedCustomer) {
+      toast.error('Please select or add a supermarket for supermarket orders.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      const expectedDaysNum = parseInt(expectedPaymentDays) || 14;
+      const expectedDate =
+        orderType === 'supermarket'
+          ? new Date(Date.now() + expectedDaysNum * 24 * 60 * 60 * 1000).toISOString()
+          : undefined;
+
+      const orderNotes =
+        orderType === 'supermarket'
+          ? `[Invoice #${invoiceNumber}] Expected Payment in ${expectedDaysNum} days.${notes ? `\n${notes}` : ''}`
+          : notes || undefined;
+
       const sale = await createSale({
+        orderType,
         customerId: selectedCustomer?.id,
         items: cartItems.map((item) => ({
           productId: item.product.id,
@@ -247,7 +280,8 @@ export default function RecordSaleScreen() {
         paymentMethod: selectedPayment,
         paymentStatus,
         amountPaid: amountPaidValue,
-        notes: notes || undefined,
+        expectedPaymentDate: expectedDate,
+        notes: orderNotes,
       });
 
       clearCart();
@@ -263,10 +297,22 @@ export default function RecordSaleScreen() {
       setIsSubmitting(false);
     }
   }, [
+    orderType,
+    expectedPaymentDays,
+    invoiceNumber,
     cartItems,
     selectedCustomer,
     selectedPayment,
     paymentStatus,
+    amountPaid,
+    discount,
+    notes,
+    total,
+    isCartEmpty,
+    createSale,
+    router,
+    clearCart,
+  ]);
     amountPaid,
     discount,
     notes,
@@ -494,13 +540,14 @@ export default function RecordSaleScreen() {
               <StyledView className="py-4 gap-4">
                 <StyledView className="flex-row items-center justify-between">
                   <StyledText className="text-sm font-semibold text-on-surface">
-                    New Customer
+                    {orderType === 'supermarket' ? 'New Supermarket' : 'New Customer'}
                   </StyledText>
                   <StyledTouchableOpacity
                     onPress={() => {
                       setShowAddCustomer(false);
                       setNewCustomerName('');
                       setNewCustomerPhone('');
+                      setNewCustomerAddress('');
                     }}
                   >
                     <StyledText className="text-sm text-on-surface-variant">Cancel</StyledText>
@@ -508,25 +555,32 @@ export default function RecordSaleScreen() {
                 </StyledView>
                 <StyledTextInput
                   className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-base text-on-surface"
-                  placeholder="Customer name *"
+                  placeholder={orderType === 'supermarket' ? 'Supermarket name *' : 'Customer name *'}
                   placeholderTextColor={colors.outline}
                   value={newCustomerName}
                   onChangeText={setNewCustomerName}
                 />
                 <StyledTextInput
                   className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-base text-on-surface"
-                  placeholder="Phone number (optional)"
+                  placeholder="Phone number"
                   placeholderTextColor={colors.outline}
                   keyboardType="phone-pad"
                   value={newCustomerPhone}
                   onChangeText={setNewCustomerPhone}
+                />
+                <StyledTextInput
+                  className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-base text-on-surface"
+                  placeholder="Store / Delivery Address"
+                  placeholderTextColor={colors.outline}
+                  value={newCustomerAddress}
+                  onChangeText={setNewCustomerAddress}
                 />
                 <Button
                   isDisabled={!newCustomerName.trim()}
                   onPress={handleAddCustomer}
                   size="md"
                 >
-                  Add Customer
+                  {orderType === 'supermarket' ? 'Add Supermarket' : 'Add Customer'}
                 </Button>
               </StyledView>
             )}
@@ -632,9 +686,9 @@ export default function RecordSaleScreen() {
               Payment Method
             </StyledText>
             <StyledView className="flex-row gap-2 mb-4">
-              {PAYMENT_METHODS.map((method) => {
+              {(orderType === 'supermarket' ? SUPERMARKET_PAYMENT_METHODS : CUSTOMER_PAYMENT_METHODS).map((method) => {
                 const isSelected = selectedPayment === method.key;
-                const IconComponent = PAYMENT_METHOD_ICONS[method.key];
+                const IconComponent = method.icon;
                 return (
                   <StyledTouchableOpacity
                     key={method.key}
@@ -652,7 +706,7 @@ export default function RecordSaleScreen() {
                     />
                     <StyledText
                       className={cn(
-                        'text-xs font-semibold mt-1',
+                        'text-xs font-semibold mt-1 text-center',
                         isSelected ? 'text-on-primary' : 'text-on-surface-variant',
                       )}
                     >
@@ -662,6 +716,38 @@ export default function RecordSaleScreen() {
                 );
               })}
             </StyledView>
+
+            {orderType === 'supermarket' && (
+              <Surface variant="outline" className="mb-4 p-3 bg-surface-container-lowest border-outline-variant rounded-xl">
+                <StyledView className="flex-row items-center gap-2 mb-2">
+                  <Calendar size={18} color={colors.primary} />
+                  <StyledText className="text-sm font-bold text-on-surface">
+                    Supermarket Supply Terms
+                  </StyledText>
+                </StyledView>
+                <StyledText className="text-xs text-on-surface-variant mb-1">
+                  Expected Payment Period (Days)
+                </StyledText>
+                <StyledTextInput
+                  className="bg-surface-container rounded-lg px-3 py-2 text-sm text-on-surface font-semibold mb-3 border border-outline-variant/30"
+                  keyboardType="numeric"
+                  value={expectedPaymentDays}
+                  onChangeText={setExpectedPaymentDays}
+                  placeholder="e.g. 14"
+                  placeholderTextColor={colors.outline}
+                />
+                <StyledText className="text-xs text-on-surface-variant mb-1">
+                  Invoice Number
+                </StyledText>
+                <StyledTextInput
+                  className="bg-surface-container rounded-lg px-3 py-2 text-sm text-on-surface font-semibold border border-outline-variant/30"
+                  value={invoiceNumber}
+                  onChangeText={setInvoiceNumber}
+                  placeholder="e.g. INV-001"
+                  placeholderTextColor={colors.outline}
+                />
+              </Surface>
+            )}
 
             <StyledText className="text-sm font-semibold text-on-surface mb-2">
               Payment Status
@@ -802,6 +888,57 @@ export default function RecordSaleScreen() {
             <StyledText className="text-h2 font-black text-on-surface text-balance">
               Record Sale
             </StyledText>
+          </StyledView>
+
+          {/* Order Type Toggle: Customer vs Supermarket */}
+          <StyledView className="flex-row bg-surface-container rounded-xl p-1 mb-4 border border-outline-variant/30">
+            <StyledTouchableOpacity
+              className={cn(
+                'flex-1 flex-row items-center justify-center py-2.5 rounded-lg gap-2',
+                orderType === 'customer' ? 'bg-primary shadow-sm' : 'bg-transparent'
+              )}
+              onPress={() => {
+                setOrderType('customer');
+                setSelectedPayment('cash');
+                if (selectedCustomer?.customerType === 'supermarket') {
+                  setSelectedCustomer(undefined);
+                }
+              }}
+            >
+              <User size={18} color={orderType === 'customer' ? '#FFFFFF' : colors.onSurfaceVariant} />
+              <StyledText
+                className={cn(
+                  'text-xs font-bold',
+                  orderType === 'customer' ? 'text-on-primary' : 'text-on-surface-variant'
+                )}
+              >
+                Customer Order
+              </StyledText>
+            </StyledTouchableOpacity>
+
+            <StyledTouchableOpacity
+              className={cn(
+                'flex-1 flex-row items-center justify-center py-2.5 rounded-lg gap-2',
+                orderType === 'supermarket' ? 'bg-primary shadow-sm' : 'bg-transparent'
+              )}
+              onPress={() => {
+                setOrderType('supermarket');
+                setSelectedPayment('transfer');
+                if (selectedCustomer?.customerType !== 'supermarket') {
+                  setSelectedCustomer(undefined);
+                }
+              }}
+            >
+              <Storefront size={18} color={orderType === 'supermarket' ? '#FFFFFF' : colors.onSurfaceVariant} />
+              <StyledText
+                className={cn(
+                  'text-xs font-bold',
+                  orderType === 'supermarket' ? 'text-on-primary' : 'text-on-surface-variant'
+                )}
+              >
+                Supermarket Supply
+              </StyledText>
+            </StyledTouchableOpacity>
           </StyledView>
 
           <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-11">

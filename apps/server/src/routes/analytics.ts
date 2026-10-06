@@ -1,11 +1,35 @@
 import { Hono } from "hono";
-import { getAnalyticsSummary, getRevenueChart, getTopCustomers } from "../services/analyticsService";
+import { getAnalyticsSummary, getRevenueChart, getTopCustomers, getProductAnalytics, getSupermarketAnalytics } from "../services/analyticsService";
 import { getMBARules } from "../services/mbaService";
 import { authMiddleware, type AuthContext } from "../middleware/auth";
 
 export const analyticsRoutes = new Hono<AuthContext>();
 
 analyticsRoutes.use("*", authMiddleware);
+
+analyticsRoutes.get("/product/:id", async (c) => {
+  try {
+    const db = c.get("db");
+    const businessId = c.get("businessId");
+    const productId = c.req.param("id");
+    const result = await getProductAnalytics(db, businessId, productId);
+    return c.json({ success: true, data: result }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "PRODUCT_ANALYTICS_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
+});
+
+analyticsRoutes.get("/supermarket/:id", async (c) => {
+  try {
+    const db = c.get("db");
+    const businessId = c.get("businessId");
+    const supermarketId = c.req.param("id");
+    const result = await getSupermarketAnalytics(db, businessId, supermarketId);
+    return c.json({ success: true, data: result }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "SUPERMARKET_ANALYTICS_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
+});
 
 analyticsRoutes.get("/mba", async (c) => {
   try {

@@ -61,6 +61,7 @@
     "@types/node": "catalog:",
     "@types/react": "~19.2.10",
     "babel-preset-expo": "~55.0.8",
+    "dotenv": "^18.0.5",
     "typescript": "~5.9.2"
   }
 }

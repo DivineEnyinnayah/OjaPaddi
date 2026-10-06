@@ -8,6 +8,9 @@ export interface Customer {
   email?: string;
   address?: string;
   notes?: string;
+  customerType?: 'individual' | 'supermarket';
+  expectedPaymentPeriodDays?: number;
+  suppliedProductIds?: string[];
   businessId: string;
   createdAt: string;
   updatedAt: string;
@@ -59,6 +62,9 @@ export function useCustomers() {
     email?: string;
     address?: string;
     notes?: string;
+    customerType?: 'individual' | 'supermarket';
+    expectedPaymentPeriodDays?: number;
+    suppliedProductIds?: string[];
   }) => {
     setIsLoading(true);
     try {

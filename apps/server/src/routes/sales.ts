@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { createSale, getSales, getSaleById, voidSale } from "../services/saleService";
+import { createSale, getSales, getSaleById, voidSale, returnSaleProducts } from "../services/saleService";
 import { authMiddleware, type AuthContext } from "../middleware/auth";
 import { validate } from "../middleware/validate";
-import { CreateSaleSchema } from "../validators/sales";
+import { CreateSaleSchema, ReturnProductsSchema } from "../validators/sales";
 
 export const saleRoutes = new Hono<AuthContext>();
 
@@ -18,6 +18,8 @@ saleRoutes.get("/", async (c) => {
       from: c.req.query("from"),
       to: c.req.query("to"),
       paymentStatus: c.req.query("payment_status"),
+      orderType: c.req.query("order_type"),
+      customerId: c.req.query("customerId"),
     };
     const result = await getSales(db, businessId, query);
     return c.json({ success: true, data: result }, 200);
@@ -50,6 +52,19 @@ saleRoutes.get("/:id", async (c) => {
     return c.json({ success: true, data: sale }, 200);
   } catch (error: unknown) {
     return c.json({ success: false, error: { code: "SALE_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+  }
+});
+
+saleRoutes.post("/:id/returns", validate(ReturnProductsSchema), async (c) => {
+  try {
+    const db = c.get("db");
+    const businessId = c.get("businessId");
+    const saleId = c.req.param("id");
+    const body = c.get("validatedBody");
+    const updatedSale = await returnSaleProducts(db, businessId, saleId, body);
+    return c.json({ success: true, data: updatedSale }, 200);
+  } catch (error: unknown) {
+    return c.json({ success: false, error: { code: "RETURN_RECORD_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 

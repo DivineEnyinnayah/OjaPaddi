@@ -8,12 +8,53 @@ export interface AnalyticsSummary {
   totalExpenses: number;
   netProfit: number;
   topProducts: {
+    id?: string;
     name: string;
     revenue: number;
     quantitySold: number;
+    returnsCount?: number;
   }[];
   lowStockCount: number;
   totalProducts: number;
+}
+
+export interface ProductAnalytics {
+  product: {
+    id: string;
+    name: string;
+    price: string;
+    quantity: number;
+    category?: string;
+  };
+  totalSold: number;
+  totalReturned: number;
+  grossRevenue: number;
+  netRevenue: number;
+  orderCount: number;
+}
+
+export interface SupermarketAnalytics {
+  supermarket: {
+    id: string;
+    name: string;
+    phone?: string;
+    address?: string;
+    customerType?: string;
+    expectedPaymentPeriodDays?: number;
+  };
+  totalOrders: number;
+  totalBilled: number;
+  totalPaid: number;
+  totalReturnsAmount: number;
+  netReceivable: number;
+  productsSupplied: {
+    productId: string;
+    productName: string;
+    quantitySupplied: number;
+    quantityReturned: number;
+    netDelivered: number;
+    totalValue: number;
+  }[];
 }
 
 export interface RevenueChartPoint {
@@ -77,11 +118,43 @@ export function useAnalytics() {
     }
   }, [accessToken]);
 
+  const fetchProductAnalytics = useCallback(async (productId: string) => {
+    try {
+      const result = await apiRequest<ProductAnalytics>(`/analytics/product/${productId}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (result.success && result.data) return result.data;
+      return null;
+    } catch {
+      return null;
+    }
+  }, [accessToken]);
+
+  const fetchSupermarketAnalytics = useCallback(async (supermarketId: string) => {
+    try {
+      const result = await apiRequest<SupermarketAnalytics>(`/analytics/supermarket/${supermarketId}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (result.success && result.data) return result.data;
+      return null;
+    } catch {
+      return null;
+    }
+  }, [accessToken]);
+
   return {
     summary,
     isLoading,
     error,
     fetchSummary,
     fetchRevenueChart,
+    fetchProductAnalytics,
+    fetchSupermarketAnalytics,
   };
 }

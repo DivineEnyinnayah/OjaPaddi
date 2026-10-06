@@ -227,27 +227,45 @@ function handleGetSaleById(saleId: string): ApiResponse<Sale> {
   if (!sale) {
     return { success: false, error: { code: 'NOT_FOUND', message: 'Sale not found' } };
   }
-  return { success: true, data: sale };
+  const cust = sale.customerId ? mockCustomers.find((c) => c.id === sale.customerId) : undefined;
+  return {
+    success: true,
+    data: {
+      ...sale,
+      customer: cust
+        ? {
+            id: cust.id,
+            name: cust.name,
+            phone: cust.phone,
+            address: cust.address,
+          }
+        : undefined,
+    },
+  };
 }
 
 function handleCreateSale(options: RequestInit): ApiResponse<Sale> {
   const body = parseBody<{
+    orderType?: 'customer' | 'supermarket';
     customerId?: string;
     items: { productId: string; quantity: number; unitPrice: number }[];
     discount?: number;
-    paymentMethod: 'cash' | 'transfer' | 'pos' | 'other';
+    paymentMethod: 'cash' | 'transfer' | 'pos' | 'cheque' | 'other';
     paymentStatus: 'paid' | 'partial' | 'unpaid';
     amountPaid: number;
+    expectedPaymentDate?: string;
     notes?: string;
   }>(options);
 
-  const saleItems: SaleItem[] = body.items.map((item) => {
+  const saleItems: SaleItem[] = body.items.map((item, idx) => {
     const product = mockProducts.find((p) => p.id === item.productId);
     return {
+      id: `item-${Date.now()}-${idx}`,
       productId: item.productId,
       productName: product?.name || 'Unknown Product',
       unitPrice: item.unitPrice,
       quantity: item.quantity,
+      returnedQuantity: 0,
       total: item.unitPrice * item.quantity,
     };
   });
@@ -258,9 +276,12 @@ function handleCreateSale(options: RequestInit): ApiResponse<Sale> {
   const newSale: Sale = {
     id: generateSaleId(),
     reference: generateSaleReference(),
+    orderType: body.orderType || 'customer',
     customerId: body.customerId,
+    expectedPaymentDate: body.expectedPaymentDate,
     subtotal: subtotal.toFixed(2),
     discount: discount.toFixed(2),
+    returnedAmount: '0.00',
     total: (subtotal - discount).toFixed(2),
     paymentMethod: body.paymentMethod,
     paymentStatus: body.paymentStatus,
@@ -282,8 +303,75 @@ function handleCreateSale(options: RequestInit): ApiResponse<Sale> {
     }
   }
 
+  // Update customer spent/orders
+  if (body.customerId) {
+    const custIdx = mockCustomers.findIndex((c) => c.id === body.customerId);
+    if (custIdx !== -1) {
+      const prevSpent = parseFloat(mockCustomers[custIdx].totalSpent || '0');
+      mockCustomers[custIdx] = {
+        ...mockCustomers[custIdx],
+        totalSpent: (prevSpent + parseFloat(newSale.total)).toFixed(2),
+        orderCount: (mockCustomers[custIdx].orderCount || 0) + 1,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+  }
+
   mockSales.unshift(newSale);
   return { success: true, data: newSale };
+}
+
+function handleReturnProducts(saleId: string, options: RequestInit): ApiResponse<Sale> {
+  const sale = mockSales.find((s) => s.id === saleId);
+  if (!sale) {
+    return { success: false, error: { code: 'NOT_FOUND', message: 'Sale not found' } };
+  }
+
+  const body = parseBody<{
+    returns: { saleItemId: string; quantity: number }[];
+    notes?: string;
+  }>(options);
+
+  let totalReturnedVal = 0;
+
+  for (const ret of body.returns) {
+    const item = sale.items.find((i) => i.id === ret.saleItemId || i.productId === ret.saleItemId);
+    if (!item) continue;
+    const currentReturned = item.returnedQuantity || 0;
+    item.returnedQuantity = currentReturned + ret.quantity;
+    totalReturnedVal += item.unitPrice * ret.quantity;
+
+    // Restock
+    const prod = mockProducts.find((p) => p.id === item.productId);
+    if (prod) {
+      prod.quantity += ret.quantity;
+      prod.updatedAt = new Date().toISOString();
+    }
+  }
+
+  const currentReturnedAmount = parseFloat(sale.returnedAmount || '0');
+  const newReturnedAmount = currentReturnedAmount + totalReturnedVal;
+  sale.returnedAmount = newReturnedAmount.toFixed(2);
+
+  const sub = parseFloat(sale.subtotal);
+  const disc = parseFloat(sale.discount || '0');
+  const netTotal = Math.max(0, sub - disc - newReturnedAmount);
+  sale.total = netTotal.toFixed(2);
+
+  const paid = parseFloat(sale.amountPaid);
+  if (paid >= netTotal) {
+    sale.paymentStatus = 'paid';
+  } else if (paid > 0) {
+    sale.paymentStatus = 'partial';
+  } else {
+    sale.paymentStatus = 'unpaid';
+  }
+
+  if (body.notes) {
+    sale.notes = sale.notes ? `${sale.notes}\n[Return Note]: ${body.notes}` : `[Return Note]: ${body.notes}`;
+  }
+
+  return { success: true, data: sale };
 }
 
 function handleVoidSale(saleId: string): ApiResponse<null> {
@@ -299,14 +387,32 @@ function handleVoidSale(saleId: string): ApiResponse<null> {
 
 function handleGetCustomers(endpoint: string): ApiResponse<{ customers: Customer[]; pagination: { total: number; page: number; limit: number } }> {
   const { page, limit } = parsePagination(endpoint);
+  const queryString = endpoint.split('?')[1] || '';
+  const params = new URLSearchParams(queryString);
+  const search = params.get('search')?.toLowerCase();
+  const customerType = params.get('customerType');
+
+  let filtered = [...mockCustomers];
+  if (search) {
+    filtered = filtered.filter(
+      (c) =>
+        c.name.toLowerCase().includes(search) ||
+        (c.phone && c.phone.includes(search)) ||
+        (c.email && c.email.toLowerCase().includes(search))
+    );
+  }
+  if (customerType) {
+    filtered = filtered.filter((c) => (c.customerType || 'individual') === customerType);
+  }
+
   const start = (page - 1) * limit;
-  const paginated = mockCustomers.slice(start, start + limit);
+  const paginated = filtered.slice(start, start + limit);
 
   return {
     success: true,
     data: {
       customers: paginated,
-      pagination: { total: mockCustomers.length, page, limit },
+      pagination: { total: filtered.length, page, limit },
     },
   };
 }
@@ -326,6 +432,9 @@ function handleCreateCustomer(options: RequestInit): ApiResponse<Customer> {
     email?: string;
     address?: string;
     notes?: string;
+    customerType?: 'individual' | 'supermarket';
+    expectedPaymentPeriodDays?: number;
+    suppliedProductIds?: string[];
   }>(options);
 
   const newCustomer: Customer = {
@@ -335,12 +444,15 @@ function handleCreateCustomer(options: RequestInit): ApiResponse<Customer> {
     email: body.email,
     address: body.address,
     notes: body.notes,
+    customerType: body.customerType || 'individual',
+    expectedPaymentPeriodDays: body.expectedPaymentPeriodDays,
+    suppliedProductIds: body.suppliedProductIds || [],
     businessId: MOCK_BUSINESS.id,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 
-  mockCustomers.push(newCustomer);
+  mockCustomers.unshift(newCustomer);
   return { success: true, data: newCustomer };
 }
 
@@ -467,14 +579,21 @@ function handleGetAnalytics(): ApiResponse<AnalyticsSummary> {
   const totalExpensesAmount = mockExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
 
   // Calculate top products from sale items
-  const productRevenue: Record<string, { name: string; revenue: number; quantitySold: number }> = {};
+  const productRevenue: Record<string, { id: string; name: string; revenue: number; quantitySold: number; returnsCount: number }> = {};
   for (const sale of mockSales) {
     for (const item of sale.items) {
       if (!productRevenue[item.productId]) {
-        productRevenue[item.productId] = { name: item.productName, revenue: 0, quantitySold: 0 };
+        productRevenue[item.productId] = {
+          id: item.productId,
+          name: item.productName,
+          revenue: 0,
+          quantitySold: 0,
+          returnsCount: 0,
+        };
       }
       productRevenue[item.productId].revenue += item.total;
-      productRevenue[item.productId].quantitySold += item.quantity;
+      productRevenue[item.productId].quantitySold += item.quantity - (item.returnedQuantity || 0);
+      productRevenue[item.productId].returnsCount += item.returnedQuantity || 0;
     }
   }
 
@@ -495,7 +614,126 @@ function handleGetAnalytics(): ApiResponse<AnalyticsSummary> {
       netProfit: totalRevenue - totalExpensesAmount,
       topProducts,
       lowStockCount,
-      totalProducts: mockProducts.filter(p => p.isActive).length,
+      totalProducts: mockProducts.filter((p) => p.isActive).length,
+    },
+  };
+}
+
+function handleGetProductAnalytics(productId: string): ApiResponse<any> {
+  const product = mockProducts.find((p) => p.id === productId);
+  if (!product) {
+    return { success: false, error: { code: 'NOT_FOUND', message: 'Product not found' } };
+  }
+
+  let totalSold = 0;
+  let totalReturned = 0;
+  let grossRevenue = 0;
+  let netRevenue = 0;
+  const orderSet = new Set<string>();
+
+  for (const sale of mockSales) {
+    for (const item of sale.items) {
+      if (item.productId === productId) {
+        orderSet.add(sale.id);
+        const retQty = item.returnedQuantity || 0;
+        const soldQty = item.quantity;
+        totalSold += Math.max(0, soldQty - retQty);
+        totalReturned += retQty;
+        grossRevenue += item.unitPrice * soldQty;
+        netRevenue += item.unitPrice * Math.max(0, soldQty - retQty);
+      }
+    }
+  }
+
+  return {
+    success: true,
+    data: {
+      product: {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: product.quantity,
+        category: product.category,
+      },
+      totalSold,
+      totalReturned,
+      grossRevenue,
+      netRevenue,
+      orderCount: orderSet.size,
+    },
+  };
+}
+
+function handleGetSupermarketAnalytics(supermarketId: string): ApiResponse<any> {
+  const supermarket = mockCustomers.find((c) => c.id === supermarketId);
+  if (!supermarket) {
+    return { success: false, error: { code: 'NOT_FOUND', message: 'Supermarket not found' } };
+  }
+
+  const supermarketSales = mockSales.filter((s) => s.customerId === supermarketId);
+  let totalBilled = 0;
+  let totalPaid = 0;
+  let totalReturnsAmount = 0;
+  let netReceivable = 0;
+
+  const productMap: Record<string, {
+    productId: string;
+    productName: string;
+    quantitySupplied: number;
+    quantityReturned: number;
+    netDelivered: number;
+    totalValue: number;
+  }> = {};
+
+  for (const sale of supermarketSales) {
+    const sub = parseFloat(sale.subtotal);
+    const disc = parseFloat(sale.discount || '0');
+    const billed = sub - disc;
+    const paid = parseFloat(sale.amountPaid);
+    const ret = parseFloat(sale.returnedAmount || '0');
+    const tot = parseFloat(sale.total);
+
+    totalBilled += billed;
+    totalPaid += paid;
+    totalReturnsAmount += ret;
+    netReceivable += Math.max(0, tot - paid);
+
+    for (const item of sale.items) {
+      if (!productMap[item.productId]) {
+        productMap[item.productId] = {
+          productId: item.productId,
+          productName: item.productName,
+          quantitySupplied: 0,
+          quantityReturned: 0,
+          netDelivered: 0,
+          totalValue: 0,
+        };
+      }
+      const retQ = item.returnedQuantity || 0;
+      productMap[item.productId].quantitySupplied += item.quantity;
+      productMap[item.productId].quantityReturned += retQ;
+      productMap[item.productId].netDelivered += Math.max(0, item.quantity - retQ);
+      productMap[item.productId].totalValue += item.unitPrice * Math.max(0, item.quantity - retQ);
+    }
+  }
+
+  return {
+    success: true,
+    data: {
+      supermarket: {
+        id: supermarket.id,
+        name: supermarket.name,
+        phone: supermarket.phone,
+        address: supermarket.address,
+        customerType: supermarket.customerType,
+        expectedPaymentPeriodDays: supermarket.expectedPaymentPeriodDays,
+      },
+      totalOrders: supermarketSales.length,
+      totalBilled,
+      totalPaid,
+      totalReturnsAmount,
+      netReceivable,
+      productsSupplied: Object.values(productMap),
     },
   };
 }
@@ -747,6 +985,11 @@ export async function getMockResponse<T>(
     return handleVoidSale(saleByIdMatch[1]) as ApiResponse<T>;
   }
 
+  const saleReturnsMatch = path.match(/^\/sales\/([^/]+)\/returns$/);
+  if (saleReturnsMatch && method === 'POST') {
+    return handleReturnProducts(saleReturnsMatch[1], options) as ApiResponse<T>;
+  }
+
   // ── Customers ──
   const customerByIdMatch = path.match(/^\/customers\/([^/]+)$/);
 
@@ -818,6 +1061,16 @@ export async function getMockResponse<T>(
       orderCount: Math.floor(Math.random() * 15 + 2),
     }));
     return { success: true, data: topCustomers } as ApiResponse<T>;
+  }
+
+  const productAnalyticsMatch = path.match(/^\/analytics\/product\/([^/]+)$/);
+  if (productAnalyticsMatch && method === 'GET') {
+    return handleGetProductAnalytics(productAnalyticsMatch[1]) as ApiResponse<T>;
+  }
+
+  const supermarketAnalyticsMatch = path.match(/^\/analytics\/supermarket\/([^/]+)$/);
+  if (supermarketAnalyticsMatch && method === 'GET') {
+    return handleGetSupermarketAnalytics(supermarketAnalyticsMatch[1]) as ApiResponse<T>;
   }
 
   // ── Business ──

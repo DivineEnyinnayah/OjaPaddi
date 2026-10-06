@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
 import { Chip } from '@/components/ui/chip';
-import { Plus, User, ShoppingCart } from 'phosphor-react-native';
+import { Plus, User, ShoppingCart, Storefront, Bell } from 'phosphor-react-native';
 import { withUniwind } from 'uniwind';
 import { ILLUSTRATIONS } from '@/constants/illustrations';
 import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
@@ -82,28 +82,56 @@ export default function SalesScreen() {
     return filteredSales.reduce((sum, sale) => sum + parseFloat(sale.total), 0);
   }, [filteredSales]);
 
+  const dueReminders = useMemo(() => {
+    const now = new Date();
+    return sales.filter((s) => {
+      if (s.orderType !== 'supermarket' || !s.expectedPaymentDate || s.paymentStatus === 'paid') {
+        return false;
+      }
+      const dueDate = new Date(s.expectedPaymentDate);
+      const diffDays = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return diffDays <= 2; // due within 2 days or overdue
+    });
+  }, [sales]);
+
   const renderSale = ({ item }: { item: Sale }) => {
     const total = parseFloat(item.total);
     const itemCount = item.items?.length || 0;
+    const isSupermarket = item.orderType === 'supermarket';
 
     return (
       <StyledTouchableOpacity onPress={() => router.push(`/sales/${item.id}`)}>
         <Surface variant="outline" className="flex-row items-center p-4 mb-3 rounded-lg border border-outline-variant/30">
-          <StyledView className={`size-11 rounded-full items-center justify-center mr-3 ${item.customerId ? 'bg-secondary-container/30' : 'bg-surface-container-highest'}`}>
-            {item.customerId ? (
+          <StyledView className={`size-11 rounded-full items-center justify-center mr-3 ${isSupermarket ? 'bg-amber-500/20' : item.customerId ? 'bg-secondary-container/30' : 'bg-surface-container-highest'}`}>
+            {isSupermarket ? (
+              <Storefront size={22} color="#D97706" weight="bold" />
+            ) : item.customerId ? (
               <User size={22} color={colors.secondary} weight="bold" />
             ) : (
               <ShoppingCart size={22} color={colors.onSurfaceVariant} weight="bold" />
             )}
           </StyledView>
           <StyledView className="flex-1">
-            <StyledText className="text-body-sm text-on-surface-variant mb-0.5">{item.reference}</StyledText>
+            <StyledView className="flex-row items-center gap-1.5 mb-0.5">
+              <StyledText className="text-body-sm text-on-surface-variant">{item.reference}</StyledText>
+              {isSupermarket && (
+                <StyledView className="bg-amber-500/10 px-1.5 py-0.2 rounded">
+                  <StyledText className="text-[10px] font-bold text-amber-700 dark:text-amber-400">Store</StyledText>
+                </StyledView>
+              )}
+            </StyledView>
             <StyledText className="text-body-lg font-bold text-on-surface text-balance leading-tight">
-              {item.customerId ? 'Customer Sale' : 'Walk-in Customer'}
+              {isSupermarket ? 'Supermarket Supply' : item.customerId ? 'Customer Sale' : 'Walk-in Customer'}
             </StyledText>
-            <StyledText className="text-body-sm text-on-surface-variant mt-0.5 text-pretty">
-              {formatDate(item.soldAt)}
-            </StyledText>
+            {isSupermarket && item.expectedPaymentDate ? (
+              <StyledText className="text-xs text-amber-700 dark:text-amber-400 font-semibold mt-0.5">
+                Due: {new Date(item.expectedPaymentDate).toLocaleDateString()}
+              </StyledText>
+            ) : (
+              <StyledText className="text-body-sm text-on-surface-variant mt-0.5 text-pretty">
+                {formatDate(item.soldAt)}
+              </StyledText>
+            )}
           </StyledView>
           <StyledView className="items-end ml-3">
             <StyledText className="text-lg font-bold text-primary tabular-nums">
@@ -167,6 +195,32 @@ export default function SalesScreen() {
   return (
     <Container isScrollable={false} withTabBar className="bg-background">
       <StyledView className="px-margin pt-2 pb-4">
+        {/* Due Payment Reminder Alert Banner */}
+        {dueReminders.length > 0 && (
+          <Surface variant="outline" className="mb-4 p-3.5 bg-amber-500/10 border-amber-500/30 rounded-xl">
+            <StyledView className="flex-row items-center gap-2 mb-1.5">
+              <Bell size={18} color="#D97706" weight="fill" />
+              <StyledText className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                Payment Due Reminders ({dueReminders.length})
+              </StyledText>
+            </StyledView>
+            {dueReminders.slice(0, 2).map((rem) => (
+              <StyledTouchableOpacity
+                key={rem.id}
+                onPress={() => router.push(`/sales/${rem.id}`)}
+                className="py-1 flex-row justify-between items-center"
+              >
+                <StyledText className="text-xs text-amber-800 dark:text-amber-300 font-medium">
+                  {rem.reference} (Due: {new Date(rem.expectedPaymentDate!).toLocaleDateString()})
+                </StyledText>
+                <StyledText className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                  ₦{parseFloat(rem.total).toLocaleString()}
+                </StyledText>
+              </StyledTouchableOpacity>
+            ))}
+          </Surface>
+        )}
+
         <StyledView className="flex-row justify-between items-end mb-4">
           <StyledView className="flex-1">
             <StyledText className="font-label-caps text-on-surface-variant">Total Revenue</StyledText>

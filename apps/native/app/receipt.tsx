@@ -53,6 +53,7 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cash: "Cash",
   transfer: "Transfer",
   pos: "POS",
+  cheque: "Cheque",
   other: "Other",
 };
 
@@ -127,8 +128,12 @@ export default function ReceiptScreen() {
           <StyledView className="w-16 h-16 rounded-full bg-success-container items-center justify-center mb-3">
             <CheckCircle size={40} color={colors.primary} />
           </StyledView>
-          <StyledText className="text-2xl font-bold text-on-surface">Sale Recorded!</StyledText>
-          <StyledText className="text-body-lg text-on-surface-variant mt-1 mb-6">Receipt</StyledText>
+          <StyledText className="text-2xl font-bold text-on-surface">
+            {sale.orderType === "supermarket" ? "Supermarket Order Logged!" : "Sale Recorded!"}
+          </StyledText>
+          <StyledText className="text-body-lg text-on-surface-variant mt-1 mb-6">
+            {sale.orderType === "supermarket" ? "Invoice & Delivery Note" : "Receipt"}
+          </StyledText>
 
           <StyledView className="w-full mb-4">
             <Surface variant="primary" className="w-full rounded-card p-5">
@@ -148,6 +153,26 @@ export default function ReceiptScreen() {
                     {sale.reference}
                   </StyledText>
                 </StyledView>
+
+                {sale.orderType === "supermarket" && (
+                  <StyledView className="flex-row justify-between items-center mb-3">
+                    <StyledText className="text-body-sm text-on-surface-variant">Order Type</StyledText>
+                    <StyledText className="text-body-sm font-bold text-primary">
+                      Supermarket Supply
+                    </StyledText>
+                  </StyledView>
+                )}
+
+                {sale.expectedPaymentDate && (
+                  <StyledView className="flex-row justify-between items-center mb-3 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
+                    <StyledText className="text-body-sm text-amber-700 dark:text-amber-400 font-semibold">
+                      Payment Due Date
+                    </StyledText>
+                    <StyledText className="text-body-sm font-bold text-amber-700 dark:text-amber-400">
+                      {new Date(sale.expectedPaymentDate).toLocaleDateString()}
+                    </StyledText>
+                  </StyledView>
+                )}
 
                 <StyledView className="flex-row justify-between items-center mb-3">
                   <StyledText className="text-body-sm text-on-surface-variant">Date & Time</StyledText>

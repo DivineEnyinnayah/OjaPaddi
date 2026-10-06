@@ -2,8 +2,9 @@ import { pgTable, uuid, varchar, text, decimal, timestamp, pgEnum } from "drizzl
 import { businesses } from "./businesses";
 import { customers } from "./customers";
 
-export const paymentMethodEnum = pgEnum("payment_method", ["cash", "transfer", "pos", "other"]);
+export const paymentMethodEnum = pgEnum("payment_method", ["cash", "transfer", "pos", "cheque", "other"]);
 export const paymentStatusEnum = pgEnum("payment_status", ["paid", "partial", "unpaid"]);
+export const orderTypeEnum = pgEnum("order_type", ["customer", "supermarket"]);
 
 export const sales = pgTable("sales", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -13,8 +14,11 @@ export const sales = pgTable("sales", {
   customerId: uuid("customer_id")
     .references(() => customers.id, { onDelete: "set null" }),
   reference: varchar("reference", { length: 100 }).notNull().unique(),
+  orderType: orderTypeEnum("order_type").default("customer").notNull(),
+  expectedPaymentDate: timestamp("expected_payment_date"),
   subtotal: decimal("subtotal", { precision: 12, scale: 2 }).notNull(),
   discount: decimal("discount", { precision: 12, scale: 2 }).default("0").notNull(),
+  returnedAmount: decimal("returned_amount", { precision: 12, scale: 2 }).default("0").notNull(),
   total: decimal("total", { precision: 12, scale: 2 }).notNull(),
   paymentMethod: paymentMethodEnum("payment_method").notNull(),
   paymentStatus: paymentStatusEnum("payment_status").default("paid").notNull(),
