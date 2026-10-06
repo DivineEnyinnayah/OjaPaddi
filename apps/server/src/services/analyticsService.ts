@@ -1,5 +1,5 @@
 import type { Database } from "@ojapaddi/db";
-import { sales, expenses, products, saleItems } from "@ojapaddi/db/schema";
+import { sales, expenses, products, saleItems, customers } from "@ojapaddi/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 
 export async function getRevenueChart(db: Database, businessId: string, query: {

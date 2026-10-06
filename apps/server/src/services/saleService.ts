@@ -1,6 +1,6 @@
 import type { Database } from "@ojapaddi/db";
 import { sales, saleItems, products, customers } from "@ojapaddi/db/schema";
-import { eq, and, sql, inArray } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 export async function createSale(db: Database, businessId: string, data: {
   orderType?: "customer" | "supermarket";

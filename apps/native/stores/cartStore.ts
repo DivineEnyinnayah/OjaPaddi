@@ -10,7 +10,7 @@ export interface CartItem {
 interface CartState {
   items: CartItem[];
   selectedCustomer: Customer | null;
-  paymentMethod: 'cash' | 'transfer' | 'pos' | 'other';
+  paymentMethod: 'cash' | 'transfer' | 'pos' | 'cheque' | 'other';
   paymentStatus: 'paid' | 'partial' | 'unpaid';
   amountPaid: string;
   discount: string;
@@ -22,7 +22,7 @@ interface CartState {
   clearCart: () => void;
   
   setCustomer: (customer: Customer | null) => void;
-  setPaymentMethod: (method: 'cash' | 'transfer' | 'pos' | 'other') => void;
+  setPaymentMethod: (method: 'cash' | 'transfer' | 'pos' | 'cheque' | 'other') => void;
   setPaymentStatus: (status: 'paid' | 'partial' | 'unpaid') => void;
   setAmountPaid: (amount: string) => void;
   setDiscount: (discount: string) => void;

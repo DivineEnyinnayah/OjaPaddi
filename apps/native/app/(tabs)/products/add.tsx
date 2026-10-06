@@ -82,16 +82,16 @@ export default function AddProductScreen() {
   } = useProductForm(editId);
 
   useEffect(() => {
-    fetchProducts().then((prods) => {
+    fetchProducts().then(() => {
       setIsInitialLoad(false);
-      const hasProducts = prods ? prods.length > 0 : false;
+      const hasProducts = products ? products.length > 0 : false;
       if (!isEditMode && !hasProducts) {
         setCurrentStep('welcome');
       } else if (!isEditMode && currentStep === 'welcome') {
         setCurrentStep('photo');
       }
     });
-  }, [isEditMode]);
+  }, [isEditMode, products]);
 
   const shouldShowWizard = !isEditMode && products.length === 0;
 

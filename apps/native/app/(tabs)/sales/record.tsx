@@ -313,15 +313,6 @@ export default function RecordSaleScreen() {
     router,
     clearCart,
   ]);
-    amountPaid,
-    discount,
-    notes,
-    total,
-    isCartEmpty,
-    createSale,
-    router,
-    clearCart,
-  ]);
 
   useEffect(() => {
     if (paymentStatus === 'paid') {
@@ -901,7 +892,7 @@ export default function RecordSaleScreen() {
                 setOrderType('customer');
                 setSelectedPayment('cash');
                 if (selectedCustomer?.customerType === 'supermarket') {
-                  setSelectedCustomer(undefined);
+                  setSelectedCustomer(null);
                 }
               }}
             >
@@ -925,7 +916,7 @@ export default function RecordSaleScreen() {
                 setOrderType('supermarket');
                 setSelectedPayment('transfer');
                 if (selectedCustomer?.customerType !== 'supermarket') {
-                  setSelectedCustomer(undefined);
+                  setSelectedCustomer(null);
                 }
               }}
             >

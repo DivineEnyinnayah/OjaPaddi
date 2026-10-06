@@ -8,6 +8,8 @@ import {
   Animated,
   Dimensions,
   Share,
+  Modal,
+  Pressable,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -24,7 +26,6 @@ import {
   Storefront,
   X,
 } from "phosphor-react-native";
-import { Modal } from "react-native";
 import { useCustomers, type Customer } from "@/hooks/useCustomers";
 import { type ProductAnalytics, type SupermarketAnalytics } from "@/hooks/useAnalytics";
 import Svg, {
@@ -49,6 +50,7 @@ import { formatCurrency } from "@/lib/currency";
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
 const StyledTouchableOpacity = withUniwind(TouchableOpacity);
+const StyledScrollView = withUniwind(ScrollView);
 
 type Period = "today" | "week" | "month";
 
@@ -176,6 +178,8 @@ export default function AnalyticsScreen() {
   const supermarkets = useMemo(() => {
     return customers.filter((c) => c.customerType === "supermarket");
   }, [customers]);
+
+  const handleExportCSV = async () => {
     if (!summary) {
       toast.info("Please wait for the data to load.", "No data to export");
       return;
