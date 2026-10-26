@@ -1,0 +1,89 @@
+import { Hono } from "hono";
+import { getAnalyticsSummary, getRevenueChart, getTopCustomers, getProductAnalytics, getSupermarketAnalytics } from "../services/analyticsService";
+import { getMBARules } from "../services/mbaService";
+import { authMiddleware } from "../middleware/auth";
+export const analyticsRoutes = new Hono();
+analyticsRoutes.use("*", authMiddleware);
+analyticsRoutes.get("/product/:id", async (c) => {
+    try {
+        const db = c.get("db");
+        const businessId = c.get("businessId");
+        const productId = c.req.param("id");
+        const result = await getProductAnalytics(db, businessId, productId);
+        return c.json({ success: true, data: result }, 200);
+    }
+    catch (error) {
+        return c.json({ success: false, error: { code: "PRODUCT_ANALYTICS_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+    }
+});
+analyticsRoutes.get("/supermarket/:id", async (c) => {
+    try {
+        const db = c.get("db");
+        const businessId = c.get("businessId");
+        const supermarketId = c.req.param("id");
+        const result = await getSupermarketAnalytics(db, businessId, supermarketId);
+        return c.json({ success: true, data: result }, 200);
+    }
+    catch (error) {
+        return c.json({ success: false, error: { code: "SUPERMARKET_ANALYTICS_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+    }
+});
+analyticsRoutes.get("/mba", async (c) => {
+    try {
+        const db = c.get("db");
+        const businessId = c.get("businessId");
+        const minSupport = c.req.query("minSupport") ? parseFloat(c.req.query("minSupport")) : 0.1;
+        const minConfidence = c.req.query("minConfidence") ? parseFloat(c.req.query("minConfidence")) : 0.5;
+        const result = await getMBARules(db, businessId, minSupport, minConfidence);
+        return c.json({ success: true, data: result }, 200);
+    }
+    catch (error) {
+        return c.json({ success: false, error: { code: "MBA_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+    }
+});
+analyticsRoutes.get("/summary", async (c) => {
+    try {
+        const db = c.get("db");
+        const businessId = c.get("businessId");
+        const query = {
+            from: c.req.query("from"),
+            to: c.req.query("to"),
+        };
+        const result = await getAnalyticsSummary(db, businessId, query);
+        return c.json({ success: true, data: result }, 200);
+    }
+    catch (error) {
+        return c.json({ success: false, error: { code: "ANALYTICS_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+    }
+});
+analyticsRoutes.get("/revenue-chart", async (c) => {
+    try {
+        const db = c.get("db");
+        const businessId = c.get("businessId");
+        const query = {
+            from: c.req.query("from"),
+            to: c.req.query("to"),
+        };
+        const result = await getRevenueChart(db, businessId, query);
+        return c.json({ success: true, data: result }, 200);
+    }
+    catch (error) {
+        return c.json({ success: false, error: { code: "REVENUE_CHART_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+    }
+});
+analyticsRoutes.get("/top-customers", async (c) => {
+    try {
+        const db = c.get("db");
+        const businessId = c.get("businessId");
+        const query = {
+            from: c.req.query("from"),
+            to: c.req.query("to"),
+            limit: c.req.query("limit") ? parseInt(c.req.query("limit")) : undefined,
+        };
+        const result = await getTopCustomers(db, businessId, query);
+        return c.json({ success: true, data: result }, 200);
+    }
+    catch (error) {
+        return c.json({ success: false, error: { code: "TOP_CUSTOMERS_FETCH_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
+    }
+});

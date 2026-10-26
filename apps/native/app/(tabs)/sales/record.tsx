@@ -5,25 +5,23 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
-  Modal,
-  Pressable,
   Animated,
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useProducts, type Product } from '@/hooks/useProducts';
-import { useCustomers, type Customer } from '@/hooks/useCustomers';
+import { useCustomers } from '@/hooks/useCustomers';
 import { useSales } from '@/hooks/useSales';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
 import { Button } from '@/components/ui/button';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { useToast } from '@/components/ui/toast';
 import {
   ArrowLeft,
   ArrowRight,
   Bank,
-  Buildings,
   Calendar,
   CaretRight,
   CreditCard,
@@ -67,11 +65,13 @@ const SUPERMARKET_PAYMENT_METHODS: { key: PaymentMethod; label: string; icon: Re
   { key: 'cheque', label: 'Cheque', icon: Money },
 ];
 
-const PAYMENT_STATUSES: { key: PaymentStatus; label: string; color: string }[] = [
-  { key: 'paid', label: 'Paid', color: 'text-success' },
-  { key: 'partial', label: 'Partial', color: 'text-accent' },
-  { key: 'unpaid', label: 'Unpaid', color: 'text-error' },
+const PAYMENT_STATUSES: { key: PaymentStatus; label: string }[] = [
+  { key: 'paid', label: 'Paid' },
+  { key: 'partial', label: 'Partial' },
+  { key: 'unpaid', label: 'Unpaid' },
 ];
+
+const HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 } as const;
 
 function getInitials(name: string): string {
   return name
@@ -85,13 +85,13 @@ function getInitials(name: string): string {
 function SkeletonProductCard({ opacity }: { opacity: Animated.Value }) {
   return (
     <Animated.View style={{ opacity }} className="mb-3">
-      <StyledView className="flex-row items-center gap-3 bg-surface-container-lowest rounded-xl p-3 border border-outline-variant/20">
-        <StyledView className="w-14 h-14 rounded-xl bg-surface-container" />
+      <StyledView className="flex-row items-center gap-3 bg-surface-container-lowest rounded-card p-3 border border-outline-variant/20">
+        <StyledView className="w-14 h-14 rounded-card bg-surface-container" />
         <StyledView className="flex-1 gap-2">
           <StyledView className="h-4 w-44 bg-surface-container rounded-md" />
           <StyledView className="h-3 w-24 bg-surface-container rounded-md" />
         </StyledView>
-        <StyledView className="w-24 h-9 bg-surface-container rounded-lg" />
+        <StyledView className="w-24 h-9 bg-surface-container rounded-md" />
       </StyledView>
     </Animated.View>
   );
@@ -286,7 +286,7 @@ export default function RecordSaleScreen() {
 
       clearCart();
       setCheckoutVisible(false);
-      
+
       router.replace({
         pathname: '/receipt',
         params: { saleId: sale.id },
@@ -334,16 +334,16 @@ export default function RecordSaleScreen() {
         <StyledView
           key={product.id}
           className={cn(
-            'flex-row items-center gap-3 bg-surface-container-lowest rounded-xl p-3 mb-2 border',
+            'flex-row items-center gap-3 bg-surface-container-lowest rounded-card p-3 mb-2 border',
             isOutOfStock ? 'border-outline-variant/30 opacity-60' : 'border-outline-variant/20',
             cartQty > 0 && 'border-primary/30 bg-primary/5',
           )}
         >
-          <StyledView className="w-14 h-14 rounded-xl bg-primary/10 items-center justify-center overflow-hidden">
+          <StyledView className="w-14 h-14 rounded-card bg-primary/10 items-center justify-center overflow-hidden">
             {product.imageUrl ? (
               <StyledImage source={{ uri: product.imageUrl }} className="w-full h-full" />
             ) : (
-              <StyledText className="text-base font-bold text-primary">
+              <StyledText className="text-body-lg font-bold text-primary">
                 {getInitials(product.name)}
               </StyledText>
             )}
@@ -351,28 +351,28 @@ export default function RecordSaleScreen() {
 
           <StyledView className="flex-1 gap-0.5">
             <StyledView className="flex-row items-center gap-2">
-              <StyledText className="text-sm font-semibold text-on-surface flex-1" numberOfLines={1}>
+              <StyledText className="text-body-sm font-semibold text-on-surface flex-1" numberOfLines={1}>
                 {product.name}
               </StyledText>
               {product.category && (
                 <StyledView className="bg-surface-container rounded-full px-2 py-0.5">
-                  <StyledText className="text-[10px] font-medium text-on-surface-variant">
+                  <StyledText className="text-label-sm font-medium text-on-surface-variant">
                     {product.category}
                   </StyledText>
                 </StyledView>
               )}
             </StyledView>
-            <StyledText className="text-base font-bold text-primary">
+            <StyledText className="text-body-lg font-bold text-primary">
               {formatCurrency(price)}
             </StyledText>
             {isLowStock && (
-              <StyledText className="text-[11px] text-error font-medium">
+              <StyledText className="text-label-sm text-error font-medium">
                 Only {product.quantity} left
               </StyledText>
             )}
             {isOutOfStock && (
               <StyledView className="bg-error/10 self-start rounded-full px-2 py-0.5">
-                <StyledText className="text-[11px] text-error font-semibold">
+                <StyledText className="text-label-sm text-error font-semibold">
                   Out of Stock
                 </StyledText>
               </StyledView>
@@ -380,44 +380,63 @@ export default function RecordSaleScreen() {
           </StyledView>
 
           {isOutOfStock ? (
-            <StyledView className="w-24 h-9 bg-surface-container rounded-lg items-center justify-center">
-              <StyledText className="text-xs text-on-surface-variant font-medium">
+            <StyledView
+              className="w-24 h-9 bg-surface-container rounded-md items-center justify-center"
+              accessible
+              accessibilityRole="text"
+              accessibilityLabel={`${product.name} is unavailable`}
+            >
+              <StyledText className="text-label-bold text-on-surface-variant font-medium">
                 Unavailable
               </StyledText>
             </StyledView>
           ) : cartQty > 0 ? (
-            <StyledView className="flex-row items-center gap-1">
+            <StyledView className="flex-row items-center">
               <StyledTouchableOpacity
-                className="w-8 h-8 rounded-full bg-primary items-center justify-center active:opacity-80"
+                className="size-11 rounded-full bg-primary items-center justify-center active:opacity-80"
                 onPress={() => updateQuantity(product.id, cartQty - 1)}
+                accessibilityRole="button"
+                accessibilityLabel={`Decrease quantity of ${product.name}`}
+                accessibilityHint={`Currently ${cartQty} in cart. Removes the item at a quantity of one.`}
               >
-                <Minus size={16} color="#FFFFFF" />
+                <Minus size={18} color="#FFFFFF" />
               </StyledTouchableOpacity>
-              <StyledView className="w-8 h-8 items-center justify-center">
-                <StyledText className="text-sm font-bold text-on-surface">
-                  {cartQty}
-                </StyledText>
-              </StyledView>
+              <StyledText
+                className="min-w-[36px] text-body-sm font-bold text-on-surface text-center"
+                numberOfLines={1}
+              >
+                {cartQty}
+              </StyledText>
               <StyledTouchableOpacity
                 className={cn(
-                  'w-8 h-8 rounded-full items-center justify-center active:opacity-80',
+                  'size-11 rounded-full items-center justify-center active:opacity-80',
                   atMaxStock ? 'bg-outline/30' : 'bg-primary/15',
                 )}
                 onPress={() => addToCart(product)}
                 disabled={atMaxStock}
+                accessibilityRole="button"
+                accessibilityLabel={`Increase quantity of ${product.name}`}
+                accessibilityHint={
+                  atMaxStock
+                    ? `No more stock available. ${product.quantity} in stock.`
+                    : `Currently ${cartQty} in cart.`
+                }
+                accessibilityState={{ disabled: atMaxStock }}
               >
                 <Plus
-                  size={16}
+                  size={18}
                   color={atMaxStock ? colors.outline : colors.primary}
                 />
               </StyledTouchableOpacity>
             </StyledView>
           ) : (
             <StyledTouchableOpacity
-              className="w-9 h-9 rounded-lg bg-primary items-center justify-center active:opacity-80"
+              className="size-11 rounded-button bg-primary items-center justify-center active:opacity-80"
               onPress={() => addToCart(product)}
+              accessibilityRole="button"
+              accessibilityLabel={`Add ${product.name} to cart`}
             >
-              <Plus size={20} color="#FFFFFF" />
+              <Plus size={22} color="#FFFFFF" />
             </StyledTouchableOpacity>
           )}
         </StyledView>
@@ -426,443 +445,441 @@ export default function RecordSaleScreen() {
     [getCartQuantity, updateQuantity, addToCart, colors],
   );
 
-  const renderCustomerModal = () => (
-    <Modal
+  const renderCustomerSheet = () => (
+    <BottomSheet
       visible={customerModalVisible}
-      animationType="slide"
-      transparent
-      onRequestClose={() => setCustomerModalVisible(false)}
+      onClose={() => setCustomerModalVisible(false)}
+      icon={<User size={20} color={colors.onPrimaryContainer} />}
+      title="Select Customer"
+      maxHeightRatio={0.8}
+      contentClassName="pt-1 pb-2"
+      footer={
+        showAddCustomer ? (
+          <Button
+            isDisabled={!newCustomerName.trim()}
+            onPress={handleAddCustomer}
+            size="md"
+            className="w-full"
+          >
+            {orderType === 'supermarket' ? 'Add Supermarket' : 'Add Customer'}
+          </Button>
+        ) : undefined
+      }
     >
-      <Pressable
-        className="flex-1 bg-black/50 justify-end"
-        onPress={() => setCustomerModalVisible(false)}
-      >
-        <StyledView
-          className="bg-background rounded-t-2xl max-h-[80%] min-h-[50%]"
-          onStartShouldSetResponder={() => true}
-        >
-          <StyledView className="items-center pt-2 pb-1">
-            <StyledView className="w-10 h-1 rounded-full bg-outline/40" />
-          </StyledView>
-          <StyledView className="px-6 pb-3 border-b border-outline-variant/20">
-            <StyledView className="flex-row justify-between items-center mb-3">
-              <StyledText className="text-lg font-bold text-on-surface">
-                Select Customer
+      <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-card px-4 h-11 mb-2">
+        <MagnifyingGlass size={20} color={colors.outline} />
+        <StyledTextInput
+          className="flex-1 ml-2 text-body-md text-on-surface"
+          placeholder="Search customers..."
+          placeholderTextColor={colors.outline}
+          value={customerSearch}
+          onChangeText={setCustomerSearch}
+          returnKeyType="search"
+          accessibilityLabel="Search customers"
+        />
+      </StyledView>
+
+      {!showAddCustomer ? (
+        <>
+          <StyledTouchableOpacity
+            className="py-3.5 border-b border-outline-variant/10 flex-row items-center gap-3"
+            onPress={() => {
+              setSelectedCustomer(null);
+              setCustomerModalVisible(false);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Walk-in Customer"
+            accessibilityHint="Records the sale without customer details"
+            accessibilityState={{ selected: selectedCustomer === null }}
+          >
+            <StyledView className="w-10 h-10 rounded-full bg-surface-container items-center justify-center">
+              <User size={20} color={colors.outline} />
+            </StyledView>
+            <StyledView>
+              <StyledText className="text-body-sm font-semibold text-on-surface">
+                Walk-in Customer
               </StyledText>
-              <StyledTouchableOpacity onPress={() => setCustomerModalVisible(false)}>
-                <X size={24} color={colors.onSurface} />
-              </StyledTouchableOpacity>
+              <StyledText className="text-label-bold text-on-surface-variant">
+                No customer details
+              </StyledText>
             </StyledView>
-            <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-11">
-              <MagnifyingGlass size={20} color={colors.outline} />
-              <StyledTextInput
-                className="flex-1 ml-2 text-body-md text-on-surface"
-                placeholder="Search customers..."
-                placeholderTextColor={colors.outline}
-                value={customerSearch}
-                onChangeText={setCustomerSearch}
-              />
-            </StyledView>
-          </StyledView>
+          </StyledTouchableOpacity>
 
-          <StyledScrollView className="flex-1 px-6 pt-2" contentInsetAdjustmentBehavior="never">
-            {!showAddCustomer ? (
-              <>
-                <StyledTouchableOpacity
-                  className="py-3.5 border-b border-outline-variant/10 flex-row items-center gap-3"
-                  onPress={() => {
-                    setSelectedCustomer(null);
-                    setCustomerModalVisible(false);
-                  }}
-                >
-                  <StyledView className="w-10 h-10 rounded-full bg-surface-container items-center justify-center">
-                    <User size={20} color={colors.outline} />
-                  </StyledView>
-                  <StyledView>
-                    <StyledText className="text-sm font-semibold text-on-surface">
-                      Walk-in Customer
-                    </StyledText>
-                    <StyledText className="text-xs text-on-surface-variant">
-                      No customer details
-                    </StyledText>
-                  </StyledView>
-                </StyledTouchableOpacity>
-
-                {filteredCustomers.map((customer) => (
-                  <StyledTouchableOpacity
-                    key={customer.id}
-                    className="py-3.5 border-b border-outline-variant/10 flex-row items-center gap-3"
-                    onPress={() => {
-                      setSelectedCustomer(customer);
-                      setCustomerModalVisible(false);
-                    }}
-                  >
-                    <StyledView className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center">
-                      <StyledText className="text-sm font-bold text-primary">
-                        {getInitials(customer.name)}
-                      </StyledText>
-                    </StyledView>
-                    <StyledView>
-                      <StyledText className="text-sm font-semibold text-on-surface">
-                        {customer.name}
-                      </StyledText>
-                      {customer.phone && (
-                        <StyledText className="text-xs text-on-surface-variant">
-                          {customer.phone}
-                        </StyledText>
-                      )}
-                    </StyledView>
-                  </StyledTouchableOpacity>
-                ))}
-
-                <StyledTouchableOpacity
-                  className="py-4 items-center"
-                  onPress={() => setShowAddCustomer(true)}
-                >
-                  <StyledView className="flex-row items-center gap-2">
-                    <UserPlus size={20} color={colors.primary} />
-                    <StyledText className="text-sm font-semibold text-primary">
-                      Add New Customer
-                    </StyledText>
-                  </StyledView>
-                </StyledTouchableOpacity>
-              </>
-            ) : (
-              <StyledView className="py-4 gap-4">
-                <StyledView className="flex-row items-center justify-between">
-                  <StyledText className="text-sm font-semibold text-on-surface">
-                    {orderType === 'supermarket' ? 'New Supermarket' : 'New Customer'}
-                  </StyledText>
-                  <StyledTouchableOpacity
-                    onPress={() => {
-                      setShowAddCustomer(false);
-                      setNewCustomerName('');
-                      setNewCustomerPhone('');
-                      setNewCustomerAddress('');
-                    }}
-                  >
-                    <StyledText className="text-sm text-on-surface-variant">Cancel</StyledText>
-                  </StyledTouchableOpacity>
-                </StyledView>
-                <StyledTextInput
-                  className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-base text-on-surface"
-                  placeholder={orderType === 'supermarket' ? 'Supermarket name *' : 'Customer name *'}
-                  placeholderTextColor={colors.outline}
-                  value={newCustomerName}
-                  onChangeText={setNewCustomerName}
-                />
-                <StyledTextInput
-                  className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-base text-on-surface"
-                  placeholder="Phone number"
-                  placeholderTextColor={colors.outline}
-                  keyboardType="phone-pad"
-                  value={newCustomerPhone}
-                  onChangeText={setNewCustomerPhone}
-                />
-                <StyledTextInput
-                  className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-base text-on-surface"
-                  placeholder="Store / Delivery Address"
-                  placeholderTextColor={colors.outline}
-                  value={newCustomerAddress}
-                  onChangeText={setNewCustomerAddress}
-                />
-                <Button
-                  isDisabled={!newCustomerName.trim()}
-                  onPress={handleAddCustomer}
-                  size="md"
-                >
-                  {orderType === 'supermarket' ? 'Add Supermarket' : 'Add Customer'}
-                </Button>
+          {filteredCustomers.map((customer) => (
+            <StyledTouchableOpacity
+              key={customer.id}
+              className="py-3.5 border-b border-outline-variant/10 flex-row items-center gap-3"
+              onPress={() => {
+                setSelectedCustomer(customer);
+                setCustomerModalVisible(false);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Select customer ${customer.name}`}
+              accessibilityState={{ selected: selectedCustomer?.id === customer.id }}
+            >
+              <StyledView className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center">
+                <StyledText className="text-body-sm font-bold text-primary">
+                  {getInitials(customer.name)}
+                </StyledText>
               </StyledView>
-            )}
-            <StyledView className="h-6" />
-          </StyledScrollView>
+              <StyledView className="flex-1">
+                <StyledText className="text-body-sm font-semibold text-on-surface">
+                  {customer.name}
+                </StyledText>
+                {customer.phone && (
+                  <StyledText className="text-label-bold text-on-surface-variant">
+                    {customer.phone}
+                  </StyledText>
+                )}
+              </StyledView>
+              {selectedCustomer?.id === customer.id && (
+                <StyledText className="text-label-bold text-primary">✓</StyledText>
+              )}
+            </StyledTouchableOpacity>
+          ))}
+
+          <StyledTouchableOpacity
+            className="py-4 items-center"
+            onPress={() => setShowAddCustomer(true)}
+            accessibilityRole="button"
+            accessibilityLabel={
+              orderType === 'supermarket' ? 'Add a new supermarket' : 'Add a new customer'
+            }
+          >
+            <StyledView className="flex-row items-center gap-2">
+              <UserPlus size={20} color={colors.primary} />
+              <StyledText className="text-body-sm font-semibold text-primary">
+                Add New Customer
+              </StyledText>
+            </StyledView>
+          </StyledTouchableOpacity>
+        </>
+      ) : (
+        <StyledView className="pt-2 gap-4">
+          <StyledView className="flex-row items-center justify-between">
+            <StyledText className="text-body-sm font-semibold text-on-surface">
+              {orderType === 'supermarket' ? 'New Supermarket' : 'New Customer'}
+            </StyledText>
+            <StyledTouchableOpacity
+              onPress={() => {
+                setShowAddCustomer(false);
+                setNewCustomerName('');
+                setNewCustomerPhone('');
+                setNewCustomerAddress('');
+              }}
+              className="flex-row items-center justify-center min-h-[44px] px-3 -mr-3 rounded-button"
+              accessibilityRole="button"
+              accessibilityLabel="Cancel adding a customer"
+            >
+              <StyledText className="text-body-sm text-on-surface-variant">Cancel</StyledText>
+            </StyledTouchableOpacity>
+          </StyledView>
+          <StyledTextInput
+            className="bg-surface-container-lowest border border-outline-variant rounded-card px-4 h-12 text-body-lg text-on-surface"
+            placeholder={orderType === 'supermarket' ? 'Supermarket name *' : 'Customer name *'}
+            placeholderTextColor={colors.outline}
+            value={newCustomerName}
+            onChangeText={setNewCustomerName}
+            accessibilityLabel={
+              orderType === 'supermarket' ? 'Supermarket name, required' : 'Customer name, required'
+            }
+          />
+          <StyledTextInput
+            className="bg-surface-container-lowest border border-outline-variant rounded-card px-4 h-12 text-body-lg text-on-surface"
+            placeholder="Phone number"
+            placeholderTextColor={colors.outline}
+            keyboardType="phone-pad"
+            value={newCustomerPhone}
+            onChangeText={setNewCustomerPhone}
+            accessibilityLabel="Phone number"
+          />
+          <StyledTextInput
+            className="bg-surface-container-lowest border border-outline-variant rounded-card px-4 h-12 text-body-lg text-on-surface"
+            placeholder="Store / Delivery Address"
+            placeholderTextColor={colors.outline}
+            value={newCustomerAddress}
+            onChangeText={setNewCustomerAddress}
+            accessibilityLabel="Store or delivery address"
+          />
         </StyledView>
-      </Pressable>
-    </Modal>
+      )}
+    </BottomSheet>
   );
 
   const renderCheckoutSheet = () => (
-    <Modal
+    <BottomSheet
       visible={checkoutVisible}
-      animationType="slide"
-      transparent
-      onRequestClose={() => setCheckoutVisible(false)}
-    >
-      <Pressable
-        className="flex-1 bg-black/50 justify-end"
-        onPress={() => setCheckoutVisible(false)}
-      >
-        <StyledView
-          className="bg-background rounded-t-3xl max-h-[90%] w-full"
-          onStartShouldSetResponder={() => true}
+      onClose={() => setCheckoutVisible(false)}
+      icon={<CreditCard size={20} color={colors.onPrimaryContainer} />}
+      title="Checkout"
+      maxHeightRatio={0.9}
+      contentClassName="pb-2"
+      footer={
+        <Button
+          size="lg"
+          isDisabled={isSubmitting || total <= 0}
+          onPress={handleCompleteSale}
+          className="w-full"
         >
-          <StyledView className="items-center pt-3 pb-1">
-            <StyledView className="w-12 h-1.5 rounded-full bg-outline/40" />
-          </StyledView>
-
-          <StyledScrollView
-            className="px-6"
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentInsetAdjustmentBehavior="never"
-          >
-            <StyledText className="text-xl font-bold text-on-surface mb-4">
-              Checkout
-            </StyledText>
-
-            <Surface variant="primary" className="mb-4">
-              <StyledText className="text-sm font-semibold text-on-surface mb-3">
-                Order Summary
-              </StyledText>
-              {cartItems.map((item) => {
-                const lineTotal = parseFloat(item.product.price) * item.quantity;
-                return (
-                  <StyledView
-                    key={item.product.id}
-                    className="flex-row items-center justify-between py-2.5 border-b border-outline-variant/10"
-                  >
-                    <StyledView className="flex-1 mr-2">
-                      <StyledText className="text-sm font-medium text-on-surface" numberOfLines={1}>
-                        {item.product.name}
-                      </StyledText>
-                      <StyledText className="text-xs text-on-surface-variant mt-0.5">
-                        {formatCurrency(parseFloat(item.product.price))} × {item.quantity}
-                      </StyledText>
-                    </StyledView>
-                    <StyledView className="flex-row items-center gap-2">
-                      <StyledText className="text-sm font-bold text-on-surface">
-                        {formatCurrency(lineTotal)}
-                      </StyledText>
-                      <StyledTouchableOpacity
-                        onPress={() => updateQuantity(item.product.id, 0)}
-                        className="w-7 h-7 rounded-full bg-error/10 items-center justify-center active:opacity-70"
-                      >
-                        <X size={14} color={colors.error} />
-                      </StyledTouchableOpacity>
-                    </StyledView>
-                  </StyledView>
-                );
-              })}
-            </Surface>
-
-            <StyledTouchableOpacity
-              className="mb-4"
-              activeOpacity={0.7}
-              onPress={() => {
-                setCustomerSearch('');
-                setShowAddCustomer(false);
-                setCustomerModalVisible(true);
-              }}
+          {isSubmitting ? 'Recording...' : 'Complete Sale'}
+        </Button>
+      }
+    >
+      <Surface variant="primary" className="mb-4">
+        <StyledText className="text-body-sm font-semibold text-on-surface mb-3">
+          Order Summary
+        </StyledText>
+        {cartItems.map((item) => {
+          const lineTotal = parseFloat(item.product.price) * item.quantity;
+          return (
+            <StyledView
+              key={item.product.id}
+              className="flex-row items-center justify-between py-2.5 border-b border-outline-variant/10"
             >
-              <Surface variant="primary" className="flex-row items-center justify-between">
-                <StyledView className="flex-row items-center gap-3">
-                  <StyledView className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center">
-                    <User size={20} color={colors.primary} />
+              <StyledView className="flex-1 mr-2">
+                <StyledText className="text-body-sm font-medium text-on-surface" numberOfLines={1}>
+                  {item.product.name}
+                </StyledText>
+                <StyledText className="text-label-bold text-on-surface-variant mt-0.5">
+                  {formatCurrency(parseFloat(item.product.price))} × {item.quantity}
+                </StyledText>
+              </StyledView>
+              <StyledView className="flex-row items-center">
+                <StyledText className="text-body-sm font-bold text-on-surface">
+                  {formatCurrency(lineTotal)}
+                </StyledText>
+                <StyledTouchableOpacity
+                  onPress={() => updateQuantity(item.product.id, 0)}
+                  className="size-11 items-center justify-center"
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove ${item.product.name} from the order`}
+                >
+                  <StyledView className="size-7 rounded-full bg-error/10 items-center justify-center">
+                    <X size={14} color={colors.error} />
                   </StyledView>
-                  <StyledView>
-                    <StyledText className="text-sm font-semibold text-on-surface">
-                      {selectedCustomer?.name || 'Walk-in Customer'}
-                    </StyledText>
-                    <StyledText className="text-xs text-on-surface-variant">
-                      {selectedCustomer?.phone || 'Tap to select customer'}
-                    </StyledText>
-                  </StyledView>
-                </StyledView>
-                <CaretRight size={20} color={colors.outline} />
-              </Surface>
-            </StyledTouchableOpacity>
-
-            <StyledText className="text-sm font-semibold text-on-surface mb-2">
-              Payment Method
-            </StyledText>
-            <StyledView className="flex-row gap-2 mb-4">
-              {(orderType === 'supermarket' ? SUPERMARKET_PAYMENT_METHODS : CUSTOMER_PAYMENT_METHODS).map((method) => {
-                const isSelected = selectedPayment === method.key;
-                const IconComponent = method.icon;
-                return (
-                  <StyledTouchableOpacity
-                    key={method.key}
-                    className={cn(
-                      'flex-1 items-center py-3 rounded-xl border',
-                      isSelected
-                        ? 'bg-primary border-primary'
-                        : 'bg-surface-container-lowest border-outline-variant',
-                    )}
-                    onPress={() => setSelectedPayment(method.key)}
-                  >
-                    <IconComponent
-                      size={20}
-                      color={isSelected ? '#FFFFFF' : colors.onSurfaceVariant}
-                    />
-                    <StyledText
-                      className={cn(
-                        'text-xs font-semibold mt-1 text-center',
-                        isSelected ? 'text-on-primary' : 'text-on-surface-variant',
-                      )}
-                    >
-                      {method.label}
-                    </StyledText>
-                  </StyledTouchableOpacity>
-                );
-              })}
-            </StyledView>
-
-            {orderType === 'supermarket' && (
-              <Surface variant="outline" className="mb-4 p-3 bg-surface-container-lowest border-outline-variant rounded-xl">
-                <StyledView className="flex-row items-center gap-2 mb-2">
-                  <Calendar size={18} color={colors.primary} />
-                  <StyledText className="text-sm font-bold text-on-surface">
-                    Supermarket Supply Terms
-                  </StyledText>
-                </StyledView>
-                <StyledText className="text-xs text-on-surface-variant mb-1">
-                  Expected Payment Period (Days)
-                </StyledText>
-                <StyledTextInput
-                  className="bg-surface-container rounded-lg px-3 py-2 text-sm text-on-surface font-semibold mb-3 border border-outline-variant/30"
-                  keyboardType="numeric"
-                  value={expectedPaymentDays}
-                  onChangeText={setExpectedPaymentDays}
-                  placeholder="e.g. 14"
-                  placeholderTextColor={colors.outline}
-                />
-                <StyledText className="text-xs text-on-surface-variant mb-1">
-                  Invoice Number
-                </StyledText>
-                <StyledTextInput
-                  className="bg-surface-container rounded-lg px-3 py-2 text-sm text-on-surface font-semibold border border-outline-variant/30"
-                  value={invoiceNumber}
-                  onChangeText={setInvoiceNumber}
-                  placeholder="e.g. INV-001"
-                  placeholderTextColor={colors.outline}
-                />
-              </Surface>
-            )}
-
-            <StyledText className="text-sm font-semibold text-on-surface mb-2">
-              Payment Status
-            </StyledText>
-            <StyledView className="flex-row gap-2 mb-4">
-              {PAYMENT_STATUSES.map((status) => {
-                const isSelected = paymentStatus === status.key;
-                return (
-                  <StyledTouchableOpacity
-                    key={status.key}
-                    className={cn(
-                      'flex-1 py-2.5 rounded-xl border items-center',
-                      isSelected
-                        ? 'bg-primary border-primary'
-                        : 'bg-surface-container-lowest border-outline-variant',
-                    )}
-                    onPress={() => setPaymentStatus(status.key)}
-                  >
-                    <StyledText
-                      className={cn(
-                        'text-sm font-semibold',
-                        isSelected ? 'text-on-primary' : 'text-on-surface-variant',
-                      )}
-                    >
-                      {status.label}
-                    </StyledText>
-                  </StyledTouchableOpacity>
-                );
-              })}
-            </StyledView>
-
-            {paymentStatus !== 'unpaid' && (
-              <StyledView className="mb-4">
-                <StyledText className="text-sm font-semibold text-on-surface mb-2">
-                  Amount Paid
-                </StyledText>
-                <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12">
-                  <StyledText className="text-base font-semibold text-on-surface-variant mr-1">
-                    ₦
-                  </StyledText>
-                  <StyledTextInput
-                    className="flex-1 text-base text-on-surface"
-                    placeholder="0"
-                    placeholderTextColor={colors.outline}
-                    keyboardType="numeric"
-                    value={amountPaid}
-                    onChangeText={setAmountPaid}
-                  />
-                </StyledView>
+                </StyledTouchableOpacity>
               </StyledView>
-            )}
+            </StyledView>
+          );
+        })}
+      </Surface>
 
-            <StyledView className="mb-4">
-              <StyledText className="text-sm font-semibold text-on-surface mb-2">
-                Discount (optional)
+      <StyledTouchableOpacity
+        className="mb-4"
+        activeOpacity={0.7}
+        onPress={() => {
+          setCustomerSearch('');
+          setShowAddCustomer(false);
+          setCustomerModalVisible(true);
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`Customer: ${selectedCustomer?.name || 'Walk-in Customer'}. Tap to change.`}
+      >
+        <Surface variant="primary" className="flex-row items-center justify-between">
+          <StyledView className="flex-row items-center gap-3">
+            <StyledView className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center">
+              <User size={20} color={colors.primary} />
+            </StyledView>
+            <StyledView>
+              <StyledText className="text-body-sm font-semibold text-on-surface">
+                {selectedCustomer?.name || 'Walk-in Customer'}
               </StyledText>
-              <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12">
-                <StyledText className="text-base font-semibold text-on-surface-variant mr-1">
-                  ₦
-                </StyledText>
-                <StyledTextInput
-                  className="flex-1 text-base text-on-surface"
-                  placeholder="0"
-                  placeholderTextColor={colors.outline}
-                  keyboardType="numeric"
-                  value={discount}
-                  onChangeText={setDiscount}
-                />
-              </StyledView>
-            </StyledView>
-
-            <StyledView className="mb-4">
-              <StyledText className="text-sm font-semibold text-on-surface mb-2">
-                Notes (optional)
+              <StyledText className="text-label-bold text-on-surface-variant">
+                {selectedCustomer?.phone || 'Tap to select customer'}
               </StyledText>
-              <StyledTextInput
-                className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-3 text-base text-on-surface min-h-[80px]"
-                placeholder="Add any notes..."
-                placeholderTextColor={colors.outline}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-                value={notes}
-                onChangeText={setNotes}
-              />
             </StyledView>
+          </StyledView>
+          <CaretRight size={20} color={colors.outline} />
+        </Surface>
+      </StyledTouchableOpacity>
 
-            <Surface variant="primary" className="mb-6">
-              <StyledView className="flex-row justify-between items-center py-1">
-                <StyledText className="text-sm text-on-surface-variant">Subtotal</StyledText>
-                <StyledText className="text-sm font-semibold text-on-surface">
-                  {formatCurrency(subtotal)}
-                </StyledText>
-              </StyledView>
-              {(parseFloat(discount) || 0) > 0 && (
-                <StyledView className="flex-row justify-between items-center py-1">
-                  <StyledText className="text-sm text-on-surface-variant">Discount</StyledText>
-                  <StyledText className="text-sm font-semibold text-error">
-                    -{formatCurrency(parseFloat(discount) || 0)}
-                  </StyledText>
-                </StyledView>
+      <StyledText className="text-body-sm font-semibold text-on-surface mb-2">
+        Payment Method
+      </StyledText>
+      <StyledView className="flex-row gap-2 mb-4">
+        {(orderType === 'supermarket' ? SUPERMARKET_PAYMENT_METHODS : CUSTOMER_PAYMENT_METHODS).map((method) => {
+          const isSelected = selectedPayment === method.key;
+          const IconComponent = method.icon;
+          return (
+            <StyledTouchableOpacity
+              key={method.key}
+              className={cn(
+                'flex-1 items-center py-3 rounded-card border',
+                isSelected
+                  ? 'bg-primary border-primary'
+                  : 'bg-surface-container-lowest border-outline-variant',
               )}
-              <StyledView className="flex-row justify-between items-center pt-3 mt-2 border-t border-outline-variant/30">
-                <StyledText className="text-base font-bold text-on-surface">Total</StyledText>
-                <StyledText className="text-xl font-bold text-primary">
-                  {formatCurrency(total)}
-                </StyledText>
-              </StyledView>
-            </Surface>
-
-            <StyledView className="pb-6">
-              <Button
-                size="lg"
-                isDisabled={isSubmitting || total <= 0}
-                onPress={handleCompleteSale}
-                className="w-full"
+              onPress={() => setSelectedPayment(method.key)}
+              accessibilityRole="button"
+              accessibilityLabel={`Pay by ${method.label}`}
+              accessibilityState={{ selected: isSelected }}
+            >
+              <IconComponent
+                size={20}
+                color={isSelected ? '#FFFFFF' : colors.onSurfaceVariant}
+              />
+              <StyledText
+                className={cn(
+                  'text-label-bold font-semibold mt-1 text-center',
+                  isSelected ? 'text-on-primary' : 'text-on-surface-variant',
+                )}
               >
-                {isSubmitting ? 'Recording...' : 'Complete Sale'}
-              </Button>
-            </StyledView>
-          </StyledScrollView>
+                {method.label}
+              </StyledText>
+            </StyledTouchableOpacity>
+          );
+        })}
+      </StyledView>
+
+      {orderType === 'supermarket' && (
+        <Surface variant="outline" className="mb-4 p-3 bg-surface-container-lowest border-outline-variant rounded-card">
+          <StyledView className="flex-row items-center gap-2 mb-2">
+            <Calendar size={18} color={colors.primary} />
+            <StyledText className="text-body-sm font-bold text-on-surface">
+              Supermarket Supply Terms
+            </StyledText>
+          </StyledView>
+          <StyledText className="text-label-bold text-on-surface-variant mb-1">
+            Expected Payment Period (Days)
+          </StyledText>
+          <StyledTextInput
+            className="bg-surface-container rounded-input px-3 py-2 text-body-sm text-on-surface font-semibold mb-3 border border-outline-variant/30 min-h-[44px]"
+            keyboardType="numeric"
+            value={expectedPaymentDays}
+            onChangeText={setExpectedPaymentDays}
+            placeholder="e.g. 14"
+            placeholderTextColor={colors.outline}
+            accessibilityLabel="Expected payment period in days"
+          />
+          <StyledText className="text-label-bold text-on-surface-variant mb-1">
+            Invoice Number
+          </StyledText>
+          <StyledTextInput
+            className="bg-surface-container rounded-input px-3 py-2 text-body-sm text-on-surface font-semibold border border-outline-variant/30 min-h-[44px]"
+            value={invoiceNumber}
+            onChangeText={setInvoiceNumber}
+            placeholder="e.g. INV-001"
+            placeholderTextColor={colors.outline}
+            accessibilityLabel="Invoice number"
+          />
+        </Surface>
+      )}
+
+      <StyledText className="text-body-sm font-semibold text-on-surface mb-2">
+        Payment Status
+      </StyledText>
+      <StyledView className="flex-row gap-2 mb-4">
+        {PAYMENT_STATUSES.map((status) => {
+          const isSelected = paymentStatus === status.key;
+          return (
+            <StyledTouchableOpacity
+              key={status.key}
+              className={cn(
+                'flex-1 py-2.5 rounded-card border items-center min-h-[44px]',
+                isSelected
+                  ? 'bg-primary border-primary'
+                  : 'bg-surface-container-lowest border-outline-variant',
+              )}
+              onPress={() => setPaymentStatus(status.key)}
+              accessibilityRole="button"
+              accessibilityLabel={`Payment status ${status.label}`}
+              accessibilityState={{ selected: isSelected }}
+            >
+              <StyledText
+                className={cn(
+                  'text-body-sm font-semibold',
+                  isSelected ? 'text-on-primary' : 'text-on-surface-variant',
+                )}
+              >
+                {status.label}
+              </StyledText>
+            </StyledTouchableOpacity>
+          );
+        })}
+      </StyledView>
+
+      {paymentStatus !== 'unpaid' && (
+        <StyledView className="mb-4">
+          <StyledText className="text-body-sm font-semibold text-on-surface mb-2">
+            Amount Paid
+          </StyledText>
+          <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-card px-4 h-12">
+            <StyledText className="text-body-lg font-semibold text-on-surface-variant mr-1">
+              ₦
+            </StyledText>
+            <StyledTextInput
+              className="flex-1 text-body-lg text-on-surface"
+              placeholder="0"
+              placeholderTextColor={colors.outline}
+              keyboardType="numeric"
+              value={amountPaid}
+              onChangeText={setAmountPaid}
+              accessibilityLabel="Amount paid in naira"
+            />
+          </StyledView>
         </StyledView>
-      </Pressable>
-    </Modal>
+      )}
+
+      <StyledView className="mb-4">
+        <StyledText className="text-body-sm font-semibold text-on-surface mb-2">
+          Discount (optional)
+        </StyledText>
+        <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-card px-4 h-12">
+          <StyledText className="text-body-lg font-semibold text-on-surface-variant mr-1">
+            ₦
+          </StyledText>
+          <StyledTextInput
+            className="flex-1 text-body-lg text-on-surface"
+            placeholder="0"
+            placeholderTextColor={colors.outline}
+            keyboardType="numeric"
+            value={discount}
+            onChangeText={setDiscount}
+            accessibilityLabel="Discount in naira"
+          />
+        </StyledView>
+      </StyledView>
+
+      <StyledView className="mb-4">
+        <StyledText className="text-body-sm font-semibold text-on-surface mb-2">
+          Notes (optional)
+        </StyledText>
+        <StyledTextInput
+          className="bg-surface-container-lowest border border-outline-variant rounded-card px-4 py-3 text-body-lg text-on-surface min-h-[80px]"
+          placeholder="Add any notes..."
+          placeholderTextColor={colors.outline}
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+          value={notes}
+          onChangeText={setNotes}
+          accessibilityLabel="Order notes"
+        />
+      </StyledView>
+
+      <Surface variant="primary" className="mb-2">
+        <StyledView className="flex-row justify-between items-center py-1">
+          <StyledText className="text-body-sm text-on-surface-variant">Subtotal</StyledText>
+          <StyledText className="text-body-sm font-semibold text-on-surface">
+            {formatCurrency(subtotal)}
+          </StyledText>
+        </StyledView>
+        {(parseFloat(discount) || 0) > 0 && (
+          <StyledView className="flex-row justify-between items-center py-1">
+            <StyledText className="text-body-sm text-on-surface-variant">Discount</StyledText>
+            <StyledText className="text-body-sm font-semibold text-error">
+              -{formatCurrency(parseFloat(discount) || 0)}
+            </StyledText>
+          </StyledView>
+        )}
+        <StyledView className="flex-row justify-between items-center pt-3 mt-2 border-t border-outline-variant/30">
+          <StyledText className="text-body-lg font-bold text-on-surface">Total</StyledText>
+          <StyledText className="text-h2 font-bold text-primary">
+            {formatCurrency(total)}
+          </StyledText>
+        </StyledView>
+      </Surface>
+    </BottomSheet>
   );
 
   return (
@@ -871,8 +888,10 @@ export default function RecordSaleScreen() {
         <StyledView className="px-5 pt-14 pb-2">
           <StyledView className="flex-row items-center gap-3 mb-4">
             <StyledTouchableOpacity
-              className="w-10 h-10 rounded-full bg-surface-container items-center justify-center active:opacity-70"
+              className="size-11 rounded-full bg-surface-container items-center justify-center active:opacity-70"
               onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
             >
               <ArrowLeft size={22} color={colors.onSurface} />
             </StyledTouchableOpacity>
@@ -882,10 +901,10 @@ export default function RecordSaleScreen() {
           </StyledView>
 
           {/* Order Type Toggle: Customer vs Supermarket */}
-          <StyledView className="flex-row bg-surface-container rounded-xl p-1 mb-4 border border-outline-variant/30">
+          <StyledView className="flex-row bg-surface-container rounded-card p-1 mb-4 border border-outline-variant/30">
             <StyledTouchableOpacity
               className={cn(
-                'flex-1 flex-row items-center justify-center py-2.5 rounded-lg gap-2',
+                'flex-1 flex-row items-center justify-center py-2.5 rounded-button gap-2 min-h-[44px]',
                 orderType === 'customer' ? 'bg-primary shadow-sm' : 'bg-transparent'
               )}
               onPress={() => {
@@ -895,11 +914,14 @@ export default function RecordSaleScreen() {
                   setSelectedCustomer(null);
                 }
               }}
+              accessibilityRole="button"
+              accessibilityLabel="Customer Order"
+              accessibilityState={{ selected: orderType === 'customer' }}
             >
               <User size={18} color={orderType === 'customer' ? '#FFFFFF' : colors.onSurfaceVariant} />
               <StyledText
                 className={cn(
-                  'text-xs font-bold',
+                  'text-label-bold font-bold',
                   orderType === 'customer' ? 'text-on-primary' : 'text-on-surface-variant'
                 )}
               >
@@ -909,7 +931,7 @@ export default function RecordSaleScreen() {
 
             <StyledTouchableOpacity
               className={cn(
-                'flex-1 flex-row items-center justify-center py-2.5 rounded-lg gap-2',
+                'flex-1 flex-row items-center justify-center py-2.5 rounded-button gap-2 min-h-[44px]',
                 orderType === 'supermarket' ? 'bg-primary shadow-sm' : 'bg-transparent'
               )}
               onPress={() => {
@@ -919,11 +941,14 @@ export default function RecordSaleScreen() {
                   setSelectedCustomer(null);
                 }
               }}
+              accessibilityRole="button"
+              accessibilityLabel="Supermarket Supply"
+              accessibilityState={{ selected: orderType === 'supermarket' }}
             >
               <Storefront size={18} color={orderType === 'supermarket' ? '#FFFFFF' : colors.onSurfaceVariant} />
               <StyledText
                 className={cn(
-                  'text-xs font-bold',
+                  'text-label-bold font-bold',
                   orderType === 'supermarket' ? 'text-on-primary' : 'text-on-surface-variant'
                 )}
               >
@@ -932,7 +957,7 @@ export default function RecordSaleScreen() {
             </StyledTouchableOpacity>
           </StyledView>
 
-          <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-11">
+          <StyledView className="flex-row items-center bg-surface-container-lowest border border-outline-variant rounded-card px-4 h-11">
             <MagnifyingGlass size={20} color={colors.outline} />
             <StyledTextInput
               className="flex-1 ml-2 text-body-md text-on-surface"
@@ -940,9 +965,16 @@ export default function RecordSaleScreen() {
               placeholderTextColor={colors.outline}
               value={searchQuery}
               onChangeText={setSearchQuery}
+              accessibilityLabel="Search products"
             />
             {searchQuery.length > 0 && (
-              <StyledTouchableOpacity onPress={() => setSearchQuery('')}>
+              <StyledTouchableOpacity
+                onPress={() => setSearchQuery('')}
+                className="size-11 items-center justify-center -mr-3"
+                hitSlop={HIT_SLOP}
+                accessibilityRole="button"
+                accessibilityLabel="Clear product search"
+              >
                 <X size={18} color={colors.outline} />
               </StyledTouchableOpacity>
             )}
@@ -955,16 +987,19 @@ export default function RecordSaleScreen() {
               <StyledView className="flex-row gap-2">
                 <StyledTouchableOpacity
                   className={cn(
-                    'rounded-full px-4 py-2 border',
+                    'rounded-full px-4 border min-h-[44px] justify-center',
                     !selectedCategory
                       ? 'bg-primary border-primary'
                       : 'bg-surface-container-lowest border-outline-variant',
                   )}
                   onPress={() => setSelectedCategory(null)}
+                  accessibilityRole="button"
+                  accessibilityLabel="All categories"
+                  accessibilityState={{ selected: !selectedCategory }}
                 >
                   <StyledText
                     className={cn(
-                      'text-xs font-semibold',
+                      'text-label-bold font-semibold',
                       !selectedCategory ? 'text-on-primary' : 'text-on-surface-variant',
                     )}
                   >
@@ -975,16 +1010,19 @@ export default function RecordSaleScreen() {
                   <StyledTouchableOpacity
                     key={cat}
                     className={cn(
-                      'rounded-full px-4 py-2 border',
+                      'rounded-full px-4 border min-h-[44px] justify-center',
                       selectedCategory === cat
                         ? 'bg-primary border-primary'
                         : 'bg-surface-container-lowest border-outline-variant',
                     )}
                     onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Filter by ${cat}`}
+                    accessibilityState={{ selected: selectedCategory === cat }}
                   >
                     <StyledText
                       className={cn(
-                        'text-xs font-semibold',
+                        'text-label-bold font-semibold',
                         selectedCategory === cat ? 'text-on-primary' : 'text-on-surface-variant',
                       )}
                     >
@@ -1006,7 +1044,7 @@ export default function RecordSaleScreen() {
         ) : filteredProducts.length === 0 ? (
           <StyledView className="flex-1 items-center justify-center px-6">
             <MagnifyingGlass size={48} color={colors.emptyStateIcon} />
-            <StyledText className="text-base text-on-surface-variant mt-4 text-center">
+            <StyledText className="text-body-lg text-on-surface-variant mt-4 text-center">
               {searchQuery
                 ? 'No products match your search'
                 : selectedCategory
@@ -1034,26 +1072,28 @@ export default function RecordSaleScreen() {
               <StyledView className="flex-row items-center gap-3">
                 <StyledView className="relative">
                   <ShoppingCart size={24} color={colors.primary} />
-                  <StyledView className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary items-center justify-center">
-                    <StyledText className="text-[10px] font-bold text-on-primary">
+                  <StyledView className="absolute -top-1.5 -right-2 min-w-[20px] h-5 px-1.5 rounded-full bg-primary items-center justify-center">
+                    <StyledText className="text-label-sm font-bold text-on-primary">
                       {cartItemCount}
                     </StyledText>
                   </StyledView>
                 </StyledView>
                 <StyledView>
-                  <StyledText className="text-sm text-on-surface-variant">
+                  <StyledText className="text-body-sm text-on-surface-variant">
                     {cartItems.length} item{cartItems.length !== 1 ? 's' : ''}
                   </StyledText>
-                  <StyledText className="text-lg font-bold text-primary">
+                  <StyledText className="text-h3 font-bold text-primary">
                     {formatCurrency(subtotal)}
                   </StyledText>
                 </StyledView>
               </StyledView>
               <StyledTouchableOpacity
-                className="bg-primary rounded-xl px-6 py-3.5 flex-row items-center gap-2 active:opacity-80"
+                className="bg-primary rounded-button px-6 py-3.5 flex-row items-center gap-2 active:opacity-80"
                 onPress={() => setCheckoutVisible(true)}
+                accessibilityRole="button"
+                accessibilityLabel={`Review order, ${cartItems.length} item${cartItems.length !== 1 ? 's' : ''}, ${formatCurrency(subtotal)}`}
               >
-                <StyledText className="text-sm font-bold text-on-primary">
+                <StyledText className="text-body-sm font-bold text-on-primary">
                   Review
                 </StyledText>
                 <ArrowRight size={18} color="#FFFFFF" />
@@ -1063,16 +1103,16 @@ export default function RecordSaleScreen() {
         )}
       </StyledView>
 
-      {renderCustomerModal()}
+      {renderCustomerSheet()}
       {renderCheckoutSheet()}
 
       {isSubmitting && (
         <StyledView className="absolute inset-0 bg-black/40 items-center justify-center z-[var(--z-modal)]">
-          <StyledView className="bg-surface-container-lowest rounded-2xl p-8 items-center gap-3">
+          <StyledView className="bg-surface-container-lowest rounded-card p-8 items-center gap-3">
             <StyledView className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center">
               <StyledView className="w-8 h-8 rounded-full bg-primary/20 animate-pulse" />
             </StyledView>
-            <StyledText className="text-base font-semibold text-on-surface">
+            <StyledText className="text-body-lg font-semibold text-on-surface">
               Recording sale...
             </StyledText>
           </StyledView>

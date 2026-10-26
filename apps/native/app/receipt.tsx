@@ -13,7 +13,6 @@ import { useAuthStore } from "@/stores/authStore";
 import { buildReceiptMessage, shareViaWhatsApp } from "@/lib/whatsapp";
 import { formatCurrency } from "@/lib/currency";
 import { useSales, type Sale } from "@/hooks/useSales";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -92,7 +91,7 @@ export default function ReceiptScreen() {
         <StyledView className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center">
           <StyledView className="w-10 h-10 rounded-full bg-primary/20 animate-pulse" />
         </StyledView>
-        <StyledText className="text-sm text-on-surface-variant font-medium">Loading receipt...</StyledText>
+        <StyledText className="text-body-sm text-on-surface-variant font-medium">Loading receipt...</StyledText>
       </StyledView>
     );
   }
@@ -128,7 +127,7 @@ export default function ReceiptScreen() {
           <StyledView className="w-16 h-16 rounded-full bg-success-container items-center justify-center mb-3">
             <CheckCircle size={40} color={colors.primary} />
           </StyledView>
-          <StyledText className="text-2xl font-bold text-on-surface">
+          <StyledText className="text-h1 font-bold text-on-surface">
             {sale.orderType === "supermarket" ? "Supermarket Order Logged!" : "Sale Recorded!"}
           </StyledText>
           <StyledText className="text-body-lg text-on-surface-variant mt-1 mb-6">
@@ -164,11 +163,11 @@ export default function ReceiptScreen() {
                 )}
 
                 {sale.expectedPaymentDate && (
-                  <StyledView className="flex-row justify-between items-center mb-3 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
-                    <StyledText className="text-body-sm text-amber-700 dark:text-amber-400 font-semibold">
+                  <StyledView className="flex-row justify-between items-center mb-3 bg-secondary/10 p-2 rounded-lg border border-secondary/20">
+                    <StyledText className="text-body-sm text-secondary font-semibold">
                       Payment Due Date
                     </StyledText>
-                    <StyledText className="text-body-sm font-bold text-amber-700 dark:text-amber-400">
+                    <StyledText className="text-body-sm font-bold text-secondary">
                       {new Date(sale.expectedPaymentDate).toLocaleDateString()}
                     </StyledText>
                   </StyledView>
@@ -209,8 +208,8 @@ export default function ReceiptScreen() {
                         <StyledText className="text-body-sm text-on-surface" numberOfLines={2}>
                           {item.productName}
                         </StyledText>
-                        <StyledText className="text-body-xs text-on-surface-variant">
-                          {item.quantity} \u00D7 {formatCurrency(item.unitPrice)}
+                        <StyledText className="text-label-bold text-on-surface-variant">
+                          {item.quantity} × {formatCurrency(item.unitPrice)}
                         </StyledText>
                       </StyledView>
                       <StyledText className="text-body-sm font-semibold text-on-surface">
@@ -271,7 +270,7 @@ export default function ReceiptScreen() {
 
                   {sale.notes ? (
                     <StyledView className="mt-3 pt-3 border-t border-dashed border-outline-variant">
-                      <StyledText className="text-body-xs text-on-surface-variant">Notes</StyledText>
+                      <StyledText className="text-label-bold text-on-surface-variant">Notes</StyledText>
                       <StyledText className="text-body-sm text-on-surface mt-0.5">{sale.notes}</StyledText>
                     </StyledView>
                   ) : null}
@@ -281,7 +280,7 @@ export default function ReceiptScreen() {
                   <StyledText className="text-body-sm text-on-surface-variant">
                     Thank you for your patronage!
                   </StyledText>
-                  <StyledText className="text-body-xs text-on-surface-variant mt-1">
+                  <StyledText className="text-label-bold text-on-surface-variant mt-1">
                     Powered by OjaPaddi
                   </StyledText>
                 </StyledView>

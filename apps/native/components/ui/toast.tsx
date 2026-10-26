@@ -1,11 +1,12 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Animated, Modal, Pressable, Text, View } from 'react-native';
+import { Animated, AccessibilityInfo, Modal, Pressable, Text, View } from 'react-native';
 import { withUniwind } from 'uniwind';
 import { CheckCircle, WarningCircle, Info, X } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/contexts/app-theme-context';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { cn } from '@/lib/utils';
+import { AlertDialog } from './alert-dialog';
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -26,7 +27,18 @@ export interface ToastOption {
   onPress?: () => void;
 }
 
-interface DialogState {
+interface ConfirmDialogState {
+  id: number;
+  title?: string;
+  message?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  destructive?: boolean;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
+interface ActionDialogState {
   id: number;
   title?: string;
   message?: string;
@@ -81,6 +93,7 @@ function ToastCard({
   onDismiss: (id: number) => void;
 }) {
   const anim = useRef(new Animated.Value(0)).current;
+  const announced = useRef(false);
 
   useEffect(() => {
     Animated.spring(anim, {
@@ -91,16 +104,27 @@ function ToastCard({
     }).start();
   }, [anim]);
 
+  useEffect(() => {
+    if (!announced.current) {
+      announced.current = true;
+      AccessibilityInfo.announceForAccessibility(toast.title ? `${toast.title}. ${toast.message}` : toast.message);
+    }
+  }, [toast]);
+
   const iconColor =
     toast.type === 'success'
       ? isDark ? '#66bb6a' : '#2e7d32'
       : toast.type === 'error'
         ? colors.error
-      : colors.primary;
+        : colors.primary;
 
-    const ToastIcon = TOAST_ICONS[toast.type];
+  const ToastIcon = TOAST_ICONS[toast.type];
 
-    return (
+  const label = toast.title
+    ? `${toast.title}. ${toast.message}`
+    : toast.message;
+
+  return (
     <Animated.View
       style={{
         opacity: anim,
@@ -114,6 +138,9 @@ function ToastCard({
       <StyledPressable
         onPress={() => onDismiss(toast.id)}
         className="flex-row items-center gap-3 px-4 py-3.5 rounded-full bg-inverse-surface shadow-lg shadow-black/25 max-w-[92%] mx-auto"
+        accessibilityRole={toast.type === "error" ? "alert" : "button"}
+        accessibilityLiveRegion={toast.type === "error" ? "assertive" : "polite"}
+        accessibilityLabel={label}
       >
         <ToastIcon size={22} color={iconColor} />
         <StyledView className="flex-1 pr-2">
@@ -124,8 +151,8 @@ function ToastCard({
           ) : null}
           <StyledText
             className={cn(
-              "text-body-md text-inverse-on-surface",
-              toast.title && "opacity-90"
+              'text-body-md text-inverse-on-surface',
+              toast.title && 'opacity-90'
             )}
           >
             {toast.message}
@@ -142,7 +169,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const { isDark } = useAppTheme();
   const colors = useThemeColor();
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const [dialog, setDialog] = useState<DialogState | null>(null);
+  const [actionDialog, setActionDialog] = useState<ActionDialogState | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null);
   const timers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
   const removeToast = useCallback((id: number) => {
@@ -167,8 +195,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const error = useCallback((message: string, title?: string) => show({ type: 'error', title, message }), [show]);
   const info = useCallback((message: string, title?: string) => show({ type: 'info', title, message }), [show]);
 
-  const closeDialog = useCallback((option?: ToastOption) => {
-    setDialog((current) => {
+  const closeActionDialog = useCallback((option?: ToastOption) => {
+    setActionDialog((current) => {
       option?.onPress?.();
       return null;
     });
@@ -184,14 +212,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       onConfirm,
       onCancel,
     }: ConfirmParams) => {
-      setDialog({
+      setConfirmDialog({
         id: nextId++,
         title,
         message,
-        options: [
-          { label: confirmLabel, style: destructive ? 'destructive' : 'default', onPress: onConfirm },
-          { label: cancelLabel, style: 'cancel', onPress: onCancel },
-        ],
+        confirmLabel,
+        cancelLabel,
+        destructive,
+        onConfirm,
+        onCancel,
       });
     },
     []
@@ -199,7 +228,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const action = useCallback(
     ({ title, message, options }: { title?: string; message?: string; options: ToastOption[] }) => {
-      setDialog({ id: nextId++, title, message, options });
+      setActionDialog({ id: nextId++, title, message, options });
     },
     []
   );
@@ -218,67 +247,80 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         ))}
       </StyledView>
 
-      <Modal
-        visible={dialog !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => closeDialog()}
-      >
-        <StyledView className="flex-1 bg-black/50 justify-center px-6">
-          <StyledPressable className="absolute inset-0 -z-10" onPress={() => closeDialog()} />
-          <StyledView
-            className="bg-surface-container-lowest rounded-card p-6 shadow-lg shadow-black/20"
-            style={{ gap: dialog?.message ? 12 : 8 }}
-          >
-            {dialog?.title ? (
-              <StyledText className="text-xl font-bold text-on-surface text-center">
-                {dialog.title}
-              </StyledText>
-            ) : null}
-            {dialog?.message ? (
-              <StyledText className="text-body-lg text-on-surface-variant text-center leading-6">
-                {dialog.message}
-              </StyledText>
-            ) : null}
+      <AlertDialog
+        visible={confirmDialog !== null}
+        title={confirmDialog?.title}
+        message={confirmDialog?.message}
+        confirmLabel={confirmDialog?.confirmLabel}
+        cancelLabel={confirmDialog?.cancelLabel}
+        destructive={confirmDialog?.destructive}
+        onConfirm={() => {
+          const d = confirmDialog;
+          setConfirmDialog(null);
+          d?.onConfirm?.();
+        }}
+        onCancel={() => {
+          const d = confirmDialog;
+          setConfirmDialog(null);
+          d?.onCancel?.();
+        }}
+      />
 
-            {dialog?.message ? <StyledView className="h-px bg-outline-variant my-1" /> : null}
-
-            <StyledView style={{ gap: 10 }}>
-              {dialog?.options.map((option, index) => {
-                const isCancel = option.style === 'cancel';
-                const isDestructive = option.style === 'destructive';
-                return (
-                  <StyledPressable
-                    key={index}
-                    onPress={() => closeDialog(option)}
-                    className={cn(
-                      "py-3 rounded-button items-center justify-center",
-                      isCancel
-                        ? "bg-surface-container"
-                        : isDestructive
-                          ? "bg-error"
-                          : "bg-primary"
-                    )}
-                  >
-                    <StyledText
+      {actionDialog ? (
+        <Modal
+          visible={actionDialog !== null}
+          transparent
+          animationType="fade"
+          onRequestClose={() => closeActionDialog()}
+        >
+          <StyledView className="flex-1 bg-black/50 justify-center px-6">
+            <StyledPressable className="absolute inset-0 -z-10" onPress={() => closeActionDialog()} />
+            <StyledView
+              className="bg-surface-container-lowest rounded-card p-6 shadow-lg shadow-black/20"
+              style={{ gap: actionDialog.message ? 12 : 8 }}
+            >
+              {actionDialog.title ? (
+                <StyledText className="text-xl font-bold text-on-surface text-center">
+                  {actionDialog.title}
+                </StyledText>
+              ) : null}
+              {actionDialog.message ? (
+                <StyledText className="text-body-lg text-on-surface-variant text-center leading-6">
+                  {actionDialog.message}
+                </StyledText>
+              ) : null}
+              {actionDialog.message ? <StyledView className="h-px bg-outline-variant my-1" /> : null}
+              <StyledView style={{ gap: 10 }}>
+                {actionDialog.options.map((option, index) => {
+                  const isCancel = option.style === 'cancel';
+                  const isDestructive = option.style === 'destructive';
+                  return (
+                    <StyledPressable
+                      key={index}
+                      onPress={() => closeActionDialog(option)}
                       className={cn(
-                        "text-body-lg font-semibold",
-                        isCancel
-                          ? "text-on-surface"
-                          : isDestructive
-                            ? "text-on-error"
-                            : "text-on-primary"
+                        'py-3 rounded-button items-center justify-center',
+                        isCancel ? 'bg-surface-container' : isDestructive ? 'bg-error' : 'bg-primary'
                       )}
+                      accessibilityRole="button"
+                      accessibilityLabel={option.label}
                     >
-                      {option.label}
-                    </StyledText>
-                  </StyledPressable>
-                );
-              })}
+                      <StyledText
+                        className={cn(
+                          'text-body-lg font-semibold',
+                          isCancel ? 'text-on-surface' : isDestructive ? 'text-on-error' : 'text-on-primary'
+                        )}
+                      >
+                        {option.label}
+                      </StyledText>
+                    </StyledPressable>
+                  );
+                })}
+              </StyledView>
             </StyledView>
           </StyledView>
-        </StyledView>
-      </Modal>
+        </Modal>
+      ) : null}
     </ToastContext.Provider>
   );
 }

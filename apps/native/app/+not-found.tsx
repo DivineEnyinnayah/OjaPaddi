@@ -1,5 +1,5 @@
 import { Link, Stack } from "expo-router";
-import { Text, View } from "react-native";
+import { StyledText, StyledView } from "@/components/ui/styled";
 import { Button } from "@/components/ui/button";
 import { Surface } from "@/components/ui/surface";
 
@@ -10,18 +10,20 @@ export default function NotFoundScreen() {
     <>
       <Stack.Screen options={{ title: "Not Found" }} />
       <Container>
-        <View className="flex-1 justify-center items-center p-4">
-          <Surface variant="secondary" className="items-center p-6 max-w-sm rounded-lg">
-            <Text className="text-4xl mb-3">🤔</Text>
-            <Text className="text-foreground font-medium text-lg mb-1">Page Not Found</Text>
-            <Text className="text-muted text-sm text-center mb-4">
-              The page you're looking for doesn't exist.
-            </Text>
+        <StyledView className="flex-1 justify-center items-center p-4">
+          <Surface variant="secondary" className="items-center p-6 max-w-sm rounded-card">
+            <StyledText className="text-display mb-3">🤔</StyledText>
+            <StyledText className="text-h3 font-bold text-on-surface mb-1">
+              Page Not Found
+            </StyledText>
+            <StyledText className="text-body-sm text-on-surface-variant text-center mb-4">
+              The page you&apos;re looking for doesn&apos;t exist.
+            </StyledText>
             <Link href="/" asChild>
               <Button size="sm">Go Home</Button>
             </Link>
           </Surface>
-        </View>
+        </StyledView>
       </Container>
     </>
   );

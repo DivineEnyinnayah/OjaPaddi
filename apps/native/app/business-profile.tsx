@@ -123,7 +123,11 @@ export default function BusinessProfileScreen() {
       const payload: UpdateBusinessPayload = {
         name: form.name.trim(),
         category: form.category || undefined,
+        description: form.description.trim() || undefined,
+        phone: form.phone.trim() || undefined,
+        email: form.email.trim() || undefined,
         whatsappNumber: form.whatsappNumber.trim() || undefined,
+        address: form.address.trim() || undefined,
         city: form.city.trim() || undefined,
         state: form.state.trim() || undefined,
       };
@@ -144,7 +148,7 @@ export default function BusinessProfileScreen() {
     value: string,
     placeholder: string,
     field: string,
-    options?: { keyboardType?: 'default' | 'email-address' | 'phone-pad'; multiline?: boolean }
+    options?: { keyboardType?: 'default' | 'email-address' | 'phone-pad'; multiline?: boolean; error?: string }
   ) => (
     <StyledView className="mb-4">
       <StyledText className="font-label-bold text-on-surface-variant mb-1.5">
@@ -159,8 +163,14 @@ export default function BusinessProfileScreen() {
         keyboardType={options?.keyboardType || 'default'}
         multiline={options?.multiline}
         numberOfLines={options?.multiline ? 3 : 1}
+        accessibilityLabel={label}
         style={options?.multiline ? { textAlignVertical: 'top' } : undefined}
       />
+      {options?.error ? (
+        <StyledText accessibilityRole="alert" className="text-body-sm text-error mt-1">
+          {options.error}
+        </StyledText>
+      ) : null}
     </StyledView>
   );
 

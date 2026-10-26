@@ -6,10 +6,8 @@ import {
   RefreshControl,
   TouchableOpacity,
   Animated,
-  Dimensions,
   Share,
-  Modal,
-  Pressable,
+  useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -24,7 +22,6 @@ import {
   TrendUp,
   Warning,
   Storefront,
-  X,
 } from "phosphor-react-native";
 import { useCustomers, type Customer } from "@/hooks/useCustomers";
 import { type ProductAnalytics, type SupermarketAnalytics } from "@/hooks/useAnalytics";
@@ -44,6 +41,7 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import { useToast } from "@/components/ui/toast";
 import { Container } from "@/components/container";
 import { Surface } from "@/components/ui/surface";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/currency";
 
@@ -105,7 +103,6 @@ function buildChartSeries(points: RevenueChartPoint[], period: Period): ChartDay
   return series;
 }
 
-const CHART_WIDTH = Dimensions.get("window").width - 64;
 const CHART_HEIGHT = 180;
 
 export default function AnalyticsScreen() {
@@ -122,6 +119,8 @@ export default function AnalyticsScreen() {
   const colors = useThemeColor();
   const toast = useToast();
   const router = useRouter();
+  const { width: screenWidth } = useWindowDimensions();
+  const CHART_WIDTH = screenWidth - 64;
   const [period, setPeriod] = React.useState<Period>("week");
   const [chartData, setChartData] = React.useState<RevenueChartPoint[]>([]);
   const [chartLoading, setChartLoading] = React.useState(false);
@@ -321,14 +320,14 @@ export default function AnalyticsScreen() {
             className="flex-row items-center gap-1 px-3 py-1.5 bg-primary-container/20 border border-primary/30 rounded-full"
           >
             <Receipt size={16} color={colors.primary} />
-            <StyledText className="text-primary font-semibold text-xs">Expenses</StyledText>
+            <StyledText className="text-primary font-semibold text-label-bold">Expenses</StyledText>
           </StyledTouchableOpacity>
           <StyledTouchableOpacity
             onPress={handleExportCSV}
             className="flex-row items-center gap-1.5 px-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-full"
           >
             <ShareIcon size={16} color={colors.primary} />
-            <StyledText className="text-primary font-semibold text-xs">Export</StyledText>
+            <StyledText className="text-primary font-semibold text-label-bold">Export</StyledText>
           </StyledTouchableOpacity>
         </StyledView>
       </StyledView>
@@ -541,7 +540,7 @@ export default function AnalyticsScreen() {
                           className="w-3 h-3 rounded-sm"
                           style={{ backgroundColor: colors.primary }}
                         />
-                        <StyledText className="text-xs text-on-surface-variant">
+                        <StyledText className="text-label-bold text-on-surface-variant">
                           Revenue
                         </StyledText>
                       </StyledView>
@@ -550,7 +549,7 @@ export default function AnalyticsScreen() {
                           className="w-3 h-0.5 rounded-full"
                           style={{ backgroundColor: colors.secondary }}
                         />
-                        <StyledText className="text-xs text-on-surface-variant">
+                        <StyledText className="text-label-bold text-on-surface-variant">
                           Transactions
                         </StyledText>
                       </StyledView>
@@ -669,7 +668,7 @@ export default function AnalyticsScreen() {
                         <StyledText className="font-label-bold text-on-surface ml-3">
                           {formatCurrency(product.revenue)}
                         </StyledText>
-                        <StyledText className="text-[11px] text-primary font-medium">
+                        <StyledText className="text-label-bold text-primary font-medium">
                           View Breakdown
                         </StyledText>
                       </StyledView>
@@ -697,8 +696,8 @@ export default function AnalyticsScreen() {
                       }`}
                     >
                       <StyledView className="flex-row items-center gap-3 flex-1">
-                        <StyledView className="w-10 h-10 rounded-lg bg-amber-500/10 items-center justify-center">
-                          <Storefront size={20} color="#D97706" />
+                        <StyledView className="w-10 h-10 rounded-lg bg-secondary/10 items-center justify-center">
+                          <Storefront size={20} color={colors.secondary} />
                         </StyledView>
                         <StyledView className="flex-1">
                           <StyledText className="text-label-bold text-on-surface" numberOfLines={1}>
@@ -713,7 +712,7 @@ export default function AnalyticsScreen() {
                         <StyledText className="font-label-bold text-primary">
                           {formatCurrency(parseFloat(sm.totalSpent || "0"))}
                         </StyledText>
-                        <StyledText className="text-[11px] text-primary font-medium">
+                        <StyledText className="text-label-bold text-primary font-medium">
                           Store Analytics →
                         </StyledText>
                       </StyledView>
@@ -726,197 +725,157 @@ export default function AnalyticsScreen() {
         ) : null}
       </ScrollView>
 
-      {/* PRODUCT ANALYTICS DRILLDOWN MODAL */}
-      <Modal
+      {/* PRODUCT ANALYTICS DRILLDOWN */}
+      <BottomSheet
         visible={productModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setProductModalVisible(false)}
+        onClose={() => setProductModalVisible(false)}
+        title={selectedProductStat?.product.name || "Product Breakdown"}
+        subtitle="Performance for this product across all sales."
+        icon={<Package size={20} color={colors.onPrimaryContainer} />}
+        contentClassName="pt-4 pb-2"
       >
-        <Pressable className="flex-1 bg-black/50 justify-end" onPress={() => setProductModalVisible(false)}>
-          <StyledView className="bg-background rounded-t-3xl max-h-[85%] w-full" onStartShouldSetResponder={() => true}>
-            <StyledView className="items-center pt-3 pb-1">
-              <StyledView className="w-12 h-1.5 rounded-full bg-outline/40" />
+        {loadingProductStat ? (
+          <StyledView className="py-16 items-center">
+            <StyledText className="text-body-sm text-on-surface-variant">Loading product metrics...</StyledText>
+          </StyledView>
+        ) : selectedProductStat ? (
+          <StyledView className="gap-3">
+            <Surface variant="outline" className="p-3.5 rounded-xl">
+              <StyledText className="text-label-bold text-on-surface-variant mb-1">
+                Current Retail Price: <StyledText className="font-bold text-on-surface">{formatCurrency(parseFloat(selectedProductStat.product.price))}</StyledText>
+              </StyledText>
+              <StyledText className="text-label-bold text-on-surface-variant">
+                In-Stock Inventory: <StyledText className="font-bold text-on-surface">{selectedProductStat.product.quantity} units</StyledText>
+              </StyledText>
+            </Surface>
+
+            <StyledView className="flex-row gap-2">
+              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
+                <StyledText className="text-label-caps text-on-surface-variant">
+                  Net Units Sold
+                </StyledText>
+                <StyledText className="text-h3 font-black text-primary mt-1">
+                  {selectedProductStat.totalSold}
+                </StyledText>
+              </Surface>
+              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
+                <StyledText className="text-label-caps text-on-surface-variant">
+                  Units Returned
+                </StyledText>
+                <StyledText className="text-h3 font-black text-error mt-1">
+                  {selectedProductStat.totalReturned}
+                </StyledText>
+              </Surface>
             </StyledView>
 
-            <StyledScrollView className="px-6 pb-8" showsVerticalScrollIndicator={false}>
-              <StyledView className="flex-row justify-between items-center my-3">
-                <StyledView className="flex-row items-center gap-2 flex-1 mr-2">
-                  <Package size={22} color={colors.primary} />
-                  <StyledText className="text-lg font-bold text-on-surface" numberOfLines={1}>
-                    {selectedProductStat?.product.name || "Product Breakdown"}
-                  </StyledText>
-                </StyledView>
-                <StyledTouchableOpacity onPress={() => setProductModalVisible(false)}>
-                  <X size={22} color={colors.onSurfaceVariant} />
-                </StyledTouchableOpacity>
-              </StyledView>
+            <StyledView className="flex-row gap-2">
+              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
+                <StyledText className="text-label-caps text-on-surface-variant">
+                  Gross Revenue
+                </StyledText>
+                <StyledText className="text-body-lg font-bold text-on-surface mt-1">
+                  {formatCurrency(selectedProductStat.grossRevenue)}
+                </StyledText>
+              </Surface>
+              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
+                <StyledText className="text-label-caps text-on-surface-variant">
+                  Net Revenue
+                </StyledText>
+                <StyledText className="text-body-lg font-bold text-success mt-1">
+                  {formatCurrency(selectedProductStat.netRevenue)}
+                </StyledText>
+              </Surface>
+            </StyledView>
 
-              {loadingProductStat ? (
-                <StyledView className="py-16 items-center">
-                  <StyledText className="text-sm text-on-surface-variant">Loading product metrics...</StyledText>
-                </StyledView>
-              ) : selectedProductStat ? (
-                <StyledView className="gap-3">
-                  <Surface variant="outline" className="p-3.5 rounded-xl border border-outline-variant/30">
-                    <StyledText className="text-xs text-on-surface-variant mb-1">
-                      Current Retail Price: <StyledText className="font-bold text-on-surface">{formatCurrency(parseFloat(selectedProductStat.product.price))}</StyledText>
-                    </StyledText>
-                    <StyledText className="text-xs text-on-surface-variant">
-                      In-Stock Inventory: <StyledText className="font-bold text-on-surface">{selectedProductStat.product.quantity} units</StyledText>
-                    </StyledText>
-                  </Surface>
-
-                  <StyledView className="flex-row gap-2">
-                    <Surface variant="primary" className="flex-1 p-3 rounded-xl border border-outline-variant/30">
-                      <StyledText className="text-[11px] text-on-surface-variant uppercase font-bold">
-                        Net Units Sold
-                      </StyledText>
-                      <StyledText className="text-lg font-black text-primary mt-1">
-                        {selectedProductStat.totalSold}
-                      </StyledText>
-                    </Surface>
-                    <Surface variant="primary" className="flex-1 p-3 rounded-xl border border-outline-variant/30">
-                      <StyledText className="text-[11px] text-on-surface-variant uppercase font-bold">
-                        Units Returned
-                      </StyledText>
-                      <StyledText className="text-lg font-black text-error mt-1">
-                        {selectedProductStat.totalReturned}
-                      </StyledText>
-                    </Surface>
-                  </StyledView>
-
-                  <StyledView className="flex-row gap-2">
-                    <Surface variant="primary" className="flex-1 p-3 rounded-xl border border-outline-variant/30">
-                      <StyledText className="text-[11px] text-on-surface-variant uppercase font-bold">
-                        Gross Revenue
-                      </StyledText>
-                      <StyledText className="text-base font-bold text-on-surface mt-1">
-                        {formatCurrency(selectedProductStat.grossRevenue)}
-                      </StyledText>
-                    </Surface>
-                    <Surface variant="primary" className="flex-1 p-3 rounded-xl border border-outline-variant/30">
-                      <StyledText className="text-[11px] text-on-surface-variant uppercase font-bold">
-                        Net Revenue
-                      </StyledText>
-                      <StyledText className="text-base font-bold text-success mt-1">
-                        {formatCurrency(selectedProductStat.netRevenue)}
-                      </StyledText>
-                    </Surface>
-                  </StyledView>
-
-                  <Surface variant="primary" className="p-3.5 rounded-xl border border-outline-variant/30">
-                    <StyledText className="text-xs text-on-surface-variant">
-                      Distinct Sales Transactions: <StyledText className="font-bold text-on-surface">{selectedProductStat.orderCount}</StyledText>
-                    </StyledText>
-                  </Surface>
-                </StyledView>
-              ) : null}
-            </StyledScrollView>
+            <Surface variant="primary" className="p-3.5 rounded-xl">
+              <StyledText className="text-label-bold text-on-surface-variant">
+                Distinct Sales Transactions: <StyledText className="font-bold text-on-surface">{selectedProductStat.orderCount}</StyledText>
+              </StyledText>
+            </Surface>
           </StyledView>
-        </Pressable>
-      </Modal>
+        ) : null}
+      </BottomSheet>
 
-      {/* SUPERMARKET ANALYTICS DRILLDOWN MODAL */}
-      <Modal
+      {/* SUPERMARKET ANALYTICS DRILLDOWN */}
+      <BottomSheet
         visible={supermarketModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setSupermarketModalVisible(false)}
+        onClose={() => setSupermarketModalVisible(false)}
+        title={selectedSupermarketStat?.supermarket.name || "Store Analytics"}
+        subtitle="Invoiced, paid, and returned value for this store."
+        icon={<Storefront size={20} color={colors.onSecondaryContainer} />}
+        contentClassName="pt-4 pb-2"
       >
-        <Pressable className="flex-1 bg-black/50 justify-end" onPress={() => setSupermarketModalVisible(false)}>
-          <StyledView className="bg-background rounded-t-3xl max-h-[85%] w-full" onStartShouldSetResponder={() => true}>
-            <StyledView className="items-center pt-3 pb-1">
-              <StyledView className="w-12 h-1.5 rounded-full bg-outline/40" />
+        {loadingSupermarketStat ? (
+          <StyledView className="py-16 items-center">
+            <StyledText className="text-body-sm text-on-surface-variant">Loading store metrics...</StyledText>
+          </StyledView>
+        ) : selectedSupermarketStat ? (
+          <StyledView className="gap-3">
+            <StyledView className="flex-row gap-2">
+              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
+                <StyledText className="text-label-caps text-on-surface-variant">
+                  Total Invoiced
+                </StyledText>
+                <StyledText className="text-body-lg font-black text-on-surface mt-1">
+                  {formatCurrency(selectedSupermarketStat.totalBilled)}
+                </StyledText>
+              </Surface>
+              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
+                <StyledText className="text-label-caps text-on-surface-variant">
+                  Total Paid
+                </StyledText>
+                <StyledText className="text-body-lg font-black text-success mt-1">
+                  {formatCurrency(selectedSupermarketStat.totalPaid)}
+                </StyledText>
+              </Surface>
             </StyledView>
 
-            <StyledScrollView className="px-6 pb-8" showsVerticalScrollIndicator={false}>
-              <StyledView className="flex-row justify-between items-center my-3">
-                <StyledView className="flex-row items-center gap-2 flex-1 mr-2">
-                  <Storefront size={22} color="#D97706" />
-                  <StyledText className="text-lg font-bold text-on-surface" numberOfLines={1}>
-                    {selectedSupermarketStat?.supermarket.name || "Store Analytics"}
-                  </StyledText>
-                </StyledView>
-                <StyledTouchableOpacity onPress={() => setSupermarketModalVisible(false)}>
-                  <X size={22} color={colors.onSurfaceVariant} />
-                </StyledTouchableOpacity>
-              </StyledView>
+            <StyledView className="flex-row gap-2">
+              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
+                <StyledText className="text-label-caps text-on-surface-variant">
+                  Returned Value
+                </StyledText>
+                <StyledText className="text-body-lg font-black text-error mt-1">
+                  {formatCurrency(selectedSupermarketStat.totalReturnsAmount)}
+                </StyledText>
+              </Surface>
+              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
+                <StyledText className="text-label-caps text-on-surface-variant">
+                  Receivable Due
+                </StyledText>
+                <StyledText className="text-body-lg font-black text-primary mt-1">
+                  {formatCurrency(selectedSupermarketStat.netReceivable)}
+                </StyledText>
+              </Surface>
+            </StyledView>
 
-              {loadingSupermarketStat ? (
-                <StyledView className="py-16 items-center">
-                  <StyledText className="text-sm text-on-surface-variant">Loading store metrics...</StyledText>
-                </StyledView>
-              ) : selectedSupermarketStat ? (
-                <StyledView className="gap-3">
-                  <StyledView className="flex-row gap-2">
-                    <Surface variant="primary" className="flex-1 p-3 rounded-xl border border-outline-variant/30">
-                      <StyledText className="text-[11px] text-on-surface-variant uppercase font-bold">
-                        Total Invoiced
+            <Surface variant="primary" className="p-4 rounded-xl mt-1">
+              <StyledText className="text-body-sm font-bold text-on-surface mb-2">
+                Supplied Products & Return Rates
+              </StyledText>
+              {selectedSupermarketStat.productsSupplied.length === 0 ? (
+                <StyledText className="text-label-bold text-on-surface-variant italic">No deliveries recorded</StyledText>
+              ) : (
+                selectedSupermarketStat.productsSupplied.map((item) => (
+                  <StyledView key={item.productId} className="py-2 border-b border-outline-variant/20">
+                    <StyledView className="flex-row justify-between items-center">
+                      <StyledText className="text-label-bold text-on-surface flex-1 mr-2">
+                        {item.productName}
                       </StyledText>
-                      <StyledText className="text-base font-black text-on-surface mt-1">
-                        {formatCurrency(selectedSupermarketStat.totalBilled)}
+                      <StyledText className="text-label-bold text-primary">
+                        {formatCurrency(item.totalValue)}
                       </StyledText>
-                    </Surface>
-                    <Surface variant="primary" className="flex-1 p-3 rounded-xl border border-outline-variant/30">
-                      <StyledText className="text-[11px] text-on-surface-variant uppercase font-bold">
-                        Total Paid
-                      </StyledText>
-                      <StyledText className="text-base font-black text-success mt-1">
-                        {formatCurrency(selectedSupermarketStat.totalPaid)}
-                      </StyledText>
-                    </Surface>
-                  </StyledView>
-
-                  <StyledView className="flex-row gap-2">
-                    <Surface variant="primary" className="flex-1 p-3 rounded-xl border border-outline-variant/30">
-                      <StyledText className="text-[11px] text-on-surface-variant uppercase font-bold">
-                        Returned Value
-                      </StyledText>
-                      <StyledText className="text-base font-black text-error mt-1">
-                        {formatCurrency(selectedSupermarketStat.totalReturnsAmount)}
-                      </StyledText>
-                    </Surface>
-                    <Surface variant="primary" className="flex-1 p-3 rounded-xl border border-outline-variant/30">
-                      <StyledText className="text-[11px] text-on-surface-variant uppercase font-bold">
-                        Receivable Due
-                      </StyledText>
-                      <StyledText className="text-base font-black text-primary mt-1">
-                        {formatCurrency(selectedSupermarketStat.netReceivable)}
-                      </StyledText>
-                    </Surface>
-                  </StyledView>
-
-                  <Surface variant="primary" className="p-4 rounded-xl border border-outline-variant/30 mt-2">
-                    <StyledText className="text-sm font-bold text-on-surface mb-2">
-                      Supplied Products & Return Rates
+                    </StyledView>
+                    <StyledText className="text-label-bold text-on-surface-variant mt-0.5">
+                      Supplied: {item.quantitySupplied} | Returned: {item.quantityReturned} | Net: {item.netDelivered}
                     </StyledText>
-                    {selectedSupermarketStat.productsSupplied.length === 0 ? (
-                      <StyledText className="text-xs text-on-surface-variant italic">No deliveries recorded</StyledText>
-                    ) : (
-                      selectedSupermarketStat.productsSupplied.map((item) => (
-                        <StyledView key={item.productId} className="py-2 border-b border-outline-variant/20">
-                          <StyledView className="flex-row justify-between items-center">
-                            <StyledText className="text-xs font-semibold text-on-surface flex-1 mr-2">
-                              {item.productName}
-                            </StyledText>
-                            <StyledText className="text-xs font-bold text-primary">
-                              {formatCurrency(item.totalValue)}
-                            </StyledText>
-                          </StyledView>
-                          <StyledText className="text-[11px] text-on-surface-variant mt-0.5">
-                            Supplied: {item.quantitySupplied} | Returned: {item.quantityReturned} | Net: {item.netDelivered}
-                          </StyledText>
-                        </StyledView>
-                      ))
-                    )}
-                  </Surface>
-                </StyledView>
-              ) : null}
-            </StyledScrollView>
+                  </StyledView>
+                ))
+              )}
+            </Surface>
           </StyledView>
-        </Pressable>
-      </Modal>
+        ) : null}
+      </BottomSheet>
     </Container>
   );
 }

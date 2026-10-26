@@ -1,16 +1,17 @@
 import { defineConfig } from "drizzle-kit";
 
-const dbUrl = process.env.DIRECT_URL || process.env.DATABASE_URL;
+const dbUrl = process.env.TURSO_DATABASE_URL;
 
 if (!dbUrl) {
-  throw new Error("DATABASE_URL or DIRECT_URL must be set (loaded via --env-file=apps/server/.env)");
+  throw new Error("TURSO_DATABASE_URL must be set (loaded via --env-file=apps/server/.env)");
 }
 
 export default defineConfig({
   schema: "./src/schema",
   out: "./src/migrations",
-  dialect: "postgresql",
+  dialect: "turso",
   dbCredentials: {
     url: dbUrl,
+    authToken: process.env.TURSO_AUTH_TOKEN,
   },
 });

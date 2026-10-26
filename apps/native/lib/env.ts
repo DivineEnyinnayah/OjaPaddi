@@ -22,10 +22,6 @@ interface AppEnv {
    * Set via EXPO_PUBLIC_DEV_MODE in .env
    */
   IS_DEV_MODE: boolean;
-  /** Supabase project URL */
-  SUPABASE_URL: string;
-  /** Supabase anon key */
-  SUPABASE_ANON_KEY: string;
 }
 
 function getExtra(): Record<string, any> {
@@ -57,6 +53,4 @@ function getBoolEnvVar(key: string, fallback: boolean = false): boolean {
 export const env: AppEnv = {
   SERVER_URL: getEnvVar('EXPO_PUBLIC_SERVER_URL'),
   IS_DEV_MODE: getBoolEnvVar('EXPO_PUBLIC_DEV_MODE', false),
-  SUPABASE_URL: getEnvVar('EXPO_PUBLIC_SUPABASE_URL', ''),
-  SUPABASE_ANON_KEY: getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY', ''),
 };

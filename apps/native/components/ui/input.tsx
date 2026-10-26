@@ -12,13 +12,33 @@ export interface InputProps extends TextInputProps {
 }
 
 export const Input = React.forwardRef<TextInput, InputProps>(
-  ({ label, error, containerClassName, inputClassName, className, ...props }, ref) => {
+  (
+    {
+      label,
+      error,
+      containerClassName,
+      inputClassName,
+      className,
+      // Pulled out of `...props` so a caller-supplied value wins over the
+      // derived default without being clobbered by the spread below.
+      accessibilityLabel,
+      accessibilityState,
+      ...props
+    },
+    ref,
+  ) => {
     const colors = useThemeColor();
 
     return (
       <StyledView className={cn("w-full mb-4", containerClassName)}>
         {label && (
-          <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">
+          <StyledText
+            className="text-body-sm text-on-surface font-semibold mb-2 ml-1"
+            // Visually paired with the input, but not programmatically
+            // associated with it — the input carries its own label instead.
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+          >
             {label}
           </StyledText>
         )}
@@ -33,11 +53,18 @@ export const Input = React.forwardRef<TextInput, InputProps>(
             ref={ref}
             className={cn("flex-1 text-body-lg text-on-surface", inputClassName)}
             placeholderTextColor={colors.outline}
+            accessibilityLabel={accessibilityLabel ?? label ?? props.placeholder}
+            accessibilityState={accessibilityState}
+            aria-invalid={!!error}
             {...props}
           />
         </StyledView>
         {error && (
-          <StyledText className="text-body-sm text-error mt-1 ml-1">
+          <StyledText
+            className="text-body-sm text-error mt-1 ml-1"
+            accessibilityRole="alert"
+            accessibilityLiveRegion="polite"
+          >
             {error}
           </StyledText>
         )}

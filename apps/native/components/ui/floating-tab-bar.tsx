@@ -1,8 +1,10 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { TouchableOpacity, Animated, useWindowDimensions, Platform, View, Text } from 'react-native';
+import { TouchableOpacity, Animated, useWindowDimensions, Platform, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { cn } from '../../lib/utils';
+import { StyledText } from './styled';
 
 type TabIcon = keyof typeof Ionicons.glyphMap;
 
@@ -100,6 +102,9 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
             <TouchableOpacity
               key={route.key}
               onPress={() => handleTabPress(route.name)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isFocused }}
+              accessibilityLabel={config.label}
               style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 44, gap: 1 }}
               activeOpacity={0.6}
             >
@@ -108,15 +113,14 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
                 size={24}
                 color={isFocused ? colors.tabActiveIcon : colors.tabInactiveIcon}
               />
-              <Text
-                style={{
-                  fontSize: 11,
-                  fontWeight: isFocused ? '700' : '500',
-                  color: isFocused ? colors.tabActiveIcon : colors.tabInactiveIcon,
-                }}
+              <StyledText
+                className={cn(
+                  'text-label-sm font-label',
+                  isFocused ? 'font-semibold text-on-surface' : 'text-on-surface-variant'
+                )}
               >
                 {config.label}
-              </Text>
+              </StyledText>
             </TouchableOpacity>
           );
         })}

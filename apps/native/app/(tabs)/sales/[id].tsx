@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, Pressable } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -14,10 +14,10 @@ import {
   Calendar,
   Money,
   CheckCircle,
-  X,
 } from 'phosphor-react-native';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { Button } from '@/components/ui/button';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
 import { useToast } from '@/components/ui/toast';
@@ -178,7 +178,7 @@ export default function SaleDetailScreen() {
   if (!sale) {
     return (
       <Container isScrollable={false} className="bg-background items-center justify-center">
-        <StyledText className="text-base text-on-surface-variant mb-4">Sale not found</StyledText>
+        <StyledText className="text-body-lg text-on-surface-variant mb-4">Sale not found</StyledText>
         <Button onPress={() => router.back()}>Go Back</Button>
       </Container>
     );
@@ -196,7 +196,12 @@ export default function SaleDetailScreen() {
   return (
     <Container isScrollable={false} className="bg-background">
       <StyledView className="absolute top-4 left-6 z-10 w-12 h-12 bg-surface rounded-full justify-center items-center shadow-sm shadow-black/10 elevation-2">
-        <StyledTouchableOpacity onPress={() => router.back()}>
+        <StyledTouchableOpacity
+          onPress={() => router.back()}
+          className="w-full h-full items-center justify-center"
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <Ionicons name="arrow-back" size={24} color={colors.onSurface} />
         </StyledTouchableOpacity>
       </StyledView>
@@ -204,10 +209,10 @@ export default function SaleDetailScreen() {
       <ScrollView contentContainerStyle={{ paddingTop: 88, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         <StyledView className="px-6">
           <StyledView className="flex-row items-center justify-between mb-4">
-            <StyledText className="text-2xl font-bold text-on-surface">Order Details</StyledText>
+            <StyledText className="text-h1 font-bold text-on-surface">Order Details</StyledText>
             {isSupermarket && (
-              <StyledView className="bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
-                <StyledText className="text-xs font-bold text-amber-700 dark:text-amber-400">
+              <StyledView className="bg-secondary/10 px-3 py-1 rounded-full border border-secondary/30">
+                <StyledText className="text-label-bold font-bold text-secondary">
                   Supermarket Order
                 </StyledText>
               </StyledView>
@@ -218,7 +223,7 @@ export default function SaleDetailScreen() {
             <StyledView className="flex-row justify-between items-start mb-3">
               <StyledView className="flex-1 mr-3">
                 <StyledText className="text-body-sm text-outline mb-1">{sale.reference}</StyledText>
-                <StyledText className="text-base text-on-surface-variant">{formatDate(sale.soldAt)}</StyledText>
+                <StyledText className="text-body-lg text-on-surface-variant">{formatDate(sale.soldAt)}</StyledText>
               </StyledView>
               <Chip variant={getStatusVariant(sale.paymentStatus)}>
                 {sale.paymentStatus.charAt(0).toUpperCase() + sale.paymentStatus.slice(1)}
@@ -226,13 +231,13 @@ export default function SaleDetailScreen() {
             </StyledView>
 
             {isSupermarket && sale.expectedPaymentDate && (
-              <StyledView className="my-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex-row items-center gap-2">
-                <Calendar size={18} color="#D97706" />
+              <StyledView className="my-2 p-2.5 rounded-xl bg-secondary/10 border border-secondary/20 flex-row items-center gap-2">
+                <Calendar size={18} color={colors.secondary} />
                 <StyledView>
-                  <StyledText className="text-xs font-bold text-amber-800 dark:text-amber-300">
+                  <StyledText className="text-label-bold font-bold text-secondary">
                     Payment Due Date: {new Date(sale.expectedPaymentDate).toLocaleDateString()}
                   </StyledText>
-                  <StyledText className="text-[11px] text-amber-700 dark:text-amber-400">
+                  <StyledText className="text-label-bold text-secondary">
                     Reminder notification active
                   </StyledText>
                 </StyledView>
@@ -246,12 +251,12 @@ export default function SaleDetailScreen() {
               ) : (
                 <Person size={20} color={colors.onSurfaceVariant} />
               )}
-              <StyledText className="text-base text-on-surface ml-2 font-semibold">
+              <StyledText className="text-body-lg text-on-surface ml-2 font-semibold">
                 {sale.customer?.name || (sale.customerId ? 'Registered Client' : 'Walk-in Customer')}
               </StyledText>
             </StyledView>
             {sale.customer?.address && (
-              <StyledText className="text-xs text-on-surface-variant ml-7 mt-0.5">
+              <StyledText className="text-label-bold text-on-surface-variant ml-7 mt-0.5">
                 {sale.customer.address}
               </StyledText>
             )}
@@ -260,7 +265,7 @@ export default function SaleDetailScreen() {
           <Surface variant="outline" className="p-4 mb-4">
             <StyledView className="flex-row items-center mb-1">
               <PaymentIcon size={20} color={colors.primary} />
-              <StyledText className="text-base font-semibold text-on-surface ml-2">
+              <StyledText className="text-body-lg font-semibold text-on-surface ml-2">
                 {PAYMENT_LABELS[sale.paymentMethod] || sale.paymentMethod}
               </StyledText>
             </StyledView>
@@ -268,13 +273,15 @@ export default function SaleDetailScreen() {
 
           <Surface variant="outline" className="p-4 mb-4">
             <StyledView className="flex-row justify-between items-center mb-3">
-              <StyledText className="text-base font-bold text-on-surface">Items</StyledText>
+              <StyledText className="text-h3 font-bold text-on-surface">Items</StyledText>
               <StyledTouchableOpacity
                 onPress={() => setReturnModalVisible(true)}
-                className="flex-row items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-lg active:opacity-70"
+                className="flex-row items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-button active:opacity-70 min-h-[44px]"
+                accessibilityRole="button"
+                accessibilityLabel="Record returned products"
               >
                 <ArrowUUpLeft size={16} color={colors.primary} />
-                <StyledText className="text-xs font-bold text-primary">Record Return</StyledText>
+                <StyledText className="text-label-bold font-bold text-primary">Record Return</StyledText>
               </StyledTouchableOpacity>
             </StyledView>
 
@@ -309,10 +316,10 @@ export default function SaleDetailScreen() {
                   </StyledView>
                   {ret > 0 && (
                     <StyledView className="mt-1 flex-row justify-between bg-error/10 px-2 py-1 rounded">
-                      <StyledText className="text-[11px] font-semibold text-error">
+                      <StyledText className="text-label-bold font-semibold text-error">
                         Returned: {ret} unit(s)
                       </StyledText>
-                      <StyledText className="text-[11px] font-bold text-on-surface">
+                      <StyledText className="text-label-bold font-bold text-on-surface">
                         Net kept: {netQty} ({formatCurrency(netQty * item.unitPrice)})
                       </StyledText>
                     </StyledView>
@@ -345,8 +352,8 @@ export default function SaleDetailScreen() {
             )}
 
             <StyledView className="flex-row justify-between mt-2 pt-2 border-t border-outline-variant/30">
-              <StyledText className="text-base font-bold text-on-surface">Recalculated Total</StyledText>
-              <StyledText className="text-lg font-bold text-primary">{formatCurrency(total)}</StyledText>
+              <StyledText className="text-h3 font-bold text-on-surface">Recalculated Total</StyledText>
+              <StyledText className="text-h3 font-bold text-primary">{formatCurrency(total)}</StyledText>
             </StyledView>
 
             <StyledView className="h-[1px] bg-outline-variant/30 my-3" />
@@ -366,7 +373,7 @@ export default function SaleDetailScreen() {
             <Surface variant="outline" className="p-4 mb-4">
               <StyledView className="flex-row items-center mb-2">
                 <FileText size={20} color={colors.onSurfaceVariant} />
-                <StyledText className="text-base font-semibold text-on-surface ml-2">Notes & Terms</StyledText>
+                <StyledText className="text-h3 font-semibold text-on-surface ml-2">Notes & Terms</StyledText>
               </StyledView>
               <StyledText className="text-body-sm text-on-surface-variant leading-5">{sale.notes}</StyledText>
             </Surface>
@@ -376,108 +383,97 @@ export default function SaleDetailScreen() {
             <StyledTouchableOpacity
               className="w-full py-3.5 rounded-button border-2 border-error bg-error/10 justify-center items-center flex-row active:opacity-80"
               onPress={handleVoidSale}
+              accessibilityRole="button"
+              accessibilityLabel="Void this sale"
+              accessibilityHint="Permanently cancels this sale and returns stock to inventory"
             >
               <Trash size={20} color={colors.error} />
-              <StyledText className="text-base font-semibold text-error ml-2">Void Sale</StyledText>
+              <StyledText className="text-body-lg font-semibold text-error ml-2">Void Sale</StyledText>
             </StyledTouchableOpacity>
           </StyledView>
         </StyledView>
       </ScrollView>
 
-      {/* RECORD PRODUCT RETURN MODAL */}
-      <Modal
+      {/* RECORD PRODUCT RETURN */}
+      <BottomSheet
         visible={returnModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setReturnModalVisible(false)}
+        onClose={() => setReturnModalVisible(false)}
+        title="Record Returned Products"
+        subtitle="Totals and the customer ledger recalculate automatically."
+        icon={<ArrowUUpLeft size={20} color={colors.onPrimaryContainer} />}
+        contentClassName="pt-4 pb-2"
+        footer={
+          <Button
+            size="lg"
+            isDisabled={isSubmittingReturn}
+            onPress={handleProcessReturn}
+            className="w-full"
+          >
+            {isSubmittingReturn ? 'Recalculating...' : 'Confirm Return & Recalculate'}
+          </Button>
+        }
       >
-        <Pressable className="flex-1 bg-black/50 justify-end" onPress={() => setReturnModalVisible(false)}>
-          <StyledView className="bg-background rounded-t-3xl max-h-[85%] w-full" onStartShouldSetResponder={() => true}>
-            <StyledView className="items-center pt-3 pb-1">
-              <StyledView className="w-12 h-1.5 rounded-full bg-outline/40" />
-            </StyledView>
+        <StyledText className="text-label-bold text-on-surface-variant mb-4">
+          Specify quantities returned from this delivery.
+        </StyledText>
 
-            <StyledScrollView className="px-6 pb-8" keyboardShouldPersistTaps="handled">
-              <StyledView className="flex-row justify-between items-center my-3">
-                <StyledText className="text-lg font-bold text-on-surface">Record Returned Products</StyledText>
-                <StyledTouchableOpacity onPress={() => setReturnModalVisible(false)}>
-                  <X size={22} color={colors.onSurfaceVariant} />
-                </StyledTouchableOpacity>
+        {sale.items.map((item) => {
+          const key = item.id || item.productId;
+          const maxReturnable = item.quantity - (item.returnedQuantity || 0);
+
+          return (
+            <Surface key={key} variant="primary" className="p-3.5 mb-3 rounded-xl border border-outline-variant/20">
+              <StyledView className="flex-row justify-between items-start mb-2">
+                <StyledView className="flex-1 mr-2">
+                  <StyledText className="text-body-sm font-bold text-on-surface">{item.productName}</StyledText>
+                  <StyledText className="text-label-bold text-on-surface-variant">
+                    Supplied: {item.quantity} | Available to return: {maxReturnable}
+                  </StyledText>
+                </StyledView>
+                <StyledText className="text-label-bold text-primary">
+                  {formatCurrency(item.unitPrice)} each
+                </StyledText>
               </StyledView>
 
-              <StyledText className="text-xs text-on-surface-variant mb-4">
-                Specify quantities returned from this delivery. The overall sale total and customer ledger will automatically recalculate.
-              </StyledText>
-
-              {sale.items.map((item) => {
-                const key = item.id || item.productId;
-                const maxReturnable = item.quantity - (item.returnedQuantity || 0);
-
-                return (
-                  <Surface key={key} variant="primary" className="p-3.5 mb-3 rounded-xl border border-outline-variant/20">
-                    <StyledView className="flex-row justify-between items-start mb-2">
-                      <StyledView className="flex-1 mr-2">
-                        <StyledText className="text-sm font-bold text-on-surface">{item.productName}</StyledText>
-                        <StyledText className="text-xs text-on-surface-variant">
-                          Supplied: {item.quantity} | Available to return: {maxReturnable}
-                        </StyledText>
-                      </StyledView>
-                      <StyledText className="text-xs font-bold text-primary">
-                        {formatCurrency(item.unitPrice)} each
-                      </StyledText>
-                    </StyledView>
-
-                    <StyledView className="flex-row items-center gap-2">
-                      <StyledText className="text-xs font-medium text-on-surface-variant">
-                        Quantity Returned:
-                      </StyledText>
-                      <StyledTextInput
-                        className="bg-surface-container rounded-lg px-3 py-1.5 text-center text-sm font-bold text-on-surface w-20 border border-outline-variant/40"
-                        placeholder="0"
-                        placeholderTextColor={colors.outline}
-                        keyboardType="numeric"
-                        value={returnQuantities[key] || ''}
-                        onChangeText={(txt) => {
-                          const val = parseInt(txt || '0', 10);
-                          if (val > maxReturnable) {
-                            toast.error(`Cannot exceed ${maxReturnable}`);
-                            return;
-                          }
-                          setReturnQuantities((prev) => ({ ...prev, [key]: txt }));
-                        }}
-                      />
-                    </StyledView>
-                  </Surface>
-                );
-              })}
-
-              <StyledView className="mt-2 mb-4">
-                <StyledText className="text-xs font-semibold text-on-surface-variant mb-1">
-                  Reason / Notes for Return
+              <StyledView className="flex-row items-center gap-2">
+                <StyledText className="text-label-bold text-on-surface-variant">
+                  Quantity Returned:
                 </StyledText>
                 <StyledTextInput
-                  className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-3 text-sm text-on-surface min-h-[60px]"
-                  placeholder="Damaged in transit, expired, rejected by store..."
+                  className="bg-surface-container rounded-input px-3 py-1.5 text-center text-body-sm font-bold text-on-surface w-20 border border-outline-variant/40"
+                  placeholder="0"
                   placeholderTextColor={colors.outline}
-                  multiline
-                  numberOfLines={2}
-                  value={returnNotes}
-                  onChangeText={setReturnNotes}
+                  keyboardType="numeric"
+                  value={returnQuantities[key] || ''}
+                  onChangeText={(txt) => {
+                    const val = parseInt(txt || '0', 10);
+                    if (val > maxReturnable) {
+                      toast.error(`Cannot exceed ${maxReturnable}`);
+                      return;
+                    }
+                    setReturnQuantities((prev) => ({ ...prev, [key]: txt }));
+                  }}
                 />
               </StyledView>
+            </Surface>
+          );
+        })}
 
-              <Button
-                size="lg"
-                isDisabled={isSubmittingReturn}
-                onPress={handleProcessReturn}
-                className="w-full mb-6"
-              >
-                {isSubmittingReturn ? 'Recalculating...' : 'Confirm Return & Recalculate'}
-              </Button>
-            </StyledScrollView>
-          </StyledView>
-        </Pressable>
-      </Modal>
+        <StyledView className="mt-2">
+          <StyledText className="text-label-bold text-on-surface-variant mb-1.5">
+            Reason / Notes for Return
+          </StyledText>
+          <StyledTextInput
+            className="bg-surface-container-low border border-outline-variant rounded-input px-4 py-3 text-body-sm text-on-surface min-h-[60px]"
+            placeholder="Damaged in transit, expired, rejected by store..."
+            placeholderTextColor={colors.outline}
+            multiline
+            numberOfLines={2}
+            value={returnNotes}
+            onChangeText={setReturnNotes}
+          />
+        </StyledView>
+      </BottomSheet>
     </Container>
   );
 }

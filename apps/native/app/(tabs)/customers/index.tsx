@@ -8,9 +8,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   TextInput,
-  Modal,
-  ScrollView,
-  Pressable,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useCustomers, type Customer } from "../../../hooks/useCustomers";
@@ -21,18 +18,15 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/container";
 import { Surface } from "@/components/ui/surface";
 import { Chip } from "@/components/ui/chip";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useToast } from "@/components/ui/toast";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
-  Buildings,
-  CheckCircle,
   Clock,
   MapPin,
-  Package,
   Phone,
   Storefront,
   User,
-  X,
   ChartLineUp,
 } from "phosphor-react-native";
 import { withUniwind } from "uniwind";
@@ -45,7 +39,6 @@ const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
 const StyledTouchableOpacity = withUniwind(TouchableOpacity);
 const StyledTextInput = withUniwind(TextInput);
-const StyledScrollView = withUniwind(ScrollView);
 
 export default function CustomersScreen() {
   const router = useRouter();
@@ -170,17 +163,26 @@ export default function CustomersScreen() {
             handleOpenSupermarketAnalytics(item);
           }
         }}
+        disabled={!isSupermarket}
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel={
+          isSupermarket
+            ? `${item.name}, supermarket. View sales analytics.`
+            : `${item.name}, customer`
+        }
+        accessibilityState={{ disabled: !isSupermarket }}
       >
         <Surface variant="primary" className="p-4 mb-3 rounded-card">
           <StyledView className="flex-row items-center">
             <StyledView
               className={cn(
                 "w-12 h-12 rounded-full justify-center items-center mr-3",
-                isSupermarket ? "bg-amber-500/20" : "bg-primary-container"
+                isSupermarket ? "bg-secondary/20" : "bg-primary-container"
               )}
             >
               {isSupermarket ? (
-                <Storefront size={24} color="#D97706" />
+                <Storefront size={24} color={colors.secondary} />
               ) : (
                 <StyledText className="font-bold text-body-lg text-on-primary-container">
                   {getInitials(item.name)}
@@ -190,12 +192,12 @@ export default function CustomersScreen() {
 
             <StyledView className="flex-1">
               <StyledView className="flex-row items-center gap-2">
-                <StyledText className="text-base font-semibold text-on-surface" numberOfLines={1}>
+                <StyledText className="text-body-lg font-semibold text-on-surface" numberOfLines={1}>
                   {item.name}
                 </StyledText>
                 {isSupermarket && (
-                  <StyledView className="bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                    <StyledText className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                  <StyledView className="bg-secondary/10 px-2 py-0.5 rounded-full border border-secondary/20">
+                    <StyledText className="text-label-sm font-bold text-secondary">
                       Supermarket
                     </StyledText>
                   </StyledView>
@@ -212,7 +214,7 @@ export default function CustomersScreen() {
               {item.address && (
                 <StyledView className="flex-row items-center gap-1 mt-0.5">
                   <MapPin size={12} color={colors.outline} />
-                  <StyledText className="text-xs text-on-surface-variant" numberOfLines={1}>
+                  <StyledText className="text-label-bold text-on-surface-variant" numberOfLines={1}>
                     {item.address}
                   </StyledText>
                 </StyledView>
@@ -221,14 +223,14 @@ export default function CustomersScreen() {
 
             <StyledView className="items-end">
               {item.totalSpent && (
-                <StyledText className="text-sm font-semibold text-primary">
+                <StyledText className="text-body-sm font-semibold text-primary">
                   {formatCurrency(parseFloat(item.totalSpent))}
                 </StyledText>
               )}
               {isSupermarket ? (
                 <StyledView className="flex-row items-center gap-1 mt-1 bg-primary/10 px-2 py-1 rounded-md">
                   <ChartLineUp size={13} color={colors.primary} />
-                  <StyledText className="text-[11px] font-bold text-primary">Analytics</StyledText>
+                  <StyledText className="text-label-sm font-bold text-primary">Analytics</StyledText>
                 </StyledView>
               ) : (
                 <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
@@ -240,12 +242,12 @@ export default function CustomersScreen() {
             <StyledView className="mt-3 pt-2 border-t border-outline-variant/20 flex-row justify-between items-center">
               <StyledView className="flex-row items-center gap-1">
                 <Clock size={13} color={colors.onSurfaceVariant} />
-                <StyledText className="text-xs text-on-surface-variant">
+                <StyledText className="text-label-bold text-on-surface-variant">
                   Payment Period: <StyledText className="font-bold">{item.expectedPaymentPeriodDays} days</StyledText>
                 </StyledText>
               </StyledView>
               {item.suppliedProductIds && item.suppliedProductIds.length > 0 && (
-                <StyledText className="text-xs text-primary font-medium">
+                <StyledText className="text-label-bold text-primary font-medium">
                   {item.suppliedProductIds.length} Products Supplied
                 </StyledText>
               )}
@@ -267,9 +269,12 @@ export default function CustomersScreen() {
         <StyledTouchableOpacity
           className={cn("flex-1 py-2 items-center rounded-lg", activeTab === "all" && "bg-primary")}
           onPress={() => setActiveTab("all")}
+          accessibilityRole="button"
+          accessibilityLabel="Filter by All customers"
+          accessibilityState={{ selected: activeTab === "all" }}
         >
           <StyledText
-            className={cn("text-xs font-bold", activeTab === "all" ? "text-on-primary" : "text-on-surface-variant")}
+            className={cn("text-label-bold font-bold", activeTab === "all" ? "text-on-primary" : "text-on-surface-variant")}
           >
             All ({customers.length})
           </StyledText>
@@ -278,10 +283,13 @@ export default function CustomersScreen() {
         <StyledTouchableOpacity
           className={cn("flex-1 py-2 items-center rounded-lg", activeTab === "individual" && "bg-primary")}
           onPress={() => setActiveTab("individual")}
+          accessibilityRole="button"
+          accessibilityLabel="Filter by Customers only"
+          accessibilityState={{ selected: activeTab === "individual" }}
         >
           <StyledText
             className={cn(
-              "text-xs font-bold",
+              "text-label-bold font-bold",
               activeTab === "individual" ? "text-on-primary" : "text-on-surface-variant"
             )}
           >
@@ -292,10 +300,13 @@ export default function CustomersScreen() {
         <StyledTouchableOpacity
           className={cn("flex-1 py-2 items-center rounded-lg", activeTab === "supermarket" && "bg-primary")}
           onPress={() => setActiveTab("supermarket")}
+          accessibilityRole="button"
+          accessibilityLabel="Filter by Supermarkets only"
+          accessibilityState={{ selected: activeTab === "supermarket" }}
         >
           <StyledText
             className={cn(
-              "text-xs font-bold",
+              "text-label-bold font-bold",
               activeTab === "supermarket" ? "text-on-primary" : "text-on-surface-variant"
             )}
           >
@@ -337,7 +348,7 @@ export default function CustomersScreen() {
               style={{ width: 80, height: 80 }}
               resizeMode="contain"
             />
-            <StyledText className="text-base text-on-surface-variant mt-4 text-center">
+            <StyledText className="text-body-lg text-on-surface-variant mt-4 text-center">
               {search.trim() ? "No results match your search." : "No entries found. Tap + to add!"}
             </StyledText>
             {!search.trim() && (
@@ -350,216 +361,195 @@ export default function CustomersScreen() {
       />
 
       <StyledTouchableOpacity
-        className="absolute right-4 w-14 h-14 rounded-full bg-primary justify-center items-center shadow-md shadow-black/30 elevation-5"
+        className="absolute right-4 size-14 rounded-full bg-primary justify-center items-center shadow-lg z-[var(--z-fab)] active:scale-95"
         style={{ bottom: TAB_BAR_OFFSET + 12 }}
         onPress={() => {
           setCreateType(activeTab === "supermarket" ? "supermarket" : "individual");
           setModalVisible(true);
         }}
+        accessibilityRole="button"
+        accessibilityLabel="Add customer or supermarket"
       >
         <MaterialIcons name="add" size={28} color={colors.onPrimary} />
       </StyledTouchableOpacity>
 
-      {/* CREATE MODAL */}
-      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
-        <Pressable className="flex-1 bg-black/50 justify-end" onPress={() => setModalVisible(false)}>
-          <StyledView className="bg-background rounded-t-3xl max-h-[90%] w-full" onStartShouldSetResponder={() => true}>
-            <StyledView className="items-center pt-3 pb-1">
-              <StyledView className="w-12 h-1.5 rounded-full bg-outline/40" />
-            </StyledView>
-
-            <StyledScrollView className="px-6 pb-6" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <StyledView className="flex-row justify-between items-center my-3">
-                <StyledText className="text-xl font-bold text-on-surface">Add Entry</StyledText>
-                <StyledTouchableOpacity onPress={() => setModalVisible(false)}>
-                  <X size={22} color={colors.onSurfaceVariant} />
-                </StyledTouchableOpacity>
-              </StyledView>
-
-              {/* Toggle Customer vs Supermarket */}
-              <StyledView className="flex-row bg-surface-container rounded-xl p-1 mb-4 border border-outline-variant/30">
-                <StyledTouchableOpacity
-                  className={cn(
-                    "flex-1 flex-row items-center justify-center py-2.5 rounded-lg gap-2",
-                    createType === "individual" ? "bg-primary" : "bg-transparent"
-                  )}
-                  onPress={() => setCreateType("individual")}
-                >
-                  <User size={18} color={createType === "individual" ? "#FFFFFF" : colors.onSurfaceVariant} />
-                  <StyledText
-                    className={cn(
-                      "text-xs font-bold",
-                      createType === "individual" ? "text-on-primary" : "text-on-surface-variant"
-                    )}
-                  >
-                    Customer
-                  </StyledText>
-                </StyledTouchableOpacity>
-
-                <StyledTouchableOpacity
-                  className={cn(
-                    "flex-1 flex-row items-center justify-center py-2.5 rounded-lg gap-2",
-                    createType === "supermarket" ? "bg-primary" : "bg-transparent"
-                  )}
-                  onPress={() => setCreateType("supermarket")}
-                >
-                  <Storefront size={18} color={createType === "supermarket" ? "#FFFFFF" : colors.onSurfaceVariant} />
-                  <StyledText
-                    className={cn(
-                      "text-xs font-bold",
-                      createType === "supermarket" ? "text-on-primary" : "text-on-surface-variant"
-                    )}
-                  >
-                    Supermarket
-                  </StyledText>
-                </StyledTouchableOpacity>
-              </StyledView>
-
-              <StyledView className="gap-3">
-                <StyledView>
-                  <StyledText className="text-xs font-semibold text-on-surface-variant mb-1">
-                    {createType === "supermarket" ? "Supermarket / Store Name *" : "Customer Name *"}
-                  </StyledText>
-                  <StyledTextInput
-                    className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-base text-on-surface"
-                    placeholder={createType === "supermarket" ? "e.g. Prince Ebeano Supermarket" : "e.g. Mama Titi"}
-                    placeholderTextColor={colors.outline}
-                    value={name}
-                    onChangeText={setName}
-                  />
-                </StyledView>
-
-                <StyledView>
-                  <StyledText className="text-xs font-semibold text-on-surface-variant mb-1">
-                    Phone Number for Reachout
-                  </StyledText>
-                  <StyledTextInput
-                    className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-base text-on-surface"
-                    placeholder="080..."
-                    placeholderTextColor={colors.outline}
-                    keyboardType="phone-pad"
-                    value={phone}
-                    onChangeText={setPhone}
-                  />
-                </StyledView>
-
-                <StyledView>
-                  <StyledText className="text-xs font-semibold text-on-surface-variant mb-1">
-                    {createType === "supermarket" ? "Supermarket Address *" : "Delivery Address"}
-                  </StyledText>
-                  <StyledTextInput
-                    className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-base text-on-surface"
-                    placeholder="e.g. Admiralty Way, Lekki Phase 1"
-                    placeholderTextColor={colors.outline}
-                    value={address}
-                    onChangeText={setAddress}
-                  />
-                </StyledView>
-
-                {createType === "supermarket" && (
-                  <>
-                    <StyledView>
-                      <StyledText className="text-xs font-semibold text-on-surface-variant mb-1">
-                        Time Period for Expected Payment (Days)
-                      </StyledText>
-                      <StyledTextInput
-                        className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-base text-on-surface"
-                        placeholder="e.g. 14"
-                        placeholderTextColor={colors.outline}
-                        keyboardType="numeric"
-                        value={expectedPaymentDays}
-                        onChangeText={setExpectedPaymentDays}
-                      />
-                    </StyledView>
-
-                    <StyledView>
-                      <StyledText className="text-xs font-semibold text-on-surface-variant mb-1">
-                        Products Supplied to This Supermarket
-                      </StyledText>
-                      <StyledView className="flex-row flex-wrap gap-2 pt-1">
-                        {products.map((p) => {
-                          const isSelected = selectedProductIds.includes(p.id);
-                          return (
-                            <StyledTouchableOpacity
-                              key={p.id}
-                              onPress={() => toggleProductSelection(p.id)}
-                              className={cn(
-                                "flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border",
-                                isSelected ? "bg-primary border-primary" : "bg-surface-container border-outline-variant"
-                              )}
-                            >
-                              <StyledText
-                                className={cn(
-                                  "text-xs font-semibold",
-                                  isSelected ? "text-on-primary" : "text-on-surface"
-                                )}
-                              >
-                                {p.name}
-                              </StyledText>
-                            </StyledTouchableOpacity>
-                          );
-                        })}
-                      </StyledView>
-                    </StyledView>
-                  </>
-                )}
-
-                <StyledView>
-                  <StyledText className="text-xs font-semibold text-on-surface-variant mb-1">
-                    Additional Notes
-                  </StyledText>
-                  <StyledTextInput
-                    className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-3 text-base text-on-surface min-h-[70px]"
-                    placeholder="Payment preferences, contact person..."
-                    placeholderTextColor={colors.outline}
-                    multiline
-                    numberOfLines={2}
-                    value={notes}
-                    onChangeText={setNotes}
-                  />
-                </StyledView>
-
-                <Button
-                  size="lg"
-                  isDisabled={isSubmitting || !name.trim()}
-                  onPress={handleSaveCustomer}
-                  className="mt-4 mb-8"
-                >
-                  {isSubmitting ? "Saving..." : createType === "supermarket" ? "Save Supermarket" : "Save Customer"}
-                </Button>
-              </StyledView>
-            </StyledScrollView>
-          </StyledView>
-        </Pressable>
-      </Modal>
-
-      {/* SUPERMARKET ANALYTICS MODAL */}
-      <Modal
-        visible={analyticsModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setAnalyticsModalVisible(false)}
+      <BottomSheet
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title="Add Entry"
+        footer={
+          <Button
+            size="lg"
+            isDisabled={isSubmitting || !name.trim()}
+            onPress={handleSaveCustomer}
+            className="w-full"
+          >
+            {isSubmitting ? "Saving..." : createType === "supermarket" ? "Save Supermarket" : "Save Customer"}
+          </Button>
+        }
       >
-        <Pressable className="flex-1 bg-black/50 justify-end" onPress={() => setAnalyticsModalVisible(false)}>
-          <StyledView className="bg-background rounded-t-3xl max-h-[90%] w-full" onStartShouldSetResponder={() => true}>
-            <StyledView className="items-center pt-3 pb-1">
-              <StyledView className="w-12 h-1.5 rounded-full bg-outline/40" />
-            </StyledView>
+        {/* Toggle Customer vs Supermarket */}
+        <StyledView className="flex-row bg-surface-container rounded-xl p-1 mb-4 border border-outline-variant/30">
+          <StyledTouchableOpacity
+            className={cn(
+              "flex-1 flex-row items-center justify-center py-2.5 rounded-lg gap-2",
+              createType === "individual" ? "bg-primary" : "bg-transparent"
+            )}
+            onPress={() => setCreateType("individual")}
+            accessibilityRole="button"
+            accessibilityLabel="Switch to Customer mode"
+            accessibilityState={{ selected: createType === "individual" }}
+          >
+            <User size={18} color={createType === "individual" ? "#FFFFFF" : colors.onSurfaceVariant} />
+            <StyledText
+              className={cn(
+                "text-label-bold font-bold",
+                createType === "individual" ? "text-on-primary" : "text-on-surface-variant"
+              )}
+            >
+              Customer
+            </StyledText>
+          </StyledTouchableOpacity>
 
-            <StyledScrollView className="px-6 pb-8" showsVerticalScrollIndicator={false}>
-              <StyledView className="flex-row justify-between items-center my-3">
-                <StyledView className="flex-row items-center gap-2">
-                  <Storefront size={22} color={colors.primary} />
-                  <StyledText className="text-lg font-bold text-on-surface" numberOfLines={1}>
-                    {selectedSupermarket?.name}
-                  </StyledText>
-                </StyledView>
-                <StyledTouchableOpacity onPress={() => setAnalyticsModalVisible(false)}>
-                  <X size={22} color={colors.onSurfaceVariant} />
-                </StyledTouchableOpacity>
+          <StyledTouchableOpacity
+            className={cn(
+              "flex-1 flex-row items-center justify-center py-2.5 rounded-lg gap-2",
+              createType === "supermarket" ? "bg-primary" : "bg-transparent"
+            )}
+            onPress={() => setCreateType("supermarket")}
+            accessibilityRole="button"
+            accessibilityLabel="Switch to Supermarket mode"
+            accessibilityState={{ selected: createType === "supermarket" }}
+          >
+            <Storefront size={18} color={createType === "supermarket" ? "#FFFFFF" : colors.onSurfaceVariant} />
+            <StyledText
+              className={cn(
+                "text-label-bold font-bold",
+                createType === "supermarket" ? "text-on-primary" : "text-on-surface-variant"
+              )}
+            >
+              Supermarket
+            </StyledText>
+          </StyledTouchableOpacity>
+        </StyledView>
+
+        <StyledView className="gap-3">
+          <StyledView>
+            <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-1">
+              {createType === "supermarket" ? "Supermarket / Store Name *" : "Customer Name *"}
+            </StyledText>
+            <StyledTextInput
+              className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-body-lg text-on-surface"
+              placeholder={createType === "supermarket" ? "e.g. Prince Ebeano Supermarket" : "e.g. Mama Titi"}
+              placeholderTextColor={colors.outline}
+              value={name}
+              onChangeText={setName}
+            />
+          </StyledView>
+
+          <StyledView>
+            <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-1">
+              Phone Number for Reachout
+            </StyledText>
+            <StyledTextInput
+              className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-body-lg text-on-surface"
+              placeholder="080..."
+              placeholderTextColor={colors.outline}
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
+            />
+          </StyledView>
+
+          <StyledView>
+            <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-1">
+              {createType === "supermarket" ? "Supermarket Address *" : "Delivery Address"}
+            </StyledText>
+            <StyledTextInput
+              className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-body-lg text-on-surface"
+              placeholder="e.g. Admiralty Way, Lekki Phase 1"
+              placeholderTextColor={colors.outline}
+              value={address}
+              onChangeText={setAddress}
+            />
+          </StyledView>
+
+          {createType === "supermarket" && (
+            <>
+              <StyledView>
+                <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-1">
+                  Time Period for Expected Payment (Days)
+                </StyledText>
+                <StyledTextInput
+                  className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 h-12 text-body-lg text-on-surface"
+                  placeholder="e.g. 14"
+                  placeholderTextColor={colors.outline}
+                  keyboardType="numeric"
+                  value={expectedPaymentDays}
+                  onChangeText={setExpectedPaymentDays}
+                />
               </StyledView>
 
-              {loadingAnalytics ? (
+              <StyledView>
+                <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-1">
+                  Products Supplied to This Supermarket
+                </StyledText>
+                <StyledView className="flex-row flex-wrap gap-2 pt-1">
+                  {products.map((p) => {
+                    const isSelected = selectedProductIds.includes(p.id);
+                    return (
+                      <StyledTouchableOpacity
+                        key={p.id}
+                        onPress={() => toggleProductSelection(p.id)}
+                        className={cn(
+                          "flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border",
+                          isSelected ? "bg-primary border-primary" : "bg-surface-container border-outline-variant"
+                        )}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Product: ${p.name}, ${isSelected ? "selected" : "not selected"}`}
+                        accessibilityState={{ selected: isSelected }}
+                      >
+                        <StyledText
+                          className={cn(
+                            "text-label-bold font-semibold",
+                            isSelected ? "text-on-primary" : "text-on-surface"
+                          )}
+                        >
+                          {p.name}
+                        </StyledText>
+                      </StyledTouchableOpacity>
+                    );
+                  })}
+                </StyledView>
+              </StyledView>
+            </>
+          )}
+
+          <StyledView>
+            <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-1">
+              Additional Notes
+            </StyledText>
+            <StyledTextInput
+              className="bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-3 text-body-lg text-on-surface min-h-[70px]"
+              placeholder="Payment preferences, contact person..."
+              placeholderTextColor={colors.outline}
+              multiline
+              numberOfLines={2}
+              value={notes}
+              onChangeText={setNotes}
+            />
+          </StyledView>
+        </StyledView>
+      </BottomSheet>
+
+      {/* SUPERMARKET ANALYTICS */}
+      <BottomSheet
+        visible={analyticsModalVisible}
+        onClose={() => setAnalyticsModalVisible(false)}
+        title={selectedSupermarket?.name ?? "Store analytics"}
+        maxHeightRatio={0.88}
+      >
+        {loadingAnalytics ? (
                 <StyledView className="py-20 items-center justify-center">
                   <ActivityIndicator size="large" color={colors.primary} />
                   <StyledText className="text-sm text-on-surface-variant mt-3">Loading analytics...</StyledText>
@@ -569,7 +559,7 @@ export default function CustomersScreen() {
                   {/* Summary Metric Cards */}
                   <StyledView className="flex-row gap-2">
                     <Surface variant="primary" className="flex-1 p-3 rounded-xl border border-outline-variant/30">
-                      <StyledText className="text-[11px] text-on-surface-variant uppercase font-bold">
+                      <StyledText className="text-label-sm text-on-surface-variant uppercase font-bold">
                         Total Billed
                       </StyledText>
                       <StyledText className="text-base font-black text-on-surface mt-1">
@@ -577,7 +567,7 @@ export default function CustomersScreen() {
                       </StyledText>
                     </Surface>
                     <Surface variant="primary" className="flex-1 p-3 rounded-xl border border-outline-variant/30">
-                      <StyledText className="text-[11px] text-on-surface-variant uppercase font-bold">
+                      <StyledText className="text-label-sm text-on-surface-variant uppercase font-bold">
                         Total Paid
                       </StyledText>
                       <StyledText className="text-base font-black text-success mt-1">
@@ -588,7 +578,7 @@ export default function CustomersScreen() {
 
                   <StyledView className="flex-row gap-2">
                     <Surface variant="primary" className="flex-1 p-3 rounded-xl border border-outline-variant/30">
-                      <StyledText className="text-[11px] text-on-surface-variant uppercase font-bold">
+                      <StyledText className="text-label-sm text-on-surface-variant uppercase font-bold">
                         Total Returns
                       </StyledText>
                       <StyledText className="text-base font-black text-error mt-1">
@@ -596,7 +586,7 @@ export default function CustomersScreen() {
                       </StyledText>
                     </Surface>
                     <Surface variant="primary" className="flex-1 p-3 rounded-xl border border-outline-variant/30">
-                      <StyledText className="text-[11px] text-on-surface-variant uppercase font-bold">
+                      <StyledText className="text-label-sm text-on-surface-variant uppercase font-bold">
                         Net Receivable
                       </StyledText>
                       <StyledText className="text-base font-black text-primary mt-1">
@@ -608,13 +598,13 @@ export default function CustomersScreen() {
                   {/* Supply terms info */}
                   <Surface variant="outline" className="p-4 rounded-xl border border-outline-variant/40 bg-surface-container-lowest">
                     <StyledText className="text-sm font-bold text-on-surface mb-2">Store Profile</StyledText>
-                    <StyledText className="text-xs text-on-surface-variant mb-1">
+                    <StyledText className="text-label-bold text-on-surface-variant mb-1">
                       Phone: <StyledText className="text-on-surface font-semibold">{supermarketStats.supermarket.phone || "None"}</StyledText>
                     </StyledText>
-                    <StyledText className="text-xs text-on-surface-variant mb-1">
+                    <StyledText className="text-label-bold text-on-surface-variant mb-1">
                       Address: <StyledText className="text-on-surface font-semibold">{supermarketStats.supermarket.address || "None"}</StyledText>
                     </StyledText>
-                    <StyledText className="text-xs text-on-surface-variant">
+                    <StyledText className="text-label-bold text-on-surface-variant">
                       Payment Interval: <StyledText className="text-on-surface font-semibold">{supermarketStats.supermarket.expectedPaymentPeriodDays || 14} days</StyledText>
                     </StyledText>
                   </Surface>
@@ -625,7 +615,7 @@ export default function CustomersScreen() {
                       Products Supplied & Return History
                     </StyledText>
                     {supermarketStats.productsSupplied.length === 0 ? (
-                      <StyledText className="text-xs text-on-surface-variant italic py-2">
+                      <StyledText className="text-label-bold text-on-surface-variant italic py-2">
                         No supply orders recorded yet.
                       </StyledText>
                     ) : (
@@ -639,14 +629,14 @@ export default function CustomersScreen() {
                               {formatCurrency(prod.totalValue)}
                             </StyledText>
                           </StyledView>
-                          <StyledView className="flex-row justify-between text-xs text-on-surface-variant">
-                            <StyledText className="text-[11px] text-on-surface-variant">
+                          <StyledView className="flex-row justify-between text-label-bold text-on-surface-variant">
+                            <StyledText className="text-label-sm text-on-surface-variant">
                               Supplied: <StyledText className="font-bold">{prod.quantitySupplied}</StyledText>
                             </StyledText>
-                            <StyledText className="text-[11px] text-error font-medium">
+                            <StyledText className="text-label-sm text-error font-medium">
                               Returned: {prod.quantityReturned}
                             </StyledText>
-                            <StyledText className="text-[11px] text-success font-medium">
+                            <StyledText className="text-label-sm text-success font-medium">
                               Net Kept: {prod.netDelivered}
                             </StyledText>
                           </StyledView>
@@ -656,10 +646,7 @@ export default function CustomersScreen() {
                   </Surface>
                 </StyledView>
               ) : null}
-            </StyledScrollView>
-          </StyledView>
-        </Pressable>
-      </Modal>
+      </BottomSheet>
     </Container>
   );
 }

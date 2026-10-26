@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, View, Text, Image, TouchableOpacity, TextInput } from 'react-native';
+import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { EnvelopeSimple, CheckCircle, XCircle, Lock, Eye, EyeSlash, Fingerprint, QrCode } from 'phosphor-react-native';
+import { EnvelopeSimple, CheckCircle, XCircle, Lock, Eye, EyeSlash } from 'phosphor-react-native';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
 import { useToast } from '@/components/ui/toast';
@@ -55,6 +55,13 @@ export default function LoginScreen() {
       if (result.success && result.data) {
         await setUser(result.data.user, result.data.access_token, result.data.refresh_token);
         router.replace('/');
+      } else if (result.error?.code === 'PASSWORD_RESET_REQUIRED') {
+        // Account exists but has never had a password — every user migrated
+        // off Supabase is in this state. Send them to set one.
+        router.push({
+          pathname: '/set-password',
+          params: { email: formData.email.trim().toLowerCase() },
+        });
       } else {
         toast.error(result.error?.message || 'An error occurred', 'Login Failed');
       }
@@ -161,7 +168,7 @@ export default function LoginScreen() {
               <StyledView className="gap-1.5">
                 <StyledView className="flex-row justify-between items-center">
                   <StyledText className="text-body-sm font-semibold text-on-surface">Password</StyledText>
-                  <StyledTouchableOpacity onPress={handleForgotPassword}>
+                  <StyledTouchableOpacity onPress={handleForgotPassword} accessibilityRole="button" accessibilityLabel="Forgot password">
                     <StyledText className="text-body-sm font-medium text-primary">Forgot password?</StyledText>
                   </StyledTouchableOpacity>
                 </StyledView>
@@ -185,7 +192,14 @@ export default function LoginScreen() {
                   {errors.password && (
                     <XCircle size={20} color={colors.error} />
                   )}
-                  <StyledTouchableOpacity onPress={() => setShowPassword(!showPassword)} className="ml-1" accessibilityLabel="Toggle password visibility">
+                  <StyledTouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    className="ml-1"
+                    accessibilityRole="button"
+                    accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                    accessibilityState={{ expanded: showPassword }}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  >
                     {showPassword ? <Eye size={20} color={colors.outline} /> : <EyeSlash size={20} color={colors.outline} />}
                   </StyledTouchableOpacity>
                 </StyledView>
@@ -198,28 +212,11 @@ export default function LoginScreen() {
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
             </StyledView>
-
-            <StyledView className="flex-row items-center gap-3 my-6">
-              <StyledView className="flex-1 h-px bg-outline-variant" />
-              <StyledText className="text-label-caps text-on-surface-variant">Or secure access</StyledText>
-              <StyledView className="flex-1 h-px bg-outline-variant" />
-            </StyledView>
-
-            <StyledView className="flex-row gap-4">
-              <StyledView className="flex-1 h-12 flex-row items-center justify-center gap-2 border border-outline rounded-input bg-surface-container-lowest">
-                <Fingerprint size={20} color={colors.primary} />
-                <StyledText className="text-label-bold text-on-surface">Biometric</StyledText>
-              </StyledView>
-              <StyledView className="flex-1 h-12 flex-row items-center justify-center gap-2 border border-outline rounded-input bg-surface-container-lowest">
-                <QrCode size={20} color={colors.primary} />
-                <StyledText className="text-label-bold text-on-surface">QR Code</StyledText>
-              </StyledView>
-            </StyledView>
           </StyledView>
 
           <StyledView className="flex-row justify-center pb-6 mt-6">
             <StyledText className="text-body-lg text-on-surface-variant">New to OjaPaddi? </StyledText>
-            <StyledTouchableOpacity onPress={() => router.push('/register')}>
+            <StyledTouchableOpacity onPress={() => router.push('/register')} accessibilityRole="button" accessibilityLabel="Create account">
               <StyledText className="text-body-lg font-semibold text-primary">Create Account</StyledText>
             </StyledTouchableOpacity>
           </StyledView>

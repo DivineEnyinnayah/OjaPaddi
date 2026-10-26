@@ -50,7 +50,7 @@ export function CategoryPicker({ value, onChange }: CategoryPickerProps) {
                 }`}
               >
                 <StyledText
-                  className={`text-xs font-semibold ${
+                  className={`text-label-bold font-semibold ${
                     value === cat ? 'text-on-primary' : 'text-on-surface-variant'
                   }`}
                 >

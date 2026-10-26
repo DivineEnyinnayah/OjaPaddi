@@ -1,6 +1,7 @@
 import type { Database } from "@ojapaddi/db";
 import { expenses } from "@ojapaddi/db/schema";
-import { eq, and, sql, desc, ilike } from "drizzle-orm";
+import { eq, and, sql, desc, like } from "drizzle-orm";
+import { money } from "../lib/money";
 
 export async function getExpenses(db: Database, businessId: string, query: {
   from?: string;
@@ -13,16 +14,16 @@ export async function getExpenses(db: Database, businessId: string, query: {
   let filters = [eq(expenses.businessId, businessId)];
 
   if (from) {
-    filters.push(sql`${expenses.incurredAt} >= ${new Date(from)}`);
+    filters.push(sql`${expenses.incurredAt} >= ${new Date(from).getTime()}`);
   }
   if (to) {
-    filters.push(sql`${expenses.incurredAt} <= ${new Date(to)}`);
+    filters.push(sql`${expenses.incurredAt} <= ${new Date(to).getTime()}`);
   }
   if (category && category !== 'All') {
     filters.push(eq(expenses.category, category));
   }
   if (search && search.trim() !== '') {
-    filters.push(ilike(expenses.description, `%${search.trim()}%`));
+    filters.push(like(expenses.description, `%${search.trim()}%`));
   }
 
   const result = await db
@@ -48,7 +49,7 @@ export async function createExpense(db: Database, businessId: string, data: {
   const [newExpense] = await db.insert(expenses).values({
     businessId,
     description: data.description,
-    amount: data.amount.toString(),
+    amount: money(data.amount),
     category: data.category,
     isRecurring: data.isRecurring ?? false,
     recurringFrequency: data.recurringFrequency,

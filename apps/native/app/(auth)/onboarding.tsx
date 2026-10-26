@@ -1,15 +1,25 @@
-import React, { useState, useRef } from 'react';
-import { KeyboardAvoidingView, Platform, View, Text, TouchableOpacity, ScrollView, TextInput, Image, Animated, useWindowDimensions } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Platform, ScrollView, useWindowDimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { useToast } from '@/components/ui/toast';
-import { Storefront, Folder, CaretUp, CaretDown, Check, Phone, MapPin, MapTrifold, CameraPlus } from 'phosphor-react-native';
+import {
+  Storefront,
+  Folder,
+  CaretDown,
+  Check,
+  Phone,
+  MapPin,
+  MapTrifold,
+  CameraPlus,
+} from 'phosphor-react-native';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { apiRequest, apiFormDataRequest } from '../../lib/api';
 import { useAuthStore, type User } from '../../stores/authStore';
-import { StyledView, StyledText, StyledTouchableOpacity, StyledTextInput, StyledImage, StyledScrollView, StyledKeyboardAvoidingView } from '@/components/ui/styled';
+import { StyledView, StyledText, StyledTouchableOpacity, StyledTextInput, StyledImage, StyledKeyboardAvoidingView } from '@/components/ui/styled';
 import { ILLUSTRATIONS } from '@/constants/illustrations';
 
 interface FormErrors {
@@ -21,24 +31,28 @@ interface FormErrors {
 }
 
 const BUSINESS_CATEGORIES = [
-  'Clothing & Fashion',
-  'Food & Beverages',
-  'Electronics',
-  'Beauty & Cosmetics',
-  'Home & Furniture',
-  'Pharmacy/Medical',
-  'Jewelry & Accessories',
-  'Books & Stationery',
-  'Sports & Fitness',
-  'General Goods',
-  'Other',
-];
+  { label: 'Clothing & Fashion', emoji: '👗' },
+  { label: 'Food & Beverages', emoji: '🍲' },
+  { label: 'Electronics', emoji: '📱' },
+  { label: 'Beauty & Cosmetics', emoji: '💄' },
+  { label: 'Home & Furniture', emoji: '🛋️' },
+  { label: 'Pharmacy / Medical', emoji: '💊' },
+  { label: 'Jewelry & Accessories', emoji: '💍' },
+  { label: 'Books & Stationery', emoji: '📚' },
+  { label: 'Sports & Fitness', emoji: '⚽' },
+  { label: 'General Goods', emoji: '🛍️' },
+  { label: 'Other', emoji: '✨' },
+] as const;
 
 const STEPS = [
   { title: 'Business Basics', subtitle: 'Tell us about your business' },
   { title: 'Location & Contact', subtitle: 'How customers reach you' },
   { title: 'Final Touch', subtitle: 'Add a logo and finish' },
-];
+] as const;
+
+/** Window over the shared entrance driver each card fades in through. Cards overlap slightly so the motion reads as one gesture. */
+const STAGGER_STEP = 0.16;
+const STAGGER_SPAN = 0.55;
 
 export default function OnboardingScreen() {
   const router = useRouter();
@@ -49,7 +63,6 @@ export default function OnboardingScreen() {
   const colors = useThemeColor();
   const toast = useToast();
   const { width: screenWidth } = useWindowDimensions();
-  const stepWidth = screenWidth; // Dynamic viewport screen width
 
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -66,20 +79,71 @@ export default function OnboardingScreen() {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(1)).current;
+  const entrance = useRef(new Animated.Value(0)).current;
 
-  const animateToStep = (step: number) => {
-    Animated.timing(slideAnim, {
-      toValue: step,
-      duration: 250,
+  /** Cards of the active step fade + lift in sequence. */
+  const playEntrance = useCallback(() => {
+    entrance.setValue(0);
+    Animated.timing(entrance, {
+      toValue: 1,
+      duration: 520,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  };
+  }, [entrance]);
 
-  const goToStep = (step: number) => {
-    setShowCategoryPicker(false);
-    setCurrentStep(step);
-    animateToStep(step);
-  };
+  // Play once on mount so the first step also arrives with motion.
+  useEffect(() => {
+    playEntrance();
+  }, [playEntrance]);
+
+  const goToStep = useCallback(
+    (step: number) => {
+      setShowCategoryPicker(false);
+      setCurrentStep(step);
+      // The pager slides while the incoming step's cards stagger in behind it.
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: step,
+          duration: 320,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(entrance, {
+          toValue: 1,
+          duration: 520,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    },
+    [slideAnim, entrance],
+  );
+
+  /** Fade + lift for the nth card of the active step. */
+  const stagger = useCallback(
+    (index: number) => {
+      const start = index * STAGGER_STEP;
+      const end = Math.min(start + STAGGER_SPAN, 1);
+      return {
+        opacity: entrance.interpolate({
+          inputRange: [start, end],
+          outputRange: [0, 1],
+          extrapolate: 'clamp',
+        }),
+        transform: [
+          {
+            translateY: entrance.interpolate({
+              inputRange: [start, end],
+              outputRange: [18, 0],
+              extrapolate: 'clamp',
+            }),
+          },
+        ],
+      };
+    },
+    [entrance],
+  );
 
   const validateStep = (step: number) => {
     const newErrors: FormErrors = {};
@@ -250,192 +314,256 @@ export default function OnboardingScreen() {
     }
   };
 
-  const renderStepIndicator = () => (
-    <StyledView className="flex-row items-center justify-center gap-2 mb-6 mt-6">
-      {[1, 2, 3].map((step) => (
-        <StyledView
-          key={step}
-          className={`h-2 rounded-full ${step === currentStep ? 'w-8 bg-primary' : step < currentStep ? 'w-2 bg-primary/50' : 'w-2 bg-outline-variant'}`}
+  const renderStepper = () => (
+    <StyledView className="mb-5">
+      <StyledView className="flex-row items-center justify-between mb-3">
+        <StyledText className="text-label-caps text-primary">
+          Step {currentStep} of {STEPS.length}
+        </StyledText>
+        <StyledText className="text-label-bold text-on-surface-variant">
+          {STEPS[currentStep - 1].title}
+        </StyledText>
+      </StyledView>
+
+      <StyledView className="flex-row items-center">
+        {STEPS.map((step, i) => {
+          const n = i + 1;
+          const isDone = n < currentStep;
+          const isActive = n === currentStep;
+
+          return (
+            <React.Fragment key={step.title}>
+              {i > 0 ? (
+                <StyledView
+                  className="flex-1 h-[2px] mx-2 rounded-full"
+                  style={{ backgroundColor: n <= currentStep ? colors.primary : colors.outlineVariant }}
+                />
+              ) : null}
+
+              <StyledView
+                className={`rounded-full items-center justify-center ${
+                  isActive
+                    ? 'w-8 h-8 bg-primary'
+                    : isDone
+                      ? 'w-7 h-7 bg-primary-container'
+                      : 'w-7 h-7 bg-surface-container border border-outline-variant'
+                }`}
+                accessible
+                accessibilityLabel={`Step ${n}: ${step.title}${isDone ? ', completed' : isActive ? ', current step' : ', not started'}`}
+              >
+                {isDone ? (
+                  <Check size={14} color={colors.primary} weight="bold" />
+                ) : (
+                  <StyledText className={`text-label-bold ${isActive ? 'text-on-primary' : 'text-on-surface-variant'}`}>
+                    {n}
+                  </StyledText>
+                )}
+              </StyledView>
+            </React.Fragment>
+          );
+        })}
+      </StyledView>
+    </StyledView>
+  );
+
+  const StepHero = ({ illustration, caption }: { illustration: string; caption: string }) => (
+    <StyledView className="items-center mb-5">
+      <StyledView className="w-20 h-20 rounded-3xl bg-primary-container items-center justify-center mb-3">
+        <StyledImage
+          source={{ uri: illustration }}
+          style={{ width: 56, height: 56 }}
+          resizeMode="contain"
         />
-      ))}
+      </StyledView>
+      <StyledText className="text-body-lg text-on-surface-variant text-center text-pretty">{caption}</StyledText>
+    </StyledView>
+  );
+
+  const Field = ({
+    label,
+    error,
+    children,
+  }: {
+    label: string;
+    error?: string;
+    children: React.ReactNode;
+  }) => (
+    <StyledView>
+      <StyledText className="text-label-bold text-on-surface font-semibold mb-2 ml-1">{label}</StyledText>
+      {children}
+      {error ? (
+        <StyledText className="text-label-bold text-error mt-1.5 ml-1">{error}</StyledText>
+      ) : null}
     </StyledView>
   );
 
   const renderStep1 = () => (
     <StyledView>
-      <StyledView className="items-center mb-6">
-        <StyledView className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center mb-4">
-          <Image source={{ uri: ILLUSTRATIONS.onboardingStore }} style={{ width: 40, height: 40 }} resizeMode="contain" />
-        </StyledView>
-        <StyledText className="text-[16px] text-on-surface-variant text-center">Let's set up your store in just a few steps!</StyledText>
-      </StyledView>
+      <Animated.View style={stagger(0)}>
+        <StepHero
+          illustration={ILLUSTRATIONS.onboardingStore}
+          caption="Let's set up your store in just a few steps!"
+        />
+      </Animated.View>
 
-      <StyledView className="w-full mb-4">
-        <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">Business Name</StyledText>
-        <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
-          <Storefront size={20} color={colors.outline} style={{ marginRight: 10 }} />
-          <StyledTextInput
-            className="flex-1 text-body-lg text-on-surface"
-            placeholder="e.g., Tope's Fashion Hub"
-            placeholderTextColor={colors.outline}
-            value={formData.businessName}
-            onChangeText={(value) => updateField('businessName', value)}
-            autoCapitalize="words"
-          />
-        </StyledView>
-        {errors.businessName && <StyledText className="text-body-sm text-error mt-1 ml-1">{errors.businessName}</StyledText>}
-      </StyledView>
-
-      <StyledView className="w-full mb-4">
-        <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">Business Category</StyledText>
-        <StyledTouchableOpacity
-          className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12"
-          onPress={() => setShowCategoryPicker(!showCategoryPicker)}
-        >
-          <Folder size={20} color={colors.outline} style={{ marginRight: 10 }} />
-          <StyledText className={`flex-1 text-body-lg ${formData.category ? 'text-on-surface' : 'text-on-surface-variant'}`}>
-            {formData.category || 'Select a category'}
-          </StyledText>
-          {showCategoryPicker ? <CaretUp size={20} color={colors.outline} /> : <CaretDown size={20} color={colors.outline} />}
-        </StyledTouchableOpacity>
-        {showCategoryPicker && (
-          <StyledView className="mt-2 rounded-xl bg-surface border border-outline-variant max-h-[220px] overflow-hidden">
-            <ScrollView nestedScrollEnabled>
-              {BUSINESS_CATEGORIES.map((category) => (
-                <StyledTouchableOpacity
-                  key={category}
-                  className={`flex-row items-center px-4 py-3.5 border-b border-outline-variant ${formData.category === category ? 'bg-secondary-container' : ''}`}
-                  onPress={() => {
-                    updateField('category', category);
-                    setShowCategoryPicker(false);
-                  }}
-                >
-                  <Folder size={18} color={formData.category === category ? colors.primary : colors.outline} style={{ marginRight: 10 }} />
-                  <StyledText className={`flex-1 text-body-lg ${formData.category === category ? 'font-semibold text-primary' : ''}`}>
-                    {category}
-                  </StyledText>
-                  {formData.category === category && (
-                    <Check size={18} color={colors.primary} />
-                  )}
-                </StyledTouchableOpacity>
-              ))}
-            </ScrollView>
+      <Animated.View style={stagger(1)}>
+        <Field label="Business Name" error={errors.businessName}>
+          <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
+            <Storefront size={20} color={colors.outline} style={{ marginRight: 10 }} />
+            <StyledTextInput
+              className="flex-1 text-body-lg text-on-surface"
+              placeholder="e.g., Tope's Fashion Hub"
+              placeholderTextColor={colors.outline}
+              value={formData.businessName}
+              onChangeText={(value) => updateField('businessName', value)}
+              autoCapitalize="words"
+            />
           </StyledView>
-        )}
-        {errors.category && <StyledText className="text-body-sm text-error mt-1 ml-1">{errors.category}</StyledText>}
-      </StyledView>
+        </Field>
+      </Animated.View>
+
+      <Animated.View style={[stagger(2), { marginTop: 16 }]}>
+        <Field label="Business Category" error={errors.category}>
+          <StyledTouchableOpacity
+            className={`flex-row items-center rounded-input border px-4 h-12 ${
+              formData.category ? 'border-primary bg-primary-container/40' : 'border-outline-variant bg-surface-container-lowest'
+            }`}
+            onPress={() => setShowCategoryPicker(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Business category"
+            accessibilityValue={{ text: formData.category || 'Not selected' }}
+          >
+            <Folder size={20} color={formData.category ? colors.primary : colors.outline} style={{ marginRight: 10 }} />
+            <StyledText
+              className={`flex-1 text-body-lg ${formData.category ? 'text-on-surface font-medium' : 'text-on-surface-variant'}`}
+            >
+              {formData.category || 'Select a category'}
+            </StyledText>
+            <CaretDown size={20} color={colors.outline} />
+          </StyledTouchableOpacity>
+        </Field>
+      </Animated.View>
     </StyledView>
   );
 
   const renderStep2 = () => (
     <StyledView>
-      <StyledView className="items-center mb-6">
-        <StyledView className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center mb-4">
-          <Image source={{ uri: ILLUSTRATIONS.onboardingContact }} style={{ width: 40, height: 40 }} resizeMode="contain" />
-        </StyledView>
-        <StyledText className="text-[16px] text-on-surface-variant text-center">Customers reach you through WhatsApp. Let's set that up!</StyledText>
-      </StyledView>
+      <Animated.View style={stagger(0)}>
+        <StepHero
+          illustration={ILLUSTRATIONS.onboardingContact}
+          caption="Customers reach you through WhatsApp. Let's set that up!"
+        />
+      </Animated.View>
 
-      <StyledView className="w-full mb-4">
-        <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">WhatsApp Number</StyledText>
-        <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
-          <Phone size={20} color={colors.outline} style={{ marginRight: 8 }} />
-          <StyledView className="flex-row items-center pr-3 mr-3">
+      <Animated.View style={stagger(1)}>
+        <Field label="WhatsApp Number" error={errors.whatsappNumber}>
+          <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
+            <Phone size={20} color={colors.outline} style={{ marginRight: 8 }} />
             <StyledText className="text-body-lg text-on-surface font-medium">+234</StyledText>
+            <StyledView className="w-px h-6 bg-outline-variant ml-3 mr-3" />
+            <StyledTextInput
+              className="flex-1 text-body-lg text-on-surface"
+              placeholder="801 234 5678"
+              placeholderTextColor={colors.outline}
+              value={formData.whatsappNumber}
+              onChangeText={(value) => updateField('whatsappNumber', value)}
+              keyboardType="phone-pad"
+            />
           </StyledView>
-          <StyledView className="w-px h-6 bg-outline-variant mr-3" />
-          <StyledTextInput
-            className="flex-1 text-body-lg text-on-surface"
-            placeholder="801 234 5678"
-            placeholderTextColor={colors.outline}
-            value={formData.whatsappNumber}
-            onChangeText={(value) => updateField('whatsappNumber', value)}
-            keyboardType="phone-pad"
-          />
-        </StyledView>
-        {errors.whatsappNumber && <StyledText className="text-body-sm text-error mt-1 ml-1">{errors.whatsappNumber}</StyledText>}
-      </StyledView>
+        </Field>
+      </Animated.View>
 
-      <StyledView className="w-full mb-4">
-        <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">City</StyledText>
-        <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
-          <MapPin size={20} color={colors.outline} style={{ marginRight: 10 }} />
-          <StyledTextInput
-            className="flex-1 text-body-lg text-on-surface"
-            placeholder="e.g., Lagos"
-            placeholderTextColor={colors.outline}
-            value={formData.city}
-            onChangeText={(value) => updateField('city', value)}
-          />
-        </StyledView>
-        {errors.city && <StyledText className="text-body-sm text-error mt-1 ml-1">{errors.city}</StyledText>}
-      </StyledView>
+      <Animated.View style={[stagger(2), { marginTop: 16 }]}>
+        <Field label="City" error={errors.city}>
+          <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
+            <MapPin size={20} color={colors.outline} style={{ marginRight: 10 }} />
+            <StyledTextInput
+              className="flex-1 text-body-lg text-on-surface"
+              placeholder="e.g., Lagos"
+              placeholderTextColor={colors.outline}
+              value={formData.city}
+              onChangeText={(value) => updateField('city', value)}
+            />
+          </StyledView>
+        </Field>
+      </Animated.View>
 
-      <StyledView className="w-full mb-4">
-        <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">State</StyledText>
-        <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
-          <MapTrifold size={20} color={colors.outline} style={{ marginRight: 10 }} />
-          <StyledTextInput
-            className="flex-1 text-body-lg text-on-surface"
-            placeholder="e.g., Lagos"
-            placeholderTextColor={colors.outline}
-            value={formData.state}
-            onChangeText={(value) => updateField('state', value)}
-          />
-        </StyledView>
-        {errors.state && <StyledText className="text-body-sm text-error mt-1 ml-1">{errors.state}</StyledText>}
-      </StyledView>
+      <Animated.View style={[stagger(3), { marginTop: 16 }]}>
+        <Field label="State" error={errors.state}>
+          <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
+            <MapTrifold size={20} color={colors.outline} style={{ marginRight: 10 }} />
+            <StyledTextInput
+              className="flex-1 text-body-lg text-on-surface"
+              placeholder="e.g., Lagos"
+              placeholderTextColor={colors.outline}
+              value={formData.state}
+              onChangeText={(value) => updateField('state', value)}
+            />
+          </StyledView>
+        </Field>
+      </Animated.View>
     </StyledView>
   );
 
   const renderStep3 = () => (
     <StyledView>
-      <StyledView className="items-center mb-6">
-        <StyledView className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center mb-4">
-          <Image source={{ uri: ILLUSTRATIONS.onboardingDone }} style={{ width: 40, height: 40 }} resizeMode="contain" />
-        </StyledView>
-        <StyledText className="text-[16px] text-on-surface-variant text-center">You're almost ready! Review and finish setup.</StyledText>
-      </StyledView>
+      <Animated.View style={stagger(0)}>
+        <StepHero
+          illustration={ILLUSTRATIONS.onboardingDone}
+          caption="You're almost ready! Review and finish setup."
+        />
+      </Animated.View>
 
-      <StyledView className="items-center mb-6">
+      <Animated.View style={[stagger(1), { alignItems: 'center', marginBottom: 20 }]}>
         <StyledTouchableOpacity
-          className="w-[100px] h-[100px] rounded-[20px] justify-center items-center border-2 border-dashed border-outline-variant bg-surface"
+          className="w-24 h-24 rounded-3xl items-center justify-center border-2 border-dashed border-outline-variant bg-surface-container-lowest"
           onPress={pickLogo}
+          accessibilityRole="button"
+          accessibilityLabel="Add business logo"
         >
           {formData.logoUri ? (
-            <StyledImage source={{ uri: formData.logoUri }} className="w-full h-full rounded-[18px]" />
+            <StyledImage source={{ uri: formData.logoUri }} className="w-full h-full rounded-2xl" />
           ) : (
             <StyledView className="items-center">
               <CameraPlus size={28} color={colors.outline} />
-              <StyledText className="text-body-sm mt-1 text-outline">Logo</StyledText>
+              <StyledText className="text-label-bold mt-1 text-outline">Logo</StyledText>
             </StyledView>
           )}
         </StyledTouchableOpacity>
-        <StyledTouchableOpacity onPress={pickLogo}>
-          <StyledText className="text-body-sm text-primary font-medium mt-2">
+        <StyledTouchableOpacity onPress={pickLogo} hitSlop={8}>
+          <StyledText className="text-body-sm text-primary font-semibold mt-3">
             {formData.logoUri ? 'Change Logo' : 'Add Logo'}
           </StyledText>
         </StyledTouchableOpacity>
-      </StyledView>
+      </Animated.View>
 
-      <StyledView className="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 mb-4">
-        <StyledView className="flex-row items-center mb-3 pb-3 border-b border-outline-variant/30">
-          <Storefront size={18} color={colors.primary} />
-          <StyledText className="flex-1 text-body-lg text-on-surface font-semibold ml-3">{formData.businessName || 'Your Business'}</StyledText>
+      <Animated.View style={stagger(2)}>
+        <StyledView className="bg-surface-container-lowest rounded-card border border-outline-variant p-4">
+          <StyledView className="flex-row items-center mb-3 pb-3 border-b border-outline-variant/30">
+            <Storefront size={18} color={colors.primary} />
+            <StyledText className="flex-1 text-body-lg text-on-surface font-semibold ml-3" numberOfLines={1}>
+              {formData.businessName || 'Your Business'}
+            </StyledText>
+          </StyledView>
+          <StyledView className="flex-row items-center mb-2">
+            <Folder size={16} color={colors.outline} />
+            <StyledText className="text-body-sm text-on-surface-variant ml-3">{formData.category || 'Not set'}</StyledText>
+          </StyledView>
+          <StyledView className="flex-row items-center mb-2">
+            <Phone size={16} color={colors.outline} />
+            <StyledText className="text-body-sm text-on-surface-variant ml-3">
+              +234 {formData.whatsappNumber || 'Not set'}
+            </StyledText>
+          </StyledView>
+          <StyledView className="flex-row items-center">
+            <MapPin size={16} color={colors.outline} />
+            <StyledText className="text-body-sm text-on-surface-variant ml-3">
+              {formData.city || 'Not set'}
+              {formData.state ? `, ${formData.state}` : ''}
+            </StyledText>
+          </StyledView>
         </StyledView>
-        <StyledView className="flex-row items-center mb-2">
-          <Folder size={16} color={colors.outline} />
-          <StyledText className="text-body-sm text-on-surface-variant ml-3">{formData.category || 'Not set'}</StyledText>
-        </StyledView>
-        <StyledView className="flex-row items-center mb-2">
-          <Phone size={16} color={colors.outline} />
-          <StyledText className="text-body-sm text-on-surface-variant ml-3">+234 {formData.whatsappNumber || 'Not set'}</StyledText>
-        </StyledView>
-        <StyledView className="flex-row items-center">
-          <MapPin size={16} color={colors.outline} />
-          <StyledText className="text-body-sm text-on-surface-variant ml-3">{formData.city || 'Not set'}{formData.state ? `, ${formData.state}` : ''}</StyledText>
-        </StyledView>
-      </StyledView>
+      </Animated.View>
     </StyledView>
   );
 
@@ -445,51 +573,108 @@ export default function OnboardingScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingVertical: 24 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingVertical: 24 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+      >
+        <StyledView className="px-6">
+          {renderStepper()}
+
+          <StyledView className="mb-6">
+            <StyledText className="text-h1 font-bold text-on-surface mb-1 text-balance">
+              {STEPS[currentStep - 1].title}
+            </StyledText>
+            <StyledText className="text-body-lg text-on-surface-variant text-pretty">
+              {STEPS[currentStep - 1].subtitle}
+            </StyledText>
+          </StyledView>
+        </StyledView>
+
+        <Animated.View
+          style={{
+            transform: [
+              {
+                translateX: slideAnim.interpolate({
+                  inputRange: [1, 2, 3],
+                  outputRange: [0, -screenWidth, -screenWidth * 2],
+                  extrapolate: 'clamp',
+                }),
+              },
+            ],
+            width: screenWidth * STEPS.length,
+            flexDirection: 'row',
+          }}
         >
-          <StyledView className="px-6">
-            {renderStepIndicator()}
+          <StyledView className="px-6" style={{ width: screenWidth }}>{renderStep1()}</StyledView>
+          <StyledView className="px-6" style={{ width: screenWidth }}>{renderStep2()}</StyledView>
+          <StyledView className="px-6" style={{ width: screenWidth }}>{renderStep3()}</StyledView>
+        </Animated.View>
 
-            <StyledView className="mb-6">
-              <StyledText className="text-h1 font-bold text-on-surface mb-1 text-balance">{STEPS[currentStep - 1].title}</StyledText>
-              <StyledText className="text-body-lg text-on-surface-variant text-pretty">{STEPS[currentStep - 1].subtitle}</StyledText>
+        <StyledView className="mt-auto gap-3 pb-6 px-6">
+          {currentStep < 3 ? (
+            <StyledView className="gap-3">
+              <Button size="lg" variant="primary" onPress={handleNext}>
+                Continue
+              </Button>
+              <StyledTouchableOpacity className="items-center" onPress={handleSkip}>
+                <StyledText className="text-body-lg text-on-surface-variant">Complete Later</StyledText>
+              </StyledTouchableOpacity>
             </StyledView>
-          </StyledView>
-
-          <Animated.View style={{ transform: [{ translateX: slideAnim.interpolate({ inputRange: [1, 2, 3], outputRange: [0, -stepWidth, -stepWidth * 2], extrapolate: 'clamp' }) }] }}>
-            <StyledView className="flex-row" style={{ width: stepWidth * 3 }}>
-              <StyledView style={{ width: stepWidth }} className="px-6">{renderStep1()}</StyledView>
-              <StyledView style={{ width: stepWidth }} className="px-6">{renderStep2()}</StyledView>
-              <StyledView style={{ width: stepWidth }} className="px-6">{renderStep3()}</StyledView>
+          ) : (
+            <StyledView className="gap-3">
+              <Button size="lg" variant="primary" onPress={handleComplete} isDisabled={isLoading}>
+                {isLoading ? 'Setting up...' : 'Complete Setup'}
+              </Button>
+              <StyledTouchableOpacity className="items-center" onPress={handleBack}>
+                <StyledText className="text-body-lg text-primary font-semibold">← Go Back</StyledText>
+              </StyledTouchableOpacity>
             </StyledView>
-          </Animated.View>
-
-          <StyledView className="mt-auto gap-3 pb-10 px-6">
-            {currentStep < 3 ? (
-              <StyledView className="gap-3">
-                <Button size="lg" variant="primary" onPress={handleNext}>
-                  Continue
-                </Button>
-                <StyledTouchableOpacity className="items-center" onPress={handleSkip}>
-                  <StyledText className="text-body-lg text-on-surface-variant">Complete Later</StyledText>
-                </StyledTouchableOpacity>
-              </StyledView>
-            ) : (
-              <StyledView className="gap-3">
-                <Button size="lg" variant="primary" onPress={handleComplete} isDisabled={isLoading}>
-                  {isLoading ? 'Setting up...' : 'Complete Setup'}
-                </Button>
-                <StyledTouchableOpacity className="items-center" onPress={handleBack}>
-                  <StyledText className="text-body-lg text-primary font-semibold">← Go Back</StyledText>
-                </StyledTouchableOpacity>
-              </StyledView>
-            )}
-          </StyledView>
-        </ScrollView>
+          )}
+        </StyledView>
+      </ScrollView>
       </StyledKeyboardAvoidingView>
+
+      <BottomSheet
+        visible={showCategoryPicker}
+        onClose={() => setShowCategoryPicker(false)}
+        title="Business Category"
+        subtitle="Pick the closest match — you can change this later."
+        icon={<Folder size={20} color={colors.onPrimaryContainer} />}
+        maxHeightRatio={0.72}
+      >
+        <StyledView className="pb-4 gap-1.5">
+          {BUSINESS_CATEGORIES.map((category) => {
+            const isSelected = formData.category === category.label;
+
+            return (
+              <StyledTouchableOpacity
+                key={category.label}
+                className={`flex-row items-center px-4 py-3 rounded-input border ${
+                  isSelected
+                    ? 'border-primary bg-primary-container'
+                    : 'border-outline-variant bg-surface-container-lowest'
+                }`}
+                onPress={() => {
+                  updateField('category', category.label);
+                  setShowCategoryPicker(false);
+                }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
+              >
+                <StyledText className="text-xl mr-3">{category.emoji}</StyledText>
+                <StyledText
+                  className={`flex-1 text-body-lg ${isSelected ? 'font-semibold text-on-primary-container' : 'text-on-surface'}`}
+                >
+                  {category.label}
+                </StyledText>
+                {isSelected ? <Check size={18} color={colors.primary} weight="bold" /> : null}
+              </StyledTouchableOpacity>
+            );
+          })}
+        </StyledView>
+      </BottomSheet>
     </Container>
   );
 }

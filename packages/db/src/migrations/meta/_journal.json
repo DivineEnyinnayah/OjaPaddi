@@ -1,33 +1,12 @@
 {
   "version": "7",
-  "dialect": "postgresql",
+  "dialect": "sqlite",
   "entries": [
     {
       "idx": 0,
-      "version": "7",
-      "when": 1778310260672,
-      "tag": "0000_gray_raza",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1784764751680,
-      "tag": "0001_clever_nomad",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1784779989314,
-      "tag": "0002_burly_senator_kelly",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1784862402287,
-      "tag": "0003_clean_wildside",
+      "version": "6",
+      "when": 1791889365654,
+      "tag": "0000_solid_nick_fury",
       "breakpoints": true
     }
   ]

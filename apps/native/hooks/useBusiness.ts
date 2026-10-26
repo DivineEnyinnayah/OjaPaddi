@@ -22,10 +22,20 @@ export interface Business {
   updatedAt: string;
 }
 
+/**
+ * Fields accepted by `PUT /business`. Must stay in sync with
+ * `UpdateBusinessSchema` in apps/server/src/validators/business.ts — Zod strips
+ * anything it does not declare, so a field missing here (or there) is dropped
+ * server-side while the client still reports success.
+ */
 export interface UpdateBusinessPayload {
   name?: string;
   category?: string;
   whatsappNumber?: string;
+  description?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
   city?: string;
   state?: string;
   logoUrl?: string;

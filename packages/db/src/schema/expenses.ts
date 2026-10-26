@@ -1,19 +1,36 @@
-import { pgTable, uuid, varchar, decimal, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 import { businesses } from "./businesses";
 
-export const expenses = pgTable("expenses", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  businessId: uuid("business_id")
+const id = () =>
+  text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID());
+
+const createdAt = (name = "created_at") =>
+  integer(name, { mode: "timestamp_ms" })
     .notNull()
-    .references(() => businesses.id, { onDelete: "cascade" }),
-  description: varchar("description", { length: 255 }).notNull(),
-  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
-  category: varchar("category", { length: 100 }),
-  isRecurring: boolean("is_recurring").default(false).notNull(),
-  recurringFrequency: varchar("recurring_frequency", { length: 50 }),
-  dueDate: timestamp("due_date"),
-  isPaid: boolean("is_paid").default(true).notNull(),
-  reminderDaysBefore: integer("reminder_days_before").default(3),
-  incurredAt: timestamp("incurred_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+    .$defaultFn(() => new Date());
+
+export const expenses = sqliteTable(
+  "expenses",
+  {
+    id: id(),
+    businessId: text("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    description: text("description").notNull(),
+    amount: text("amount").notNull(),
+    category: text("category"),
+    isRecurring: integer("is_recurring", { mode: "boolean" }).notNull().default(false),
+    recurringFrequency: text("recurring_frequency"),
+    dueDate: integer("due_date", { mode: "timestamp_ms" }),
+    isPaid: integer("is_paid", { mode: "boolean" }).notNull().default(true),
+    reminderDaysBefore: integer("reminder_days_before").default(3),
+    incurredAt: integer("incurred_at", { mode: "timestamp_ms" }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index("expenses_business_id_idx").on(table.businessId),
+    index("expenses_business_incurred_at_idx").on(table.businessId, table.incurredAt),
+  ]
+);

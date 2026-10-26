@@ -21,7 +21,7 @@ export function Chip({
   };
 
   const textStyles = {
-    success: "text-primary",
+    success: "text-on-success-container",
     warning: "text-on-secondary-container",
     error: "text-on-error-container",
     default: "text-on-surface-variant",

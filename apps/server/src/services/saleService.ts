@@ -1,6 +1,7 @@
 import type { Database } from "@ojapaddi/db";
 import { sales, saleItems, products, customers } from "@ojapaddi/db/schema";
 import { eq, and, sql } from "drizzle-orm";
+import { money, moneyFloor0, toNumber } from "../lib/money";
 
 export async function createSale(db: Database, businessId: string, data: {
   orderType?: "customer" | "supermarket";
@@ -35,13 +36,13 @@ export async function createSale(db: Database, businessId: string, data: {
       orderType: data.orderType || "customer",
       expectedPaymentDate: data.expectedPaymentDate ? new Date(data.expectedPaymentDate) : null,
       reference: `OJA-${new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14)}`,
-      subtotal: subtotal.toString(),
-      discount: discount.toString(),
-      returnedAmount: "0",
-      total: total.toString(),
+      subtotal: money(subtotal),
+      discount: money(discount),
+      returnedAmount: "0.00",
+      total: money(total),
       paymentMethod: data.paymentMethod,
       paymentStatus: data.paymentStatus,
-      amountPaid: data.amountPaid.toString(),
+      amountPaid: money(data.amountPaid),
       notes: data.notes,
       soldAt: new Date(),
     }).returning();
@@ -65,11 +66,11 @@ export async function createSale(db: Database, businessId: string, data: {
         saleId: newSale.id,
         productId: item.productId,
         productName: product.name,
-        unitPrice: item.unitPrice.toString(),
+        unitPrice: money(item.unitPrice),
         costPrice: product.costPrice,
         quantity: item.quantity,
         returnedQuantity: 0,
-        total: (item.unitPrice * item.quantity).toString(),
+        total: money(item.unitPrice * item.quantity),
       });
 
       await tx.update(products)
@@ -77,15 +78,25 @@ export async function createSale(db: Database, businessId: string, data: {
         .where(eq(products.id, product.id));
     }
 
-    // 5. Update customer stats if customerId provided
+    // 5. Update customer stats if customerId provided.
+    // Computed in JS, not SQL: the columns are TEXT and SQLite would coerce the
+    // arithmetic to a float (and store 15.5 rather than "15.50").
     if (data.customerId) {
-      await tx.update(customers)
-        .set({
-          orderCount: sql`${customers.orderCount} + 1`,
-          totalSpent: sql`${customers.totalSpent} + ${total}`,
-          updatedAt: new Date(),
-        })
+      const [existingCustomer] = await tx
+        .select()
+        .from(customers)
         .where(eq(customers.id, data.customerId));
+
+      if (existingCustomer) {
+        await tx
+          .update(customers)
+          .set({
+            orderCount: (existingCustomer.orderCount ?? 0) + 1,
+            totalSpent: money(toNumber(existingCustomer.totalSpent) + total),
+            updatedAt: new Date(),
+          })
+          .where(eq(customers.id, data.customerId));
+      }
     }
 
     return newSale;
@@ -152,12 +163,12 @@ export async function returnSaleProducts(
       }
     }
 
-    const newReturnedAmount = Number(sale.returnedAmount || 0) + totalReturnedVal;
-    const currentSubtotal = Number(sale.subtotal);
-    const discount = Number(sale.discount || 0);
+    const newReturnedAmount = toNumber(sale.returnedAmount) + totalReturnedVal;
+    const currentSubtotal = toNumber(sale.subtotal);
+    const discount = toNumber(sale.discount);
     const newNetTotal = Math.max(0, currentSubtotal - discount - newReturnedAmount);
 
-    const amountPaid = Number(sale.amountPaid);
+    const amountPaid = toNumber(sale.amountPaid);
     let newPaymentStatus = sale.paymentStatus;
     if (amountPaid >= newNetTotal) {
       newPaymentStatus = "paid";
@@ -174,23 +185,30 @@ export async function returnSaleProducts(
     const [updatedSale] = await tx
       .update(sales)
       .set({
-        returnedAmount: newReturnedAmount.toString(),
-        total: newNetTotal.toString(),
+        returnedAmount: money(newReturnedAmount),
+        total: money(newNetTotal),
         paymentStatus: newPaymentStatus as any,
         notes: updatedNotes,
       })
       .where(eq(sales.id, saleId))
       .returning();
 
-    // Adjust customer totalSpent if applicable
+    // Adjust customer totalSpent if applicable (JS-side; see createSale)
     if (sale.customerId) {
-      await tx
-        .update(customers)
-        .set({
-          totalSpent: sql`GREATEST(0, ${customers.totalSpent} - ${totalReturnedVal})`,
-          updatedAt: new Date(),
-        })
+      const [existingCustomer] = await tx
+        .select()
+        .from(customers)
         .where(eq(customers.id, sale.customerId));
+
+      if (existingCustomer) {
+        await tx
+          .update(customers)
+          .set({
+            totalSpent: moneyFloor0(toNumber(existingCustomer.totalSpent) - totalReturnedVal),
+            updatedAt: new Date(),
+          })
+          .where(eq(customers.id, sale.customerId));
+      }
     }
 
     const updatedItems = await tx.select().from(saleItems).where(eq(saleItems.saleId, saleId));
@@ -298,13 +316,21 @@ export async function voidSale(db: Database, businessId: string, saleId: string,
       .where(eq(sales.id, saleId));
 
     if (sale.customerId) {
-      await tx.update(customers)
-        .set({
-          orderCount: sql`GREATEST(0, ${customers.orderCount} - 1)`,
-          totalSpent: sql`GREATEST(0, ${customers.totalSpent} - ${Number(sale.total)})`,
-          updatedAt: new Date(),
-        })
+      const [existingCustomer] = await tx
+        .select()
+        .from(customers)
         .where(eq(customers.id, sale.customerId));
+
+      if (existingCustomer) {
+        await tx
+          .update(customers)
+          .set({
+            orderCount: Math.max(0, (existingCustomer.orderCount ?? 0) - 1),
+            totalSpent: moneyFloor0(toNumber(existingCustomer.totalSpent) - toNumber(sale.total)),
+            updatedAt: new Date(),
+          })
+          .where(eq(customers.id, sale.customerId));
+      }
     }
 
     return { alreadyVoided: false };

@@ -942,6 +942,11 @@ export async function getMockResponse<T>(
   const method = (options.method || 'GET').toUpperCase();
   const path = getPath(endpoint);
 
+  // Note: /auth/* has no mock handlers. Dev mode injects a mock user and
+  // bypasses authentication entirely (see stores/authStore.initialize), and the
+  // set-password code is only ever delivered by email — so there is nothing
+  // realistic to fake here.
+
   // ── Products ──
   const productByIdMatch = path.match(/^\/products\/([^/]+)$/);
   const productStockMatch = path.match(/^\/products\/([^/]+)\/stock$/);

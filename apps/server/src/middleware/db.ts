@@ -1,16 +1,15 @@
 import { createMiddleware } from "hono/factory";
-import { createDbWithPool } from "@ojapaddi/db";
-import { env } from "@ojapaddi/env/server";
+import { createDb } from "@ojapaddi/db";
 import type { HonoEnv } from "../types";
 
+/**
+ * libSQL talks HTTP/WebSocket, so there is no connection pool to open or close
+ * per request — the client is shared and stateless. This middleware simply
+ * binds a Database instance onto the context so services keep the same
+ * `c.get("db")` signature they had with Postgres.
+ */
 export const dbMiddleware = createMiddleware<HonoEnv>(async (c, next) => {
-  const connectionString = c.env?.HYPERDRIVE?.connectionString ?? env.DATABASE_URL;
-  const { db, pool } = createDbWithPool(connectionString);
-  c.set("db", db);
+  c.set("db", createDb());
 
   await next();
-
-  if (c.env?.HYPERDRIVE) {
-    c.executionCtx.waitUntil(pool.end());
-  }
 });

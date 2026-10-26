@@ -43,7 +43,7 @@ function FormSection({ title, children }: { title?: string; children: React.Reac
     <StyledView className="rounded-xl border border-outline-variant/40 bg-surface">
       {title && (
         <StyledView className="px-4 pt-3 pb-1">
-          <StyledText className="text-xs font-semibold text-primary uppercase">{title}</StyledText>
+          <StyledText className="text-label-bold font-semibold text-primary uppercase">{title}</StyledText>
         </StyledView>
       )}
       <StyledView className="px-4 pb-2">
@@ -101,7 +101,7 @@ export default function AddProductScreen() {
         <StyledView className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center">
           <StyledView className="w-10 h-10 rounded-full bg-primary/20 animate-pulse" />
         </StyledView>
-        <StyledText className="text-sm text-on-surface-variant font-medium">Loading product...</StyledText>
+        <StyledText className="text-body-sm text-on-surface-variant font-medium">Loading product...</StyledText>
       </StyledView>
     );
   }
@@ -201,7 +201,7 @@ export default function AddProductScreen() {
   const renderPhotoStep = () => (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="flex-1 px-6">
       <StyledView className="flex-1 items-center justify-center">
-        <StyledText className="text-xl font-bold text-on-surface mb-2">
+        <StyledText className="text-h2 font-bold text-on-surface mb-2">
           {copy.productOnboarding.photo.title}
         </StyledText>
         <StyledText className="text-on-surface-variant text-center mb-8">
@@ -212,12 +212,16 @@ export default function AddProductScreen() {
           onPress={handleImagePress}
           className="w-48 h-48 rounded-2xl border-2 border-dashed items-center justify-center overflow-hidden active:opacity-80 mb-8"
           style={{ borderColor: colors.outlineVariant }}
+          accessibilityRole="button"
+          accessibilityLabel="Add product photo"
         >
           {(imageUri || existingImageUrl) ? (
             <StyledImage
               source={{ uri: imageUri || existingImageUrl! }}
               className="w-full h-full"
               resizeMode="cover"
+              accessible
+              accessibilityLabel={formData.name || "Product photo"}
             />
           ) : (
             <StyledView className="items-center">
@@ -237,7 +241,7 @@ export default function AddProductScreen() {
   const renderDetailsStep = () => (
     <ScrollView contentContainerStyle={{ padding: 24 }} showsVerticalScrollIndicator={false}>
       <StyledView>
-        <StyledText className="text-xl font-bold text-on-surface mb-2">
+        <StyledText className="text-h2 font-bold text-on-surface mb-2">
           {copy.productOnboarding.details.title}
         </StyledText>
         <StyledText className="text-on-surface-variant mb-6">
@@ -274,7 +278,7 @@ export default function AddProductScreen() {
   const renderPricingStep = () => (
     <ScrollView contentContainerStyle={{ padding: 24 }} showsVerticalScrollIndicator={false}>
       <StyledView>
-        <StyledText className="text-xl font-bold text-on-surface mb-2">
+        <StyledText className="text-h2 font-bold text-on-surface mb-2">
           {copy.productOnboarding.pricing.title}
         </StyledText>
         <StyledText className="text-on-surface-variant mb-6">
@@ -374,6 +378,8 @@ export default function AddProductScreen() {
             <StyledTouchableOpacity
               onPress={() => router.back()}
               className="w-10 h-10 items-center justify-center rounded-full bg-surface-container active:scale-95"
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
             >
               <ArrowLeft size={22} color={colors.onSurface} />
             </StyledTouchableOpacity>
@@ -394,17 +400,21 @@ export default function AddProductScreen() {
                 style={{
                   borderColor: errors.image ? colors.error : colors.outlineVariant,
                 }}
+                accessibilityRole="button"
+                accessibilityLabel="Change product photo"
               >
                 {(imageUri || existingImageUrl) ? (
                   <StyledImage
                     source={{ uri: imageUri || existingImageUrl! }}
                     className="w-full h-full"
                     resizeMode="cover"
+                    accessible
+                    accessibilityLabel={formData.name || "Product photo"}
                   />
                 ) : (
                   <StyledView className="items-center gap-2">
                     <CameraPlus size={28} color={colors.primary} />
-                    <StyledText className="text-sm text-on-surface-variant font-medium">
+                    <StyledText className="text-body-sm text-on-surface-variant font-medium">
                       {copy.addProduct.imagePlaceholder}
                     </StyledText>
                   </StyledView>
@@ -496,7 +506,7 @@ export default function AddProductScreen() {
           </ScrollView>
 
           <StyledView
-            className="px-4 pt-3"
+            className="px-4 pt-3 border-t border-outline-variant/30"
             style={{
               position: 'absolute',
               bottom: insets.bottom + TAB_BAR_OFFSET,
@@ -504,8 +514,6 @@ export default function AddProductScreen() {
               right: 0,
               paddingBottom: 8,
               backgroundColor: colors.surface,
-              borderTopWidth: 1,
-              borderTopColor: colors.outlineVariant + '30',
             }}
           >
             <Button
@@ -531,6 +539,8 @@ export default function AddProductScreen() {
         <StyledTouchableOpacity
           onPress={handleBack}
           className="w-10 h-10 items-center justify-center rounded-full bg-surface-container active:scale-95"
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <ArrowLeft size={22} color={colors.onSurface} />
         </StyledTouchableOpacity>
@@ -547,15 +557,13 @@ export default function AddProductScreen() {
 
       {currentStep !== 'welcome' && (
         <StyledView
-          className="px-4 py-3 shadow-lg z-10"
+          className="px-4 py-3 shadow-lg z-10 border-t border-outline-variant/30"
           style={{
             position: 'absolute',
             bottom: TAB_BAR_OFFSET,
             left: 0,
             right: 0,
             backgroundColor: colors.surface,
-            borderTopWidth: 1,
-            borderTopColor: colors.outlineVariant + '30',
           }}
         >
           <Button

@@ -1,0 +1,31 @@
+{
+  "name": "@ojapaddi/auth",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "types": "./src/*.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@ojapaddi/config": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "@ojapaddi/db": "workspace:*",
+    "@ojapaddi/env": "workspace:*",
+    "better-auth": "catalog:",
+    "@better-auth/infra": "catalog:",
+    "zod": "catalog:"
+  }
+}

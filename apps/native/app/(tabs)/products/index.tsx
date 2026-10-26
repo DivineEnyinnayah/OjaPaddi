@@ -20,6 +20,7 @@ import { withUniwind } from 'uniwind';
 import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
 import { ILLUSTRATIONS } from '@/constants/illustrations';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatCurrency } from '@/lib/currency';
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -82,11 +83,19 @@ export default function ProductsScreen() {
               params: { id: item.id },
             })
           }
+          accessibilityRole="button"
+          accessibilityLabel={`${item.name}, ${formatCurrency(price)}, ${item.quantity} in stock`}
         >
           <Surface variant="primary" className="p-0 overflow-hidden rounded-xl border border-outline-variant/20 shadow-sm">
             <StyledView className="h-28 bg-surface-container items-center justify-center">
               {item.imageUrl ? (
-                <StyledImage source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
+                <StyledImage
+                  source={{ uri: item.imageUrl }}
+                  className="w-full h-full"
+                  resizeMode="cover"
+                  accessible
+                  accessibilityLabel={item.name}
+                />
               ) : (
                 <StyledText className="text-2xl font-bold text-outline">
                   {getInitials(item.name)}
@@ -95,28 +104,28 @@ export default function ProductsScreen() {
             </StyledView>
             <StyledView className="p-3 gap-1">
               <StyledText
-                className="text-base font-semibold text-on-surface leading-tight text-balance"
+                className="text-body-lg font-semibold text-on-surface leading-tight text-balance"
                 numberOfLines={1}
               >
                 {item.name}
               </StyledText>
               <StyledView className="bg-surface-container self-start rounded-full px-2 py-0.5">
-                <StyledText className="text-xs text-on-surface-variant">
+                <StyledText className="text-label-bold text-on-surface-variant">
                   {item.category || 'General'}
                 </StyledText>
               </StyledView>
-              <StyledText className="text-base font-bold text-primary mt-1 tabular-nums">
+              <StyledText className="text-body-lg font-bold text-primary mt-1 tabular-nums">
                 ₦{price.toLocaleString()}
               </StyledText>
               <StyledView className="flex-row items-center gap-1">
                 <StyledText
-                  className={`text-xs ${isLowStock ? 'text-error font-semibold' : 'text-on-surface-variant'} tabular-nums`}
+                  className={`text-label-bold ${isLowStock ? 'text-error font-semibold' : 'text-on-surface-variant'} tabular-nums`}
                 >
                   {item.quantity} in stock
                 </StyledText>
                 {isLowStock && (
                   <StyledView className="bg-error/10 rounded-full px-1.5 py-0.5">
-                    <StyledText className="text-xs text-error font-semibold">
+                    <StyledText className="text-label-bold text-error font-semibold">
                       Low
                     </StyledText>
                   </StyledView>
@@ -177,7 +186,7 @@ export default function ProductsScreen() {
 
   if (error && products.length === 0) {
     return (
-      <Container isScrollable={false} withTabBar className="items-center justify-center p-6">
+      <Container isScrollable={false} withTabBar className="bg-background items-center justify-center p-6">
         <StyledText className="text-error text-center mb-4 text-body-lg">
           {error}
         </StyledText>
@@ -218,13 +227,14 @@ export default function ProductsScreen() {
           return (
             <StyledTouchableOpacity
               key={category}
-              className={`items-center justify-center rounded-full px-4 h-8 ${isSelected ? 'bg-primary' : 'border border-outline-variant'}`}
+              className={`items-center justify-center rounded-full px-4 h-11 ${isSelected ? 'bg-primary' : 'border border-outline-variant'}`}
               onPress={() => setSelectedCategory(category)}
-              accessibilityLabel={`Select category: ${category}`}
               accessibilityRole="button"
+              accessibilityLabel={`Select category: ${category}`}
+              accessibilityState={{ selected: isSelected }}
             >
               <StyledText
-                className={`justify-center items-center flex text-sm font-medium ${isSelected ? 'text-on-primary' : 'text-on-surface-variant'}`}
+                className={`justify-center items-center flex text-body-sm font-medium ${isSelected ? 'text-on-primary' : 'text-on-surface-variant'}`}
               >
                 {category}
               </StyledText>
@@ -236,19 +246,19 @@ export default function ProductsScreen() {
       <StyledView className="px-margin pb-3">
         <Surface variant="primary" className="flex-row justify-between items-center rounded-xl border border-outline-variant/30 p-md">
           <StyledView className="flex-1 items-center">
-            <StyledText className="text-xs text-on-surface-variant">
+            <StyledText className="text-label-bold text-on-surface-variant">
               Total Products
             </StyledText>
-            <StyledText className="text-xl font-bold text-on-surface tabular-nums">
+            <StyledText className="text-h2 font-bold text-on-surface tabular-nums">
               {products.length}
             </StyledText>
           </StyledView>
           <StyledView className="w-px h-10 bg-outline-variant/50" />
           <StyledView className="flex-1 items-center">
-            <StyledText className="text-xs text-on-surface-variant">
+            <StyledText className="text-label-bold text-on-surface-variant">
               Total Value
             </StyledText>
-            <StyledText className="text-xl font-bold text-primary tabular-nums">
+            <StyledText className="text-h2 font-bold text-primary tabular-nums">
               ₦{totalValue.toLocaleString()}
             </StyledText>
           </StyledView>
@@ -276,7 +286,7 @@ export default function ProductsScreen() {
               style={{ width: 80, height: 80 }}
               resizeMode="contain"
             />
-            <StyledText className="text-base text-on-surface-variant mt-4 text-center text-pretty">
+            <StyledText className="text-body-lg text-on-surface-variant mt-4 text-center text-pretty">
               No products yet
             </StyledText>
             <Button
@@ -294,8 +304,8 @@ export default function ProductsScreen() {
         className="absolute right-4 size-14 rounded-full bg-primary justify-center items-center shadow-lg z-[var(--z-fab)] active:scale-95"
         style={{ bottom: TAB_BAR_OFFSET + 12 }}
         onPress={() => router.push('/products/add')}
-        accessibilityLabel="Add new product"
         accessibilityRole="button"
+        accessibilityLabel="Add new product"
       >
         <Plus size={28} color={colors.onPrimary} />
       </StyledTouchableOpacity>

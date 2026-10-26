@@ -19,14 +19,17 @@ export function ThemeToggle() {
         toggleTheme();
       }}
       className="px-2.5"
+      accessibilityRole="button"
+      accessibilityLabel={isLight ? "Switch to dark theme" : "Switch to light theme"}
+      accessibilityState={{ checked: !isLight }}
     >
       {isLight ? (
         <View key="moon">
-          <StyledIonicons name="moon" size={20} className="text-foreground" />
+          <StyledIonicons name="moon" size={20} className="text-on-surface" />
         </View>
       ) : (
         <View key="sun">
-          <StyledIonicons name="sunny" size={20} className="text-foreground" />
+          <StyledIonicons name="sunny" size={20} className="text-on-surface" />
         </View>
       )}
     </Pressable>

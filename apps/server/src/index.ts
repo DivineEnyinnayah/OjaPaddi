@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { env } from "@ojapaddi/env/server";
+import { v2 as cloudinary } from "cloudinary";
 import { 
   authRoutes, 
   businessRoutes, 
@@ -14,6 +15,14 @@ import {
 import { dbMiddleware } from "./middleware/db";
 import { rateLimit } from "./middleware/rateLimit";
 import type { HonoEnv } from "./types";
+
+// Cloudinary SDK config — pulls CLOUDINARY_CLOUD_NAME / API_KEY / API_SECRET
+// from .env via @ojapaddi/env/server. Required for URL generation and Admin API.
+cloudinary.config({
+  cloud_name: env.CLOUDINARY_CLOUD_NAME,
+  api_key: env.CLOUDINARY_API_KEY,
+  api_secret: env.CLOUDINARY_API_SECRET,
+});
 
 const app = new Hono<HonoEnv>();
 

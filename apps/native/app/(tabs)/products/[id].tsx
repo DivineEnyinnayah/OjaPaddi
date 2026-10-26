@@ -121,7 +121,7 @@ export default function ProductDetailScreen() {
   if (!product) {
     return (
       <Container isScrollable={false} className="bg-background items-center justify-center">
-        <StyledText className="text-base text-on-surface-variant mb-4">Product not found</StyledText>
+        <StyledText className="text-body-lg text-on-surface-variant mb-4">Product not found</StyledText>
         <Button onPress={() => router.back()}>
           Go Back
         </Button>
@@ -136,7 +136,11 @@ export default function ProductDetailScreen() {
     <Container isScrollable={false} withTabBar className="bg-background">
       <StyledView className="relative flex-1">
         <StyledView className="absolute top-4 left-4 z-20 w-11 h-11 bg-surface rounded-full justify-center items-center shadow-md shadow-black/20 elevation-4">
-          <StyledTouchableOpacity onPress={() => router.back()}>
+          <StyledTouchableOpacity
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
             <ArrowLeft size={22} color={colors.onSurface} />
           </StyledTouchableOpacity>
         </StyledView>
@@ -152,6 +156,8 @@ export default function ProductDetailScreen() {
                 className="w-full h-full"
                 resizeMode="cover"
                 onError={() => setImageError(true)}
+                accessible
+                accessibilityLabel={product.name}
               />
             ) : (
               <StyledView className="w-full h-full items-center justify-center bg-primary-container/20 p-6">
@@ -174,26 +180,28 @@ export default function ProductDetailScreen() {
 
             <StyledView className="flex-row items-center gap-2 mb-1">
               <StyledView className="bg-primary-container/30 px-3 py-1 rounded-full">
-                <StyledText className="text-xs font-semibold text-primary">{product.category || 'General'}</StyledText>
+                <StyledText className="text-label-bold font-semibold text-primary">{product.category || 'General'}</StyledText>
               </StyledView>
               {product.sku ? (
-                <StyledText className="text-xs text-on-surface-variant font-medium">SKU: {product.sku}</StyledText>
+                <StyledText className="text-label-bold text-on-surface-variant font-medium">SKU: {product.sku}</StyledText>
               ) : null}
             </StyledView>
 
             <StyledView className="h-[1px] bg-outline-variant my-5" />
 
-            <StyledText className="text-base font-bold text-on-surface mb-2">Description</StyledText>
-            <StyledText className="text-sm text-on-surface-variant leading-5 mb-6">
+            <StyledText className="text-body-lg font-bold text-on-surface mb-2">Description</StyledText>
+            <StyledText className="text-body-sm text-on-surface-variant leading-5 mb-6">
               {product.description || 'No description provided.'}
             </StyledText>
 
             <Surface variant="primary" className="p-4">
-              <StyledText className="text-xs font-semibold text-on-surface-variant mb-3">Current Stock</StyledText>
+              <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-3">Current Stock</StyledText>
               <StyledView className="flex-row items-center justify-center gap-5">
                 <StyledTouchableOpacity
                   className="w-11 h-11 rounded-full justify-center items-center border border-outline/40"
                   onPress={handleStockRemove}
+                  accessibilityRole="button"
+                  accessibilityLabel="Decrease stock"
                 >
                   <Minus size={22} color={colors.onSurface} />
                 </StyledTouchableOpacity>
@@ -203,6 +211,8 @@ export default function ProductDetailScreen() {
                 <StyledTouchableOpacity
                   className="w-11 h-11 rounded-full bg-primary justify-center items-center"
                   onPress={handleStockAdd}
+                  accessibilityRole="button"
+                  accessibilityLabel="Increase stock"
                 >
                   <Plus size={22} color={colors.onPrimary} />
                 </StyledTouchableOpacity>
@@ -210,7 +220,7 @@ export default function ProductDetailScreen() {
               {product.quantity <= lowStockThreshold && (
                 <StyledView className="flex-row items-center justify-center mt-3 gap-1">
                   <Warning size={16} color={colors.error} />
-                  <StyledText className="text-xs font-semibold text-error">Running Low!</StyledText>
+                  <StyledText className="text-label-bold font-semibold text-error">Running Low!</StyledText>
                 </StyledView>
               )}
             </Surface>
@@ -221,7 +231,9 @@ export default function ProductDetailScreen() {
                 className="w-12 h-12 rounded-full justify-center items-center border-2 border-error bg-error/10"
                 onPress={handleDelete}
                 disabled={isLoading}
+                accessibilityRole="button"
                 accessibilityLabel="Delete Product"
+                accessibilityState={{ disabled: isLoading }}
               >
                 <Trash size={22} color={colors.error} />
               </StyledTouchableOpacity>

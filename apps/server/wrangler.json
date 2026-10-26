@@ -10,14 +10,7 @@
   "observability": {
     "enabled": true
   },
-  "hyperdrive": [
-    {
-      "binding": "HYPERDRIVE",
-      "id": "8902a13a52574c279ce54317bd6ba545"
-    }
-  ],
   "vars": {
-    "CORS_ORIGIN": "*",
-    "EXPO_PUBLIC_SUPABASE_URL": "https://obtteivclhfwlucwrtsf.supabase.co"
+    "CORS_ORIGIN": "*"
   }
 }

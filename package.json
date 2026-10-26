@@ -12,6 +12,9 @@
     "secrets:deploy": "pnpm --filter @ojapaddi/server secrets:deploy",
     "build": "turbo build",
     "check-types": "turbo check-types",
+    "smoke": "pnpm --filter @ojapaddi/server smoke",
+    "migrate:data": "pnpm --filter @ojapaddi/server migrate:data",
+    "migrate:images": "pnpm --filter @ojapaddi/server migrate:images",
     "db:push": "turbo -F @ojapaddi/db db:push",
     "db:studio": "turbo -F @ojapaddi/db db:studio",
     "db:generate": "turbo -F @ojapaddi/db db:generate",
@@ -43,7 +46,6 @@
     "onlyBuiltDependencies": [
       "sharp",
       "unrs-resolver",
-      "supabase",
       "esbuild"
     ]
   },

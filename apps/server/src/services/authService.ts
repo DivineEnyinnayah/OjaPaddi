@@ -1,68 +1,37 @@
 import type { Database } from "@ojapaddi/db";
-import { businesses, users, refreshTokens } from "@ojapaddi/db/schema";
-import { eq, and, or, lt } from "drizzle-orm";
-import { supabase, supabaseAnon } from "../lib/supabase";
-import { createHash } from "crypto";
+import crypto from "node:crypto";
+import { account, businesses, user, verification } from "@ojapaddi/db/schema";
+import { auth } from "@ojapaddi/auth";
+import { and, eq, or, sql } from "drizzle-orm";
 
-// ── Refresh Token Helpers ──────────────────────────────────────────────
-
-const TOKEN_EXPIRY_DAYS = 30;
-
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
-
-async function storeRefreshToken(db: Database, userId: string, refreshToken: string) {
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + TOKEN_EXPIRY_DAYS);
-
-  await db.insert(refreshTokens).values({
-    userId,
-    tokenHash: hashToken(refreshToken),
-    expiresAt,
-  });
-}
-
-async function verifyAndRotateRefreshToken(
-  db: Database,
-  userId: string,
-  oldRefreshToken: string,
-  newRefreshToken: string
-): Promise<boolean> {
-  const oldHash = hashToken(oldRefreshToken);
-  const newHash = hashToken(newRefreshToken);
-
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + TOKEN_EXPIRY_DAYS);
-
-  const deleted = await db
-    .delete(refreshTokens)
-    .where(and(eq(refreshTokens.userId, userId), eq(refreshTokens.tokenHash, oldHash)))
-    .returning();
-
-  if (deleted.length === 0) {
-    return false;
+/**
+ * Raised when a user account exists but has never set a password — the state
+ * every user was left in by the Supabase migration, since bcrypt hashes could
+ * not be copied out of GoTrue.
+ *
+ * The route maps this to HTTP 401 with code `PASSWORD_RESET_REQUIRED`, which the
+ * mobile app uses to route to the set-password screen.
+ */
+export class PasswordResetRequiredError extends Error {
+  readonly code = "PASSWORD_RESET_REQUIRED";
+  constructor(readonly email: string) {
+    super("This account has not set a password yet");
+    this.name = "PasswordResetRequiredError";
   }
-
-  await db.insert(refreshTokens).values({
-    userId,
-    tokenHash: newHash,
-    expiresAt,
-  });
-
-  return true;
 }
 
-async function revokeRefreshToken(db: Database, refreshToken: string) {
-  const tokenHash = hashToken(refreshToken);
-  await db.delete(refreshTokens).where(eq(refreshTokens.tokenHash, tokenHash));
-}
-
-async function cleanupExpiredTokens(db: Database) {
-  await db.delete(refreshTokens).where(lt(refreshTokens.expiresAt, new Date()));
-}
-
-// ── Auth Service ──────────────────────────────────────────────────────
+/**
+ * Auth service — Better Auth behind the legacy REST contract.
+ *
+ * IMPORTANT CONTRACT NOTE
+ * The mobile client persists `refresh_token` and replays it to `/auth/refresh`.
+ * Better Auth issues a single long-lived session token rather than a separate
+ * access/refresh pair, so both fields carry that same session token. The app
+ * needs no changes: `access_token` is used as the Bearer credential and
+ * `refresh_token` still re-mints the same credential. This also fixes the old
+ * bug where `/auth/refresh` returned camelCase `refreshToken` while the client
+ * destructured `refresh_token`, which silently produced `undefined`.
+ */
 
 interface RegistrationData {
   fullName: string;
@@ -79,215 +48,265 @@ interface OnboardingData {
   state: string;
 }
 
-export async function completeRegistration(db: Database, reg: RegistrationData, onb?: Partial<OnboardingData>) {
-  const existingUsers = await db
-    .select({ email: users.email, phone: users.phone })
-    .from(users)
-    .where(
-      reg.phone
-        ? or(eq(users.email, reg.email), eq(users.phone, reg.phone))
-        : eq(users.email, reg.email)
-    );
+/** Pulls the profile fields the app hydrates its auth store from. */
+async function hydrateProfile(db: Database, userId: string) {
+  const [row] = await db
+    .select({
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      name: user.name,
+      plan: user.plan,
+      businessName: businesses.name,
+      whatsappNumber: businesses.whatsappNumber,
+    })
+    .from(user)
+    .leftJoin(businesses, eq(businesses.userId, user.id))
+    .where(eq(user.id, userId))
+    .limit(1);
 
-  if (existingUsers.length > 0) {
-    const hasEmail = existingUsers.some(u => u.email.toLowerCase() === reg.email.toLowerCase());
+  return {
+    id: row?.id ?? userId,
+    email: row?.email ?? "",
+    fullName: row?.fullName || row?.name || "",
+    plan: row?.plan || "free",
+    businessName: row?.businessName || "",
+    whatsappNumber: row?.whatsappNumber || "",
+  };
+}
+
+/** Builds the response body the mobile app's `lib/api.ts` expects. */
+function authResponse(profile: Awaited<ReturnType<typeof hydrateProfile>>, token: string) {
+  return {
+    user: profile,
+    access_token: token,
+    refresh_token: token,
+  };
+}
+
+export async function completeRegistration(
+  db: Database,
+  reg: RegistrationData,
+  onb?: Partial<OnboardingData>
+) {
+  const email = reg.email.toLowerCase();
+
+  const existing = await db
+    .select({ email: user.email, phone: user.phone })
+    .from(user)
+    .where(reg.phone ? or(eq(user.email, email), eq(user.phone, reg.phone)) : eq(user.email, email))
+    .limit(1);
+
+  if (existing.length > 0) {
+    const hasEmail = existing.some((u) => u.email?.toLowerCase() === email);
     if (hasEmail) throw new Error("Email is already registered");
     throw new Error("Phone number is already registered");
   }
 
-  const { data, error: authError } = await supabase.auth.signUp({
-    email: reg.email,
-    password: reg.password,
-    options: {
-      data: {
-        full_name: reg.fullName,
-        phone: reg.phone,
-      },
+  const result = await auth.api.signUpEmail({
+    body: {
+      email,
+      password: reg.password,
+      name: reg.fullName,
+      fullName: reg.fullName,
+      phone: reg.phone,
     },
   });
 
-  if (authError) throw new Error(authError.message);
+  const userId = result?.user?.id;
+  const token = result?.token;
+  if (!userId || !token) throw new Error("User registration failed");
 
-  const userId = data.user?.id;
-  if (!userId) throw new Error("User registration failed: No user ID returned from Supabase");
+  const businessName = onb?.businessName || `${reg.fullName}'s Shop`;
 
   try {
-    await db.transaction(async (tx) => {
-      await tx.insert(users).values({
-        id: userId,
-        email: reg.email,
-        fullName: reg.fullName,
-        phone: reg.phone || undefined,
-        plan: 'free',
-      });
-
-      await tx.insert(businesses).values({
-        userId: userId,
-        name: onb?.businessName || `${reg.fullName}'s Shop`,
-        category: onb?.category || null,
-        whatsappNumber: onb?.whatsappNumber || null,
-        city: onb?.city || null,
-        state: onb?.state || null,
-      });
+    await db.insert(businesses).values({
+      userId,
+      name: businessName,
+      category: onb?.category || null,
+      whatsappNumber: onb?.whatsappNumber || null,
+      city: onb?.city || null,
+      state: onb?.state || null,
     });
-
-    if (data.session?.refresh_token) {
-      await storeRefreshToken(db, userId, data.session.refresh_token);
-    }
-
-    return {
-      user: {
-        id: userId,
-        email: reg.email,
-        fullName: reg.fullName,
-        plan: 'free' as const,
-        businessName: onb?.businessName || `${reg.fullName}'s Shop`,
-        whatsappNumber: onb?.whatsappNumber || null,
-      },
-      access_token: data.session?.access_token,
-      refresh_token: data.session?.refresh_token,
-    };
   } catch (dbError: unknown) {
+    // Compensating rollback: Better Auth already committed the user row, so
+    // remove it directly rather than leaving an orphaned account with no
+    // business. Deleting `user` cascades to session/account (FK ON DELETE).
+    try {
+      await db.delete(user).where(eq(user.id, userId));
+    } catch {}
     const message = dbError instanceof Error ? dbError.message : String(dbError);
-    try { await supabase.auth.admin.deleteUser(userId); } catch {}
     throw new Error(`Database setup failed: ${message}`);
   }
+
+  return authResponse(
+    { id: userId, email, fullName: reg.fullName, plan: "free", businessName, whatsappNumber: onb?.whatsappNumber || "" },
+    token
+  );
 }
 
 export async function loginUser(db: Database, email: string, password: string) {
-  const { data, error } = await supabaseAnon.auth.signInWithPassword({ email, password });
-  if (error) throw new Error(error.message);
-  if (!data.user || !data.session) throw new Error("Login failed: No user or session returned");
+  const normalizedEmail = email.toLowerCase();
 
-  const userId = data.user.id;
+  try {
+    const result = await auth.api.signInEmail({
+      body: { email: normalizedEmail, password },
+    });
 
-  const [userRow] = await db
-    .select({
-      id: users.id,
-      email: users.email,
-      fullName: users.fullName,
-      plan: users.plan,
-      businessName: businesses.name,
-      whatsappNumber: businesses.whatsappNumber,
-    })
-    .from(users)
-    .leftJoin(businesses, eq(businesses.userId, users.id))
-    .where(eq(users.id, userId));
+    const userId = result?.user?.id;
+    const token = result?.token;
+    if (!userId || !token) throw new Error("Invalid email or password");
 
-  if (data.session.refresh_token) {
-    await storeRefreshToken(db, userId, data.session.refresh_token);
-  }
-
-  return {
-    user: {
-      id: userId,
-      email: data.user.email!,
-      fullName: userRow?.fullName || data.user.user_metadata?.full_name || "",
-      plan: userRow?.plan || 'free',
-      businessName: userRow?.businessName || "",
-      whatsappNumber: userRow?.whatsappNumber || "",
-    },
-    access_token: data.session.access_token,
-    refresh_token: data.session.refresh_token,
-  };
-}
-
-export async function logoutUser(db: Database, refreshToken: string) {
-  await revokeRefreshToken(db, refreshToken);
-  const { error } = await supabaseAnon.auth.signOut({ scope: "global" });
-  if (error) throw new Error(error.message);
-}
-
-export async function refreshAccessToken(db: Database, refreshToken: string) {
-  await cleanupExpiredTokens(db).catch(() => {});
-
-  const tokenHash = hashToken(refreshToken);
-  const [existingToken] = await db.select().from(refreshTokens).where(eq(refreshTokens.tokenHash, tokenHash));
-
-  if (!existingToken) throw new Error("Refresh token invalid or expired");
-
-  const response = await fetch(
-    `${process.env.EXPO_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: process.env.SUPABASE_ANON_KEY!,
-      },
-      body: JSON.stringify({ refresh_token: refreshToken }),
+    return authResponse(await hydrateProfile(db, userId), token);
+  } catch (e) {
+    // Distinguish "this account exists but has never set a password" (our
+    // Supabase migration left every user in that state) from a genuine wrong
+    // password. The client uses this to route the user to the set-password
+    // screen instead of showing a dead end.
+    if (await hasPasswordlessAccount(db, normalizedEmail)) {
+      throw new PasswordResetRequiredError(normalizedEmail);
     }
-  );
-
-  if (!response.ok) {
-    const err = (await response.json().catch(() => ({}))) as any;
-    throw new Error(err.error_description || err.message || "Refresh token invalid or expired");
+    throw e;
   }
-
-  const session = (await response.json()) as any;
-  if (!session.access_token) throw new Error("Refresh failed: No session returned");
-
-  const userId: string | undefined = session.user?.id;
-  let userName = session.user?.user_metadata?.full_name || "";
-  let businessName = "";
-  let whatsappNumber = "";
-  let plan = 'free';
-
-  if (userId) {
-    const [userRow] = await db
-      .select({
-        fullName: users.fullName,
-        plan: users.plan,
-        businessName: businesses.name,
-        whatsappNumber: businesses.whatsappNumber,
-      })
-      .from(users)
-      .leftJoin(businesses, eq(businesses.userId, users.id))
-      .where(eq(users.id, userId));
-
-    if (userRow) {
-      userName = userRow.fullName || userName;
-      plan = userRow.plan || 'free';
-      businessName = userRow.businessName || "";
-      whatsappNumber = userRow.whatsappNumber || "";
-    }
-  }
-
-  const newRefreshToken = session.refresh_token;
-  if (userId && newRefreshToken) {
-    const rotated = await verifyAndRotateRefreshToken(db, userId, refreshToken, newRefreshToken);
-    if (!rotated) throw new Error("Refresh token rotation failed");
-  }
-
-  return {
-    user: {
-      id: userId,
-      email: session.user?.email || "",
-      fullName: userName,
-      plan,
-      businessName,
-      whatsappNumber,
-    },
-    access_token: session.access_token,
-    refresh_token: newRefreshToken,
-  };
 }
 
-export async function forgotPassword(email: string) {
-  const { error } = await supabaseAnon.auth.resetPasswordForEmail(email);
-  if (error) throw new Error(error.message);
+/**
+ * True when a `user` row exists for this email but has no `account` row holding
+ * a password — i.e. a migrated user who has not set one yet.
+ */
+async function hasPasswordlessAccount(db: Database, email: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(eq(user.email, email))
+    .limit(1);
+
+  if (!row) return false;
+
+  const [credential] = await db
+    .select({ id: account.id })
+    .from(account)
+    .where(and(eq(account.userId, row.id), eq(account.providerId, "credential")))
+    .limit(1);
+
+  return !credential;
 }
 
+/**
+ * Emails a password-reset code.
+ *
+ * Bypasses Better Auth's internal background queue to ensure delivery on
+ * Cloudflare Workers. Manually manages the verification token.
+ */
+export async function requestPasswordResetCode(db: Database, email: string) {
+  const normalizedEmail = email.toLowerCase();
+
+  const [known] = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(eq(user.email, normalizedEmail))
+    .limit(1);
+
+  if (!known) return;
+
+  // Generate a 6-digit code for the user and a long secure token for the API
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const token = crypto.randomBytes(32).toString("hex");
+  const value = `${code}:${token}`;
+
+  // Store in verification table (expires in 10 minutes)
+  await db.insert(verification).values({
+    identifier: normalizedEmail,
+    value,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  });
+
+  await sendEmail({
+    to: normalizedEmail,
+    subject: "Reset your OjaPaddi password",
+    text: [
+      "Hi,",
+      "",
+      "Use this code to set a new password for your OjaPaddi account:",
+      "",
+      `    ${code}`,
+      "",
+      "It expires in 10 minutes.",
+      "",
+      "If you did not request this, you can ignore this email.",
+    ].join("\n"),
+  });
+}
+
+/** Validates a reset code and sets the new password. */
 export async function resetPassword(token: string, newPassword: string) {
-  const { data, error: verifyError } = await supabaseAnon.auth.verifyOtp({
-    token_hash: token,
-    type: "recovery",
+  // The 'token' passed from the app is actually the 6-digit code.
+  // We look for a verification record that starts with this code.
+  const [v] = await auth.db.select()
+    .from(verification)
+    .where(and(
+      sql`value LIKE ${token + ":%"}`,
+      sql`expires_at > ${new Date().toISOString()}`
+    ))
+    .limit(1);
+
+  if (!v) throw new Error("Invalid or expired verification code");
+
+  const [, longToken] = v.value.split(":");
+
+  await auth.api.resetPassword({
+    body: { token: longToken, newPassword },
   });
 
-  if (verifyError || !data.user) throw new Error(verifyError?.message || "Invalid or expired reset token");
+  // Cleanup
+  await auth.db.delete(verification).where(eq(verification.id, v.id));
+}
 
-  const { error } = await supabase.auth.admin.updateUserById(data.user.id, {
-    password: newPassword,
+/**
+ * The stored "refresh token" is a live session token, so re-reading the
+ * session both validates it and re-issues the current credential.
+ */
+export async function refreshAccessToken(db: Database, refreshToken: string) {
+  const session = await auth.api.getSession({
+    headers: new Headers({ Authorization: `Bearer ${refreshToken}` }),
   });
 
-  if (error) throw new Error(error.message);
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Refresh token invalid or expired");
+
+  const headers = new Headers({ Authorization: `Bearer ${refreshToken}` });
+  // Sliding expiry: extend the session on refresh so an active user is never
+  // logged out mid-use, matching the previous 30-day rolling window.
+  const refreshed = await auth.api.getSession({ headers, query: { disableRefresh: false } });
+
+  const token = refreshed?.session?.token ?? refreshToken;
+
+  return authResponse(await hydrateProfile(db, userId), token);
+}
+
+export async function logoutUser(refreshToken: string) {
+  try {
+    await auth.api.revokeSession({
+      body: { token: refreshToken },
+      headers: new Headers({ Authorization: `Bearer ${refreshToken}` }),
+    });
+  } catch {
+    // Logging out must be idempotent: a stale or already-revoked token is a
+    // successful logout from the client's point of view.
+  }
+}
+
+/**
+ * Issues a password-reset token.
+ *
+ * NOTE: no email transport is wired up yet, so no message is actually sent.
+ * Until `sendResetPassword` is configured, the token is logged server-side so
+ * the flow can be exercised. See the migration notes.
+ */
+// ── Helpers used by the data migration ────────────────────────────────
+
+/** True when a Better Auth credential record already exists for this email. */
+export async function userExistsByEmail(db: Database, email: string) {
+  const rows = await db.select({ id: user.id }).from(user).where(eq(user.email, email.toLowerCase())).limit(1);
+  return rows.length > 0;
 }

@@ -100,11 +100,15 @@ export default function SalesScreen() {
     const isSupermarket = item.orderType === 'supermarket';
 
     return (
-      <StyledTouchableOpacity onPress={() => router.push(`/sales/${item.id}`)}>
-        <Surface variant="outline" className="flex-row items-center p-4 mb-3 rounded-lg border border-outline-variant/30">
-          <StyledView className={`size-11 rounded-full items-center justify-center mr-3 ${isSupermarket ? 'bg-amber-500/20' : item.customerId ? 'bg-secondary-container/30' : 'bg-surface-container-highest'}`}>
+      <StyledTouchableOpacity
+        onPress={() => router.push(`/sales/${item.id}`)}
+        accessibilityRole="button"
+        accessibilityLabel={`View sale ${item.reference}`}
+      >
+        <Surface variant="outline" className="flex-row items-center p-4 mb-3 rounded-card border border-outline-variant/30">
+          <StyledView className={`size-11 rounded-full items-center justify-center mr-3 ${isSupermarket ? 'bg-secondary/20' : item.customerId ? 'bg-secondary-container/30' : 'bg-surface-container-highest'}`}>
             {isSupermarket ? (
-              <Storefront size={22} color="#D97706" weight="bold" />
+              <Storefront size={22} color={colors.secondary} weight="bold" />
             ) : item.customerId ? (
               <User size={22} color={colors.secondary} weight="bold" />
             ) : (
@@ -115,8 +119,8 @@ export default function SalesScreen() {
             <StyledView className="flex-row items-center gap-1.5 mb-0.5">
               <StyledText className="text-body-sm text-on-surface-variant">{item.reference}</StyledText>
               {isSupermarket && (
-                <StyledView className="bg-amber-500/10 px-1.5 py-0.2 rounded">
-                  <StyledText className="text-[10px] font-bold text-amber-700 dark:text-amber-400">Store</StyledText>
+                <StyledView className="bg-secondary/10 px-1.5 py-0.2 rounded">
+                  <StyledText className="text-label-sm font-bold text-secondary">Store</StyledText>
                 </StyledView>
               )}
             </StyledView>
@@ -124,7 +128,7 @@ export default function SalesScreen() {
               {isSupermarket ? 'Supermarket Supply' : item.customerId ? 'Customer Sale' : 'Walk-in Customer'}
             </StyledText>
             {isSupermarket && item.expectedPaymentDate ? (
-              <StyledText className="text-xs text-amber-700 dark:text-amber-400 font-semibold mt-0.5">
+              <StyledText className="text-label-bold text-secondary font-semibold mt-0.5">
                 Due: {new Date(item.expectedPaymentDate).toLocaleDateString()}
               </StyledText>
             ) : (
@@ -134,7 +138,7 @@ export default function SalesScreen() {
             )}
           </StyledView>
           <StyledView className="items-end ml-3">
-            <StyledText className="text-lg font-bold text-primary tabular-nums">
+            <StyledText className="text-h3 font-bold text-primary tabular-nums">
               ₦{total.toLocaleString()}
             </StyledText>
             <StyledText className="text-body-sm text-on-surface-variant mt-1 tabular-nums">
@@ -197,10 +201,10 @@ export default function SalesScreen() {
       <StyledView className="px-margin pt-2 pb-4">
         {/* Due Payment Reminder Alert Banner */}
         {dueReminders.length > 0 && (
-          <Surface variant="outline" className="mb-4 p-3.5 bg-amber-500/10 border-amber-500/30 rounded-xl">
+          <Surface variant="outline" className="mb-4 p-3.5 bg-secondary/10 border-secondary/30 rounded-xl">
             <StyledView className="flex-row items-center gap-2 mb-1.5">
-              <Bell size={18} color="#D97706" weight="fill" />
-              <StyledText className="text-sm font-bold text-amber-900 dark:text-amber-200">
+              <Bell size={18} color={colors.secondary} weight="fill" />
+              <StyledText className="text-body-sm font-bold text-secondary">
                 Payment Due Reminders ({dueReminders.length})
               </StyledText>
             </StyledView>
@@ -208,12 +212,14 @@ export default function SalesScreen() {
               <StyledTouchableOpacity
                 key={rem.id}
                 onPress={() => router.push(`/sales/${rem.id}`)}
-                className="py-1 flex-row justify-between items-center"
+                className="py-1 flex-row justify-between items-center min-h-[44px]"
+                accessibilityRole="button"
+                accessibilityLabel={`View overdue sale ${rem.reference}`}
               >
-                <StyledText className="text-xs text-amber-800 dark:text-amber-300 font-medium">
+                <StyledText className="text-label-bold text-secondary font-medium">
                   {rem.reference} (Due: {new Date(rem.expectedPaymentDate!).toLocaleDateString()})
                 </StyledText>
-                <StyledText className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                <StyledText className="text-label-bold font-bold text-secondary">
                   ₦{parseFloat(rem.total).toLocaleString()}
                 </StyledText>
               </StyledTouchableOpacity>
@@ -241,10 +247,11 @@ export default function SalesScreen() {
             return (
               <StyledTouchableOpacity
                 key={period.key}
-                className={`flex-1 py-2.5 rounded-lg items-center ${isActive ? 'bg-primary' : 'bg-surface-container-lowest border border-outline-variant'}`}
+                className={`flex-1 py-2.5 rounded-lg items-center min-h-[44px] ${isActive ? 'bg-primary' : 'bg-surface-container-lowest border border-outline-variant'}`}
                 onPress={() => setSelectedPeriod(period.key)}
                 accessibilityLabel={`Filter by ${period.label}`}
                 accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
               >
                 <StyledText className={`font-label-bold ${isActive ? 'text-on-primary' : 'text-on-surface-variant'}`}>
                   {period.label}
@@ -261,10 +268,11 @@ export default function SalesScreen() {
             return (
               <StyledTouchableOpacity
                 key={filter}
-                className={`px-4 py-1.5 rounded-full mr-2 border ${isActive ? 'bg-primary border-primary' : 'bg-surface-container-lowest border-outline-variant'}`}
+                className={`px-4 py-1.5 rounded-full mr-2 min-h-[44px] items-center justify-center border ${isActive ? 'bg-primary border-primary' : 'bg-surface-container-lowest border-outline-variant'}`}
                 onPress={() => setPaymentFilter(filterKey)}
                 accessibilityLabel={`Filter by ${filter}`}
                 accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
               >
                 <StyledText className={`text-label-caps font-semibold ${isActive ? 'text-on-primary' : 'text-on-surface-variant'}`}>
                   {filter}
@@ -295,7 +303,7 @@ export default function SalesScreen() {
               style={{ width: 80, height: 80 }}
               resizeMode="contain"
             />
-            <StyledText className="text-base text-on-surface-variant mt-4 text-center text-pretty">
+            <StyledText className="text-body-lg text-on-surface-variant mt-4 text-center text-pretty">
               No sales recorded yet. Record your first sale!
             </StyledText>
             <Button size="lg" className="mt-6" onPress={() => router.push('/sales/record')}>
@@ -306,7 +314,7 @@ export default function SalesScreen() {
       />
 
       <StyledTouchableOpacity
-        className="absolute right-4 size-14 rounded-full bg-primary justify-center items-center shadow-md z-[var(--z-fab)] active:scale-95"
+        className="absolute right-4 size-14 rounded-full bg-primary justify-center items-center shadow-lg z-[var(--z-fab)] active:scale-95"
         style={{ bottom: TAB_BAR_OFFSET + 12 }}
         onPress={() => router.push('/sales/record')}
         accessibilityLabel="Record new sale"

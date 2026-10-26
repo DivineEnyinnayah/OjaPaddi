@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloudinary Getting Started — OjaPaddi</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #fafafa; color: #111; padding: 40px; }
+    .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; max-width: 1200px; margin: 0 auto; }
+    .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; }
+    .card h3 { margin-top: 0; font-size: 1.2rem; }
+    .img-wrapper { width: 100%; height: 400px; background: #eee; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 12px; }
+    .img-wrapper img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .stats { margin-top: 12px; font-size: 0.85rem; color: #666; }
+    .section { margin-top: 32px; }
+    #stage-5-integration-snippet { background: #f0f5ff; padding: 16px; border-radius: 8px; margin-top: 16px; font-family: ui-monospace, monospace; font-size: 0.85rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Cloudinary — Delivery Optimization</h1>
+  <div class="gallery">
+    <div class="card">
+      <h3>Original Image</h3>
+      <div class="img-wrapper"><img src="https://res.cloudinary.com/kwtra9mm/image/upload/v1791913074/OjaPaddi.png" alt="Original OjaPaddi image"></div>
+      <div class="stats">PNG — 68,772 bytes — 500×500</div>
+    </div>
+    <div class="card">
+      <h3>Transformed Image</h3>
+      <div class="img-wrapper"><img src="https://res.cloudinary.com/kwtra9mm/image/upload/c_fill,h_1000,w_1000,g_auto/l_text:Arial_72_bold:Adapt%20everywhere,co_white/e_shadow:50/fl_layer_apply,g_south_west,x_80,y_140/l_text:Arial_34:Dynamic%20media%20built%20in%20real%20time,co_rgb:E9D5FF/e_shadow:35/fl_layer_apply,g_south_west,x_84,y_90/f_auto/q_auto/OjaPaddi.png" alt="Transformed OjaPaddi image"></div>
+      <div class="stats">WebP — 63,288 bytes — 1000×1000 — ~7.7% smaller</div>
+    </div>
+  </div>
+
+  <div class="section" id="stage-5-integration-snippet">
+    <h3>Integration Snippet (Server — HonoJS / Node.js)</h3>
+    <pre>import { v2 as cloudinary } from "cloudinary";
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Generate transformed delivery URL
+const transformedUrl = cloudinary.url("OjaPaddi", {
+  transformation: [
+    { crop: "fill", width: 1000, height: 1000, gravity: "auto" },
+    { overlay: { font_family: "Arial", font_size: 72, text: "Adapt everywhere", color: "white" }, opacity: 100, width: "100%" },
+ { overlay: { font_family: "Arial", font_size: 34, text: "Dynamic media built in real time", color: "rgb(233, 213, 255)" }, opacity: 100, width: "100%" },
+    { shadow: 50 },
+    { gravity: "south_west", x: 80, y: 140 },
+    { shadow: 35 },
+    { gravity: "south_west", x: 84, y: 90 },
+    { format: "auto" }
+  ]
+});</pre>
+  </div>
+</body>
+</html>

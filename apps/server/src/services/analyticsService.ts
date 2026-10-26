@@ -2,6 +2,23 @@ import type { Database } from "@ojapaddi/db";
 import { sales, expenses, products, saleItems, customers } from "@ojapaddi/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 
+/**
+ * SQLite date bucketing.
+ *
+ * Postgres used `to_char(sold_at, 'YYYY-MM-DD')`. `sold_at` is stored as
+ * integer milliseconds, so SQLite needs the value divided into seconds before
+ * `strftime` can format it.
+ */
+const soldDate = sql<string>`strftime('%Y-%m-%d', ${sales.soldAt} / 1000, 'unixepoch')`;
+
+/** `sold_at` is integer ms — bind the epoch number, not a Date object. */
+function soldAtFrom(from: string) {
+  return sql`${sales.soldAt} >= ${new Date(from).getTime()}`;
+}
+function soldAtTo(to: string) {
+  return sql`${sales.soldAt} <= ${new Date(to).getTime()}`;
+}
+
 export async function getRevenueChart(db: Database, businessId: string, query: {
   from?: string;
   to?: string;
@@ -10,20 +27,20 @@ export async function getRevenueChart(db: Database, businessId: string, query: {
 
   let filters = [eq(sales.businessId, businessId), sql`${sales.voidedAt} IS NULL`];
   if (from) {
-    filters.push(sql`${sales.soldAt} >= ${new Date(from)}`);
+    filters.push(soldAtFrom(from));
   }
   if (to) {
-    filters.push(sql`${sales.soldAt} <= ${new Date(to)}`);
+    filters.push(soldAtTo(to));
   }
 
   const rows = await db.select({
-    date: sql<string>`to_char(${sales.soldAt}, 'YYYY-MM-DD')`.as("date"),
+    date: soldDate.as("date"),
     revenue: sql<number>`sum(${sales.total})`.as("revenue"),
     count: sql<number>`count(*)`.as("count"),
   })
   .from(sales)
   .where(and(...filters))
-  .groupBy(sql`to_char(${sales.soldAt}, 'YYYY-MM-DD')`)
+  .groupBy(soldDate)
   .orderBy(sql`date ASC`);
 
   return rows.map(r => ({
@@ -42,10 +59,10 @@ export async function getTopCustomers(db: Database, businessId: string, query: {
 
   let filters = [eq(sales.businessId, businessId), sql`${sales.voidedAt} IS NULL`];
   if (from) {
-    filters.push(sql`${sales.soldAt} >= ${new Date(from)}`);
+    filters.push(soldAtFrom(from));
   }
   if (to) {
-    filters.push(sql`${sales.soldAt} <= ${new Date(to)}`);
+    filters.push(soldAtTo(to));
   }
 
   const { customers } = await import("@ojapaddi/db/schema");
@@ -94,7 +111,8 @@ export async function getAnalyticsSummary(db: Database, businessId: string, quer
 
   const [expenseData] = await db.select({
     totalExpenses: sql<number>`sum(${expenses.amount})`,
-  }).from(expenses).where(and(eq(expenses.businessId, businessId), sql`${expenses.incurredAt} >= ${from ? new Date(from) : new Date(0)}`, sql`${expenses.incurredAt} <= ${to ? new Date(to) : new Date()}`));
+  // `incurred_at` is integer ms — bind epoch numbers, not Date objects.
+  }).from(expenses).where(and(eq(expenses.businessId, businessId), sql`${expenses.incurredAt} >= ${from ? new Date(from).getTime() : 0}`, sql`${expenses.incurredAt} <= ${to ? new Date(to).getTime() : Date.now()}`));
 
   const totalRevenue = Number(salesData?.totalRevenue ?? 0);
   const totalExpenses = Number(expenseData?.totalExpenses ?? 0);
@@ -102,7 +120,7 @@ export async function getAnalyticsSummary(db: Database, businessId: string, quer
 
   // Calculate COGS (Cost of Goods Sold) from sale_items
   const [cogsData] = await db.select({
-    totalCogs: sql<number>`COALESCE(sum(COALESCE(CAST(${saleItems.costPrice} AS numeric), 0) * ${saleItems.quantity}), 0)`,
+    totalCogs: sql<number>`COALESCE(sum(COALESCE(CAST(${saleItems.costPrice} AS REAL), 0) * ${saleItems.quantity}), 0)`,
   }).from(saleItems)
     .innerJoin(sales, eq(saleItems.saleId, sales.id))
     .where(and(...salesFilters));
@@ -170,8 +188,8 @@ export async function getProductAnalytics(db: Database, businessId: string, prod
     .select({
       totalSold: sql<number>`COALESCE(sum(${saleItems.quantity} - ${saleItems.returnedQuantity}), 0)`,
       totalReturned: sql<number>`COALESCE(sum(${saleItems.returnedQuantity}), 0)`,
-      grossRevenue: sql<number>`COALESCE(sum(CAST(${saleItems.unitPrice} AS numeric) * ${saleItems.quantity}), 0)`,
-      netRevenue: sql<number>`COALESCE(sum(CAST(${saleItems.unitPrice} AS numeric) * (${saleItems.quantity} - ${saleItems.returnedQuantity})), 0)`,
+      grossRevenue: sql<number>`COALESCE(sum(CAST(${saleItems.unitPrice} AS REAL) * ${saleItems.quantity}), 0)`,
+      netRevenue: sql<number>`COALESCE(sum(CAST(${saleItems.unitPrice} AS REAL) * (${saleItems.quantity} - ${saleItems.returnedQuantity})), 0)`,
       orderCount: sql<number>`count(distinct ${saleItems.saleId})`,
     })
     .from(saleItems)
@@ -204,20 +222,23 @@ export async function getSupermarketAnalytics(db: Database, businessId: string, 
       totalBilled: sql<number>`COALESCE(sum(${sales.subtotal} - ${sales.discount}), 0)`,
       totalPaid: sql<number>`COALESCE(sum(${sales.amountPaid}), 0)`,
       totalReturnsAmount: sql<number>`COALESCE(sum(${sales.returnedAmount}), 0)`,
-      netReceivable: sql<number>`COALESCE(sum(GREATEST(0, CAST(${sales.total} AS numeric) - CAST(${sales.amountPaid} AS numeric))), 0)`,
+      // SQLite has no GREATEST(); MAX() with two arguments is the scalar equivalent.
+      netReceivable: sql<number>`COALESCE(sum(MAX(0, CAST(${sales.total} AS REAL) - CAST(${sales.amountPaid} AS REAL))), 0)`,
     })
     .from(sales)
     .where(and(eq(sales.customerId, supermarketId), eq(sales.businessId, businessId), sql`${sales.voidedAt} IS NULL`));
 
-  // Top products supplied to this supermarket
+  // Top products supplied to this supermarket.
+  // The aggregates need explicit SQL aliases: `order by totalValue` below
+  // references an output column name, which SQLite cannot resolve without one.
   const topProductsSupplied = await db
     .select({
       productId: saleItems.productId,
       productName: saleItems.productName,
-      quantitySupplied: sql<number>`sum(${saleItems.quantity})`,
-      quantityReturned: sql<number>`sum(${saleItems.returnedQuantity})`,
-      netDelivered: sql<number>`sum(${saleItems.quantity} - ${saleItems.returnedQuantity})`,
-      totalValue: sql<number>`sum(CAST(${saleItems.unitPrice} AS numeric) * (${saleItems.quantity} - ${saleItems.returnedQuantity}))`,
+      quantitySupplied: sql<number>`sum(${saleItems.quantity})`.as("quantitySupplied"),
+      quantityReturned: sql<number>`sum(${saleItems.returnedQuantity})`.as("quantityReturned"),
+      netDelivered: sql<number>`sum(${saleItems.quantity} - ${saleItems.returnedQuantity})`.as("netDelivered"),
+      totalValue: sql<number>`sum(CAST(${saleItems.unitPrice} AS REAL) * (${saleItems.quantity} - ${saleItems.returnedQuantity}))`.as("totalValue"),
     })
     .from(saleItems)
     .innerJoin(sales, eq(saleItems.saleId, sales.id))

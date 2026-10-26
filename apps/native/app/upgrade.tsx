@@ -16,7 +16,7 @@ const StyledTouchableOpacity = withUniwind(TouchableOpacity);
 const PLAN_DATA = {
   free: {
     name: 'Free Plan',
-    price: '₦0 / mo',
+    price: 'â¦0 / mo',
     features: [
       'Up to 50 products',
       'Up to 100 customers',
@@ -33,7 +33,7 @@ const PLAN_DATA = {
   },
   pro: {
     name: 'Pro Plan',
-    price: '₦2,500 / mo',
+    price: 'â¦2,500 / mo',
     features: [
       'Unlimited products',
       'Unlimited customers',
@@ -50,7 +50,7 @@ const PLAN_DATA = {
   },
   growth: {
     name: 'Growth Plan',
-    price: '₦7,500 / mo',
+    price: 'â¦7,500 / mo',
     features: [
       'Everything in Pro',
       'Unlimited staff accounts',
@@ -156,8 +156,10 @@ export default function UpgradeScreen() {
         ) : (
           <StyledView style={{ gap: 12 }} className="mt-4">
             <StyledTouchableOpacity
-              className="bg-outline-variant/30 py-4 rounded-2xl items-center justify-center border border-outline-variant/50"
-              onPress={() => {}}
+              className="bg-outline-variant/30 py-4 rounded-2xl items-center justify-center border border-outline-variant/50 opacity-50"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: true }}
+              accessibilityLabel="Manage Subscription — coming soon"
             >
               <StyledText className="text-on-surface-variant font-semibold text-body-lg">Manage Subscription</StyledText>
             </StyledTouchableOpacity>

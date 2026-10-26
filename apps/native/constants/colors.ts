@@ -54,6 +54,12 @@ export interface ThemeColorTokens {
   errorContainer: string;
   onErrorContainer: string;
 
+  // Success
+  success: string;
+  onSuccess: string;
+  successContainer: string;
+  onSuccessContainer: string;
+
   // Inverse
   inverseSurface: string;
   inverseOnSurface: string;
@@ -106,6 +112,12 @@ export const COLORS: { light: ThemeColorTokens; dark: ThemeColorTokens } = {
     errorContainer: '#ffdad6',
     onErrorContainer: '#93000a',
 
+    // Success
+    success: '#2e7d32',
+    onSuccess: '#ffffff',
+    successContainer: '#e8f5e9',
+    onSuccessContainer: '#1b5e20',
+
     // Inverse
     inverseSurface: '#2d322d',
     inverseOnSurface: '#eef2eb',
@@ -156,6 +168,12 @@ export const COLORS: { light: ThemeColorTokens; dark: ThemeColorTokens } = {
     onError: '#690005',
     errorContainer: '#93000a',
     onErrorContainer: '#ffdad6',
+
+    // Success
+    success: '#66bb6a',
+    onSuccess: '#1b5e20',
+    successContainer: '#1b5e20',
+    onSuccessContainer: '#a5d6a7',
 
     // Inverse
     inverseSurface: '#e1e3e0',

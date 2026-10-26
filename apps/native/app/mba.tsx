@@ -128,8 +128,10 @@ export default function MBAScreen() {
         <StyledView className="flex-row items-center gap-2 flex-1 mr-2">
           <StyledTouchableOpacity
             onPress={() => router.back()}
-            className="w-10 h-10 items-center justify-center"
+            className="w-11 h-11 items-center justify-center"
+            accessibilityRole="button"
             accessibilityLabel="Go back"
+            hitSlop={8}
           >
             <MaterialIcons name="arrow-back" size={24} className="text-on-surface" />
           </StyledTouchableOpacity>
@@ -144,10 +146,12 @@ export default function MBAScreen() {
 
         <StyledTouchableOpacity
           onPress={handleExportCSV}
-          className="flex-row items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full"
+          className="flex-row items-center gap-1.5 px-4 py-2.5 min-h-[44px] min-w-[44px] bg-primary/10 rounded-full"
+          accessibilityRole="button"
+          accessibilityLabel="Export CSV"
         >
           <MaterialIcons name="ios-share" size={16} className="text-primary" />
-          <StyledText className="text-primary font-semibold text-xs">Export CSV</StyledText>
+          <StyledText className="text-primary font-semibold text-label-sm">Export CSV</StyledText>
         </StyledTouchableOpacity>
       </StyledView>
 
@@ -164,7 +168,10 @@ export default function MBAScreen() {
             <StyledView className="flex-row items-center justify-between">
               <StyledTouchableOpacity
                 onPress={() => adjustSupport(-0.05)}
-                className="w-8 h-8 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant/30"
+                className="w-10 h-10 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant/30"
+                accessibilityRole="button"
+                accessibilityLabel="Decrease support"
+                hitSlop={4}
               >
                 <MaterialIcons name="remove" size={16} className="text-on-surface" />
               </StyledTouchableOpacity>
@@ -173,7 +180,10 @@ export default function MBAScreen() {
               </StyledText>
               <StyledTouchableOpacity
                 onPress={() => adjustSupport(0.05)}
-                className="w-8 h-8 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant/30"
+                className="w-10 h-10 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant/30"
+                accessibilityRole="button"
+                accessibilityLabel="Increase support"
+                hitSlop={4}
               >
                 <MaterialIcons name="add" size={16} className="text-on-surface" />
               </StyledTouchableOpacity>
@@ -186,7 +196,10 @@ export default function MBAScreen() {
             <StyledView className="flex-row items-center justify-between">
               <StyledTouchableOpacity
                 onPress={() => adjustConfidence(-0.05)}
-                className="w-8 h-8 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant/30"
+                className="w-10 h-10 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant/30"
+                accessibilityRole="button"
+                accessibilityLabel="Decrease confidence"
+                hitSlop={4}
               >
                 <MaterialIcons name="remove" size={16} className="text-on-surface" />
               </StyledTouchableOpacity>
@@ -195,7 +208,10 @@ export default function MBAScreen() {
               </StyledText>
               <StyledTouchableOpacity
                 onPress={() => adjustConfidence(0.05)}
-                className="w-8 h-8 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant/30"
+                className="w-10 h-10 rounded-full bg-surface-container-lowest items-center justify-center border border-outline-variant/30"
+                accessibilityRole="button"
+                accessibilityLabel="Increase confidence"
+                hitSlop={4}
               >
                 <MaterialIcons name="add" size={16} className="text-on-surface" />
               </StyledTouchableOpacity>
@@ -211,6 +227,9 @@ export default function MBAScreen() {
           className={`flex-1 py-2 items-center rounded-lg ${
             activeTab === "recommendations" ? "bg-primary" : "bg-transparent"
           }`}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === "recommendations" }}
+          accessibilityLabel="Recommendations"
         >
           <StyledText
             className={`font-label-bold ${
@@ -226,6 +245,9 @@ export default function MBAScreen() {
           className={`flex-1 py-2 items-center rounded-lg ${
             activeTab === "rules" ? "bg-primary" : "bg-transparent"
           }`}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === "rules" }}
+          accessibilityLabel="Association Rules"
         >
           <StyledText
             className={`font-label-bold ${
@@ -265,7 +287,7 @@ export default function MBAScreen() {
             <StyledText className="text-error text-center mt-3 mb-4 font-body-lg font-semibold">
               {error}
             </StyledText>
-            <StyledTouchableOpacity className="px-6 py-3 bg-primary rounded-xl" onPress={loadData}>
+            <StyledTouchableOpacity className="px-6 py-3 bg-primary rounded-xl" onPress={loadData} accessibilityRole="button" accessibilityLabel="Retry">
               <StyledText className="text-on-primary font-semibold">Retry</StyledText>
             </StyledTouchableOpacity>
           </StyledView>
@@ -284,6 +306,8 @@ export default function MBAScreen() {
                 setMinConfidence(0.2);
               }}
               className="bg-primary/10 rounded-xl px-5 py-2.5"
+              accessibilityRole="button"
+              accessibilityLabel="Use lower settings"
             >
               <StyledText className="text-primary font-semibold text-sm">Use Lower Settings</StyledText>
             </StyledTouchableOpacity>
@@ -306,14 +330,14 @@ export default function MBAScreen() {
                   
                   <StyledView className="flex-row items-center gap-4 mt-2 pt-2.5 border-t border-outline-variant/10">
                      <StyledView>
-                       <StyledText className="text-[10px] text-on-surface-variant uppercase font-bold">Likelihood</StyledText>
+                       <StyledText className="text-label-sm text-on-surface-variant uppercase font-bold">Likelihood</StyledText>
                        <StyledText className="text-body-sm font-semibold text-primary mt-0.5 tabular-nums">
                          {(rule.confidence * 100).toFixed(0)}% Certainty
                        </StyledText>
                      </StyledView>
 
                      <StyledView>
-                       <StyledText className="text-[10px] text-on-surface-variant uppercase font-bold">Strength</StyledText>
+                       <StyledText className="text-label-sm text-on-surface-variant uppercase font-bold">Strength</StyledText>
                        <StyledText className="text-body-sm font-semibold text-on-surface mt-0.5 tabular-nums">
                          {getLiftText(rule.lift)} ({rule.lift.toFixed(1)}x)
                        </StyledText>
@@ -333,11 +357,11 @@ export default function MBAScreen() {
               <Surface key={idx} variant="primary" className="rounded-xl p-4 border border-outline-variant/20">
                 <StyledView className="flex-row justify-between items-start mb-3">
                   <StyledView className="bg-surface-container-low px-2 py-1 rounded-md">
-                    <StyledText className="text-[10px] font-bold text-primary">RULE #{idx + 1}</StyledText>
+                    <StyledText className="text-label-sm font-bold text-primary">RULE #{idx + 1}</StyledText>
                   </StyledView>
                   <StyledView className="flex-row items-center gap-1">
                     <MaterialIcons name="trending-up" size={14} className="text-secondary" />
-                    <StyledText className="text-xs font-semibold text-on-surface-variant">
+                    <StyledText className="text-label-sm font-semibold text-on-surface-variant">
                       Lift: <StyledText className="text-on-surface font-bold">{rule.lift.toFixed(2)}</StyledText>
                     </StyledText>
                   </StyledView>
@@ -347,7 +371,7 @@ export default function MBAScreen() {
                 <StyledView className="bg-surface-container-low rounded-lg p-3 mb-3">
                   <StyledView className={screenWidth < 380 ? "flex-col items-center gap-2" : "flex-row items-center gap-2"}>
                     <StyledView className={screenWidth < 380 ? "items-center w-full" : "flex-1"}>
-                      <StyledText className="text-[10px] text-on-surface-variant font-bold uppercase mb-0.5">If they buy</StyledText>
+                      <StyledText className="text-label-sm text-on-surface-variant font-bold uppercase mb-0.5">If they buy</StyledText>
                       <StyledText className={`text-body-sm font-bold text-on-surface ${screenWidth < 380 ? "text-center" : ""}`}>{rule.antecedentNames.join(" + ")}</StyledText>
                     </StyledView>
                     
@@ -358,7 +382,7 @@ export default function MBAScreen() {
                     />
                     
                     <StyledView className={screenWidth < 380 ? "items-center w-full" : "flex-1"}>
-                      <StyledText className="text-[10px] text-on-surface-variant font-bold uppercase mb-0.5">They also buy</StyledText>
+                      <StyledText className="text-label-sm text-on-surface-variant font-bold uppercase mb-0.5">They also buy</StyledText>
                       <StyledText className={`text-body-sm font-bold text-on-surface ${screenWidth < 380 ? "text-center" : ""}`}>{rule.consequentNames.join(" + ")}</StyledText>
                     </StyledView>
                   </StyledView>
@@ -367,17 +391,17 @@ export default function MBAScreen() {
                 {/* Detailed metrics */}
                 <StyledView className="flex-row justify-between pt-2 border-t border-outline-variant/10">
                   <StyledView className="items-center">
-                    <StyledText className="text-[10px] text-on-surface-variant font-semibold">Support</StyledText>
+                    <StyledText className="text-label-sm text-on-surface-variant font-semibold">Support</StyledText>
                     <StyledText className="text-body-sm font-bold text-on-surface">{(rule.support * 100).toFixed(1)}%</StyledText>
                   </StyledView>
 
                   <StyledView className="items-center">
-                    <StyledText className="text-[10px] text-on-surface-variant font-semibold">Confidence</StyledText>
+                    <StyledText className="text-label-sm text-on-surface-variant font-semibold">Confidence</StyledText>
                     <StyledText className="text-body-sm font-bold text-on-surface">{(rule.confidence * 100).toFixed(1)}%</StyledText>
                   </StyledView>
 
                   <StyledView className="items-center">
-                    <StyledText className="text-[10px] text-on-surface-variant font-semibold">Correlation</StyledText>
+                    <StyledText className="text-label-sm text-on-surface-variant font-semibold">Correlation</StyledText>
                     <StyledText className={`text-body-sm font-bold ${rule.lift > 1 ? "text-success" : "text-error"}`}>
                       {rule.lift > 1 ? "Positive" : "Negative"}
                     </StyledText>

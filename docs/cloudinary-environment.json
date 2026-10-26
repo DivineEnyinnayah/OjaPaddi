@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "cloud_name": "kwtra9mm",
+  "upload_preset": "ai_powerstart",
+  "preset_source": "admin_api_script",
+  "selection_source": "admin_api_list",
+  "public_id": "OjaPaddi",
+  "original_url": "https://res.cloudinary.com/kwtra9mm/image/upload/v1791913074/OjaPaddi.png",
+  "transformed_url": "https://res.cloudinary.com/kwtra9mm/image/upload/c_fill,h_1000,w_1000,g_auto/l_text:Arial_72_bold:Adapt%20everywhere,co_white/e_shadow:50/fl_layer_apply,g_south_west,x_80,y_140/l_text:Arial_34:Dynamic%20media%20built%20in%20real%20time,co_rgb:E9D5FF/e_shadow:35/fl_layer_apply,g_south_west,x_84,y_90/f_auto/q_auto/OjaPaddi.png",
+  "selection_reason": "Admin API returned no results, so used first image from resources endpoint",
+  "measurements": {
+    "original": {
+      "size_bytes": 68772,
+      "content_type": "image/png",
+      "dimensions": "500x500"
+    },
+    "transformed": {
+      "size_bytes": 63288,
+      "content_type": "image/webp",
+      "dimensions": "1000x1000",
+      "savings_percent": 7.69
+    }
+  }
+}

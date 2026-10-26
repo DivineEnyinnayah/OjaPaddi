@@ -8,7 +8,7 @@ import {
   TouchableOpacity, 
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Bell, Warning, ShoppingCart, Package, CreditCard, TrendUp, ArrowRight, Receipt, Plus } from 'phosphor-react-native';
+import { Warning, ShoppingCart, Package, CreditCard, TrendUp, ArrowRight, Receipt, Plus } from 'phosphor-react-native';
 import { useAuthStore } from '../../stores/authStore';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -55,6 +55,9 @@ export default function HomeScreen() {
           <StyledTouchableOpacity
             onPress={() => router.push('/more')}
             className="size-10 rounded-full overflow-hidden border-2 border-primary justify-center items-center bg-primary-container"
+            accessibilityRole="button"
+            accessibilityLabel="Open menu"
+            hitSlop={8}
           >
             <StyledText className="text-on-primary-container font-body-lg font-bold text-balance">
                 {user?.fullName?.charAt(0).toUpperCase() || 'O'}
@@ -65,9 +68,6 @@ export default function HomeScreen() {
             <StyledText className="font-h1 text-primary leading-tight text-balance">OjaPaddi</StyledText>
           </StyledView>
         </StyledView>
-        <StyledTouchableOpacity className="size-10 items-center justify-center rounded-full bg-surface-container active:scale-95" accessibilityLabel="Notifications">
-          <Bell size={24} color={colors.primary} />
-        </StyledTouchableOpacity>
       </StyledView>
 
       <ScrollView 
@@ -159,11 +159,13 @@ export default function HomeScreen() {
                   <StyledText className="font-label-bold text-on-secondary-container text-balance">
                     {summary.lowStockCount} {summary.lowStockCount === 1 ? 'product is' : 'products are'} running low on stock
                   </StyledText>
-                  <StyledText className="text-xs text-secondary font-medium uppercase tracking-wide">Restock needed soon</StyledText>
+                  <StyledText className="text-label-bold text-secondary font-medium uppercase tracking-wide">Restock needed soon</StyledText>
                 </StyledView>
-                <StyledTouchableOpacity 
-                  className="bg-on-secondary-container px-3 py-1.5 rounded-lg"
+                <StyledTouchableOpacity
+                  className="bg-on-secondary-container min-w-[44px] min-h-[44px] px-4 py-2.5 rounded-lg"
                   onPress={() => router.push('/products')}
+                  accessibilityRole="button"
+                  accessibilityLabel="View low stock products"
                 >
                   <StyledText className="font-label-bold text-secondary-container">View</StyledText>
                 </StyledTouchableOpacity>
@@ -191,11 +193,12 @@ export default function HomeScreen() {
                 <StyledText className="font-label-bold text-on-surface mt-1">Add Product</StyledText>
               </StyledTouchableOpacity>
 
-              <StyledTouchableOpacity 
-                onPress={() => router.push('/more')}
+              <StyledTouchableOpacity
+                onPress={() => router.push('/expenses')}
                 className="flex-1 items-center justify-center p-md bg-surface-container-lowest border border-outline-variant rounded-xl active:scale-95"
-                accessibilityLabel="More"
+                accessibilityLabel="Add Expense"
                 accessibilityRole="button"
+                hitSlop={4}
               >
                 <CreditCard size={24} color={colors.tertiary} />
                 <StyledText className="font-label-bold text-on-surface mt-1">Add Expense</StyledText>
@@ -286,6 +289,8 @@ export default function HomeScreen() {
         onPress={() => router.push('/products/add')}
         className="absolute right-4 size-14 bg-secondary-container rounded-full shadow-lg items-center justify-center z-[var(--z-fab)] active:scale-95"
         style={{ bottom: TAB_BAR_OFFSET + 12 }}
+        accessibilityRole="button"
+        accessibilityLabel="Add product"
       >
         <Plus size={28} color={colors.onSecondaryContainer} />
       </StyledTouchableOpacity>

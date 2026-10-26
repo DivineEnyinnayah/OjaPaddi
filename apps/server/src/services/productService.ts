@@ -2,6 +2,7 @@ import type { Database } from "@ojapaddi/db";
 import { products } from "@ojapaddi/db/schema";
 import { eq, and, like, sql } from "drizzle-orm";
 import { resolveImageUrl } from "./storageService";
+import { money } from "../lib/money";
 
 /** Resolve storage paths to signed URLs for a single product */
 async function withResolvedUrl(product: any) {
@@ -72,29 +73,14 @@ export async function createProduct(db: Database, businessId: string, data: {
     throw new Error(`Missing or invalid businessId for product creation. Received: ${JSON.stringify(businessId)}`);
   }
   try {
-    console.log("DEBUG: Data for insert:", JSON.stringify({
-      businessId,
-      name: data.name,
-      description: data.description || null,
-      sku: (data.sku && data.sku.trim() !== "") ? data.sku.trim() : null,
-      category: data.category || null,
-      price: data.price.toString(),
-      costPrice: data.costPrice?.toString() || null,
-      quantity: data.quantity,
-      lowStockThreshold: data.lowStockThreshold ?? 5,
-      imageUrl: data.imageUrl || null,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }));
     const [newProduct] = await db.insert(products).values({
       businessId,
       name: data.name,
       description: data.description || null,
       sku: (data.sku && data.sku.trim() !== "") ? data.sku.trim() : null,
       category: data.category || null,
-      price: data.price.toString(),
-      costPrice: data.costPrice?.toString() || null,
+      price: money(data.price),
+      costPrice: data.costPrice != null ? money(data.costPrice) : null,
       quantity: data.quantity,
       lowStockThreshold: data.lowStockThreshold ?? 5,
       imageUrl: data.imageUrl || null,
@@ -104,15 +90,17 @@ export async function createProduct(db: Database, businessId: string, data: {
     }).returning();
     return withResolvedUrl(newProduct);
   } catch (error: any) {
-    console.error("Database insert error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
-    // Postgres error codes: 23502 = NOT NULL violation, 23505 = unique violation
-    if (error.code === '23502') {
-      throw new Error(`Missing required field: ${error.column}`);
+    console.error("Database insert error:", error?.message ?? error);
+    const code = error?.code ?? "";
+    // NOT NULL violation: Postgres 23502, SQLite SQLITE_CONSTRAINT_NOTNULL.
+    if (code === "23502" || code === "SQLITE_CONSTRAINT_NOTNULL") {
+      throw new Error(`Missing required field: ${error?.column ?? "unknown"}`);
     }
-    if (error.code === '23505') {
+    // Unique violation on the partial (business_id, sku) index.
+    if (code === "23505" || code === "SQLITE_CONSTRAINT_UNIQUE" || code === "SQLITE_CONSTRAINT_PRIMARYKEY") {
       throw new Error(`A product with this SKU already exists in your store.`);
     }
-    throw new Error(`Failed to insert product: ${error.message}`);
+    throw new Error(`Failed to insert product: ${error?.message ?? String(error)}`);
   }
 }
 
@@ -133,6 +121,13 @@ export async function updateProduct(db: Database, businessId: string, productId:
   }
   if (updateData.category !== undefined) {
     updateData.category = updateData.category || null;
+  }
+  // Money is TEXT — normalise to 2dp so updates don't write float noise.
+  if (updateData.price !== undefined) {
+    updateData.price = money(updateData.price);
+  }
+  if (updateData.costPrice !== undefined) {
+    updateData.costPrice = updateData.costPrice == null ? null : money(updateData.costPrice);
   }
 
   await db.update(products)

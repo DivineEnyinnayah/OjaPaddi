@@ -47,6 +47,10 @@ export default function RegisterScreen() {
       newErrors.email = 'Enter a valid email address';
     }
 
+    if (formData.phone && !/^\d{10,11}$/.test(formData.phone.trim())) {
+      newErrors.phone = 'Enter a valid phone number';
+    }
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
@@ -146,7 +150,7 @@ export default function RegisterScreen() {
               </StyledView>
               {formData.fullName && !errors.fullName && (
                 <StyledView className="flex-row items-center gap-1 mt-1 ml-1">
-                  <StyledText className="text-[11px] text-primary">Looks great!</StyledText>
+                  <StyledText className="text-label-sm text-primary">Looks great!</StyledText>
                 </StyledView>
               )}
               {errors.fullName && (
@@ -201,7 +205,14 @@ export default function RegisterScreen() {
                   onChangeText={(value) => updateField('password', value)}
                   secureTextEntry={!showPassword}
                 />
-                <StyledTouchableOpacity onPress={() => setShowPassword(!showPassword)} className="ml-1" accessibilityLabel="Toggle password visibility">
+                <StyledTouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  className="ml-1"
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                  accessibilityState={{ expanded: showPassword }}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                >
                   {showPassword ? <Eye size={20} color={colors.outline} /> : <EyeSlash size={20} color={colors.outline} />}
                 </StyledTouchableOpacity>
               </StyledView>
@@ -224,7 +235,10 @@ export default function RegisterScreen() {
           <StyledTouchableOpacity
             className="flex-row items-start gap-3 mt-6 mb-8"
             onPress={() => setAgreedToTerms(!agreedToTerms)}
+            accessibilityRole="checkbox"
             accessibilityLabel="Agree to terms and conditions"
+            accessibilityState={{ checked: agreedToTerms }}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             <StyledView className={`w-4 h-4 rounded-[4px] border flex-row items-center justify-center mt-0.5 ${agreedToTerms ? 'bg-primary border-primary' : 'border-outline-variant bg-surface'}`}>
               {agreedToTerms && <Check size={12} color={colors.onPrimary} />}
@@ -250,7 +264,7 @@ export default function RegisterScreen() {
 
             <StyledView className="flex-row justify-center">
               <StyledText className="text-body-lg text-on-surface-variant">Already have an account? </StyledText>
-              <StyledTouchableOpacity onPress={() => router.push('/login')}>
+              <StyledTouchableOpacity onPress={() => router.push('/login')} accessibilityRole="button" accessibilityLabel="Log in">
                 <StyledText className="text-body-lg font-bold text-primary" style={{ textDecorationLine: 'underline' }}>
                   Log in
                 </StyledText>

@@ -43,8 +43,6 @@ export default {
       // Embedded at build time for native builds
       EXPO_PUBLIC_SERVER_URL: process.env.EXPO_PUBLIC_SERVER_URL,
       EXPO_PUBLIC_DEV_MODE: process.env.EXPO_PUBLIC_DEV_MODE === 'true',
-      EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
-      EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     },
   },
 };

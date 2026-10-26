@@ -6,6 +6,12 @@ const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
 export const rateLimit = (limit: number, windowMs: number) => 
   createMiddleware(async (c, next) => {
+    // Automated end-to-end tests fire far more than 30 requests in a minute
+    // from one identity; throttling them would test the limiter, not the app.
+    if (process.env.NODE_ENV === "test") {
+      return next();
+    }
+
     const authHeader = c.req.header("Authorization");
     const clientIp = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || "anonymous";
     const key = authHeader ? `token:${authHeader.substring(0, 100)}` : `ip:${clientIp}`;

@@ -145,14 +145,16 @@ export default function MoreScreen() {
           </StyledTouchableOpacity>
 
           <StyledTouchableOpacity
-            className="flex-row items-center px-5 py-4"
-            onPress={() => {}}
+            className="flex-row items-center px-5 py-4 opacity-50"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: true }}
+            accessibilityLabel="Staff Accounts — coming soon"
           >
             <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4 opacity-50">
               <Users size={20} color={colors.primary} />
             </StyledView>
             <StyledText className="flex-1 text-body-lg font-semibold text-on-surface opacity-50 text-balance">Staff Accounts</StyledText>
-            <StyledText className="text-md font-medium opacity-50">Coming Soon</StyledText>
+            <StyledText className="text-label-sm font-medium opacity-50">Coming Soon</StyledText>
             <StyledView className="border border-outline-variant rounded-md px-2 py-0.5 mr-1">
               <StyledText className="text-label-caps font-medium text-on-surface-variant">Free</StyledText>
             </StyledView>
@@ -163,10 +165,12 @@ export default function MoreScreen() {
         <StyledText className="font-h3 text-on-surface mt-5 mb-1">Support</StyledText>
         <Surface variant="primary" className="p-0 overflow-hidden">
           <StyledTouchableOpacity
-            className="flex-row items-center px-5 py-4 border-b border-outline-variant/50"
-            onPress={() => {}}
+            className="flex-row items-center px-5 py-4 border-b border-outline-variant/50 opacity-50"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: true }}
+            accessibilityLabel="Help & Support — coming soon"
           >
-            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4">
+            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4 opacity-50">
               <Question size={20} color={colors.primary} />
             </StyledView>
             <StyledText className="flex-1 text-body-lg font-semibold text-on-surface text-balance">Help & Support</StyledText>
@@ -174,10 +178,12 @@ export default function MoreScreen() {
           </StyledTouchableOpacity>
 
           <StyledTouchableOpacity
-            className="flex-row items-center px-5 py-4"
-            onPress={() => {}}
+            className="flex-row items-center px-5 py-4 opacity-50"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: true }}
+            accessibilityLabel="Privacy Policy — coming soon"
           >
-            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4">
+            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4 opacity-50">
               <FileText size={20} color={colors.primary} />
             </StyledView>
             <StyledText className="flex-1 text-body-lg font-semibold text-on-surface text-balance">Privacy Policy</StyledText>

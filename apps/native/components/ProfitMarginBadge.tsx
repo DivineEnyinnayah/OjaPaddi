@@ -30,17 +30,17 @@ export function ProfitMarginBadge({ sellingPrice, costPrice }: ProfitMarginBadge
     textColor = 'text-error';
     marginText = 'Low Margin';
   } else if (marginPercentage < 30) {
-    badgeColor = 'bg-warning/15 border-warning/30';
-    textColor = 'text-warning';
+    badgeColor = 'bg-secondary-container border-secondary';
+    textColor = 'text-on-secondary-container';
     marginText = 'Fair Margin';
   }
 
   return (
     <StyledView className={`flex-row items-center justify-between p-2 rounded-lg border ${badgeColor} mb-2`}>
-      <StyledText className={`text-xs font-semibold ${textColor} tabular-nums`}>
+      <StyledText className={`text-label-bold font-semibold ${textColor} tabular-nums`}>
         Profit: ₦{profit.toFixed(2)} ({marginPercentage.toFixed(1)}%)
       </StyledText>
-      <StyledText className={`text-[10px] font-bold uppercase ${textColor}`}>
+      <StyledText className={`text-label-sm font-bold uppercase ${textColor}`}>
         {marginText}
       </StyledText>
     </StyledView>

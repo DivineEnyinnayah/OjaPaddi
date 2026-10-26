@@ -1,32 +1,50 @@
-import { pgTable, uuid, varchar, text, decimal, integer, timestamp, uniqueIndex, jsonb } from "drizzle-orm/pg-core";
-import { businesses } from "./businesses";
+import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+import { businesses } from "./businesses";
 
-export const customerTypeEnum = ["individual", "supermarket"] as const;
+const id = () =>
+  text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID());
 
-export const customers = pgTable(
+const createdAt = (name = "created_at") =>
+  integer(name, { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date());
+
+const updatedAt = (name = "updated_at") =>
+  integer(name, { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date())
+    .$onUpdateFn(() => new Date());
+
+export const customers = sqliteTable(
   "customers",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    businessId: uuid("business_id")
+    id: id(),
+    businessId: text("business_id")
       .notNull()
       .references(() => businesses.id, { onDelete: "cascade" }),
-    name: varchar("name", { length: 255 }).notNull(),
-    phone: varchar("phone", { length: 20 }),
-    email: varchar("email", { length: 255 }),
+    name: text("name").notNull(),
+    phone: text("phone"),
+    email: text("email"),
     address: text("address"),
     notes: text("notes"),
-    customerType: varchar("customer_type", { length: 50 }).default("individual").notNull(),
+    customerType: text("customer_type", { enum: ["individual", "supermarket"] })
+      .notNull()
+      .default("individual"),
     expectedPaymentPeriodDays: integer("expected_payment_period_days"),
-    suppliedProductIds: jsonb("supplied_product_ids").$type<string[]>().default([]),
-    totalSpent: decimal("total_spent", { precision: 12, scale: 2 }).default("0").notNull(),
-    orderCount: integer("order_count").default(0).notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    suppliedProductIds: text("supplied_product_ids", { mode: "json" }).$type<string[]>().default([]),
+    totalSpent: text("total_spent").notNull().default("0"),
+    orderCount: integer("order_count").notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
   },
-  (table) => ({
-    phoneBusinessIdx: uniqueIndex("customer_phone_business_idx")
+  (table) => [
+    index("customers_business_id_idx").on(table.businessId),
+    // Partial unique: a phone number is only unique per business when present.
+    uniqueIndex("customers_business_phone_uniq")
       .on(table.businessId, table.phone)
       .where(sql`${table.phone} IS NOT NULL`),
-  })
+  ]
 );

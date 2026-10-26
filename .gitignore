@@ -13,6 +13,13 @@ build
 .env*.local
 .dev.vars
 
+# Local SQLite files (dev uses file: URLs; production uses Turso)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
 # IDEs and editors
 .vscode/*
 !.vscode/settings.json
@@ -47,6 +54,9 @@ coverage
 
 # Misc
 *.tgz
+
+# Agent skills — Cloudinary pack installed here
+.agents/skills/cloudinary-*
 .cache
 tmp
 temp

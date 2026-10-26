@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Modal,
   ActivityIndicator,
   RefreshControl,
   Switch,
@@ -33,6 +32,7 @@ import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { formatCurrency } from '@/lib/currency';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -308,7 +308,7 @@ export default function ExpensesScreen() {
           className="flex-row items-center gap-1.5 bg-primary px-3.5 py-2 rounded-full active:scale-95"
         >
           <Plus size={18} color={colors.onPrimary} />
-          <StyledText className="text-sm font-bold text-onPrimary">Add Expense</StyledText>
+          <StyledText className="text-body-sm font-bold text-on-primary">Add Expense</StyledText>
         </StyledTouchableOpacity>
       </StyledView>
 
@@ -322,10 +322,10 @@ export default function ExpensesScreen() {
         {/* Payment Reminders Alert Banner if expenses are due soon */}
         {dueSoonExpenses.length > 0 && (
           <StyledView className="px-5 pt-3">
-            <Surface variant="primary" className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 gap-2">
+            <Surface variant="primary" className="p-4 rounded-2xl bg-secondary/10 border border-secondary/30 gap-2">
               <StyledView className="flex-row items-center gap-2">
-                <Bell size={20} color="#D97706" weight="fill" />
-                <StyledText className="text-sm font-bold text-amber-700 dark:text-amber-400 flex-1">
+                <Bell size={20} color={colors.secondary} weight="fill" />
+                <StyledText className="text-body-sm font-bold text-secondary flex-1">
                   {dueSoonExpenses.length} Payment Reminder{dueSoonExpenses.length > 1 ? 's' : ''} Due Soon!
                 </StyledText>
               </StyledView>
@@ -334,13 +334,13 @@ export default function ExpensesScreen() {
                 return (
                   <StyledView
                     key={exp.id}
-                    className="flex-row justify-between items-center bg-surface p-3 rounded-xl border border-amber-500/20 mt-1"
+                    className="flex-row justify-between items-center bg-surface p-3 rounded-xl border border-secondary/20 mt-1"
                   >
                     <StyledView className="flex-1 mr-2">
-                      <StyledText className="text-xs font-bold text-on-surface">
+                      <StyledText className="text-label-bold font-bold text-on-surface">
                         {exp.description} ({formatCurrency(parseFloat(exp.amount))})
                       </StyledText>
-                      <StyledText className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                      <StyledText className="text-label-bold font-semibold text-secondary">
                         {dueStatus?.text}
                       </StyledText>
                     </StyledView>
@@ -348,7 +348,7 @@ export default function ExpensesScreen() {
                       onPress={() => handleTogglePaid(exp)}
                       className="bg-primary px-3 py-1.5 rounded-lg"
                     >
-                      <StyledText className="text-xs font-bold text-onPrimary">Mark Paid</StyledText>
+                      <StyledText className="text-label-bold font-bold text-on-primary">Mark Paid</StyledText>
                     </StyledTouchableOpacity>
                   </StyledView>
                 );
@@ -366,7 +366,7 @@ export default function ExpensesScreen() {
                   <TrendDown size={22} color={colors.error} />
                 </StyledView>
                 <StyledView>
-                  <StyledText className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+                  <StyledText className="text-label-bold font-semibold text-on-surface-variant uppercase tracking-wider">
                     Total Expenses
                   </StyledText>
                   <StyledText className="text-2xl font-extrabold text-error tabular-nums mt-0.5">
@@ -375,7 +375,7 @@ export default function ExpensesScreen() {
                 </StyledView>
               </StyledView>
               <StyledView className="bg-surface-container px-2.5 py-1 rounded-md">
-                <StyledText className="text-xs font-bold text-on-surface-variant">
+                <StyledText className="text-label-bold font-bold text-on-surface-variant">
                   {filteredExpenses.length} record{filteredExpenses.length !== 1 ? 's' : ''}
                 </StyledText>
               </StyledView>
@@ -384,15 +384,15 @@ export default function ExpensesScreen() {
             {/* Financial Calculation Breakdown */}
             <StyledView className="mt-3 pt-3 border-t border-outline-variant/30 flex-row justify-between items-center">
               <StyledView className="flex-1">
-                <StyledText className="text-[11px] font-medium text-on-surface-variant">Gross Revenue</StyledText>
-                <StyledText className="text-sm font-bold text-primary tabular-nums">
+                <StyledText className="text-label-bold font-medium text-on-surface-variant">Gross Revenue</StyledText>
+                <StyledText className="text-body-sm font-bold text-primary tabular-nums">
                   {formatCurrency(totalRevenue)}
                 </StyledText>
               </StyledView>
               <StyledView className="w-px h-8 bg-outline-variant/40 mx-3" />
               <StyledView className="flex-1">
-                <StyledText className="text-[11px] font-medium text-on-surface-variant">Net Profit (after Expenses)</StyledText>
-                <StyledText className="text-sm font-bold text-secondary tabular-nums">
+                <StyledText className="text-label-bold font-medium text-on-surface-variant">Net Profit (after Expenses)</StyledText>
+                <StyledText className="text-body-sm font-bold text-secondary tabular-nums">
                   {formatCurrency(netProfit)}
                 </StyledText>
               </StyledView>
@@ -414,8 +414,8 @@ export default function ExpensesScreen() {
                   }`}
                 >
                   <StyledText
-                    className={`text-xs font-bold ${
-                      isActive ? 'text-onPrimary' : 'text-on-surface-variant'
+                    className={`text-label-bold font-bold ${
+                      isActive ? 'text-on-primary' : 'text-on-surface-variant'
                     }`}
                   >
                     {period.label}
@@ -429,7 +429,7 @@ export default function ExpensesScreen() {
           <StyledView className="flex-row items-center bg-surface-container-low rounded-xl border border-outline-variant px-4 h-11 mt-1">
             <MagnifyingGlass size={18} color={colors.outline} />
             <StyledTextInput
-              className="flex-1 text-sm text-on-surface ml-2"
+              className="flex-1 text-body-sm text-on-surface ml-2"
               placeholder="Search expenses by description..."
               placeholderTextColor={colors.outline}
               value={searchQuery}
@@ -453,8 +453,8 @@ export default function ExpensesScreen() {
                     }`}
                   >
                     <StyledText
-                      className={`text-xs font-semibold ${
-                        isActive ? 'text-onPrimary' : 'text-on-surface-variant'
+                      className={`text-label-bold font-semibold ${
+                        isActive ? 'text-on-primary' : 'text-on-surface-variant'
                       }`}
                     >
                       {cat}
@@ -485,7 +485,7 @@ export default function ExpensesScreen() {
               <StyledText className="text-base font-bold text-on-surface mb-1">
                 No Expenses Recorded
               </StyledText>
-              <StyledText className="text-xs text-on-surface-variant text-center px-8 mb-4">
+              <StyledText className="text-label-bold text-on-surface-variant text-center px-8 mb-4">
                 Record services, wages, fuel, supplies, or shop bills to keep track of profit deductions.
               </StyledText>
               <Button size="md" onPress={openCreateModal}>
@@ -507,19 +507,19 @@ export default function ExpensesScreen() {
                       <StyledView className="flex-1 mr-3">
                         <StyledView className="flex-row flex-wrap items-center gap-1.5 mb-1">
                           <StyledView className="bg-error/10 px-2 py-0.5 rounded-md">
-                            <StyledText className="text-[11px] font-bold text-error">
+                            <StyledText className="text-label-bold font-bold text-error">
                               {expense.category || 'General'}
                             </StyledText>
                           </StyledView>
                           {expense.isRecurring && (
                             <StyledView className="bg-primary/10 px-2 py-0.5 rounded-md flex-row items-center gap-1">
                               <Repeat size={12} color={colors.primary} />
-                              <StyledText className="text-[11px] font-bold text-primary capitalize">
+                              <StyledText className="text-label-bold font-bold text-primary capitalize">
                                 {expense.recurringFrequency || 'Recurring'}
                               </StyledText>
                             </StyledView>
                           )}
-                          <StyledText className="text-xs text-on-surface-variant font-medium">
+                          <StyledText className="text-label-bold text-on-surface-variant font-medium">
                             {formatDate(expense.incurredAt)}
                           </StyledText>
                         </StyledView>
@@ -529,9 +529,9 @@ export default function ExpensesScreen() {
 
                         {/* Payment Due Reminder Badge */}
                         {dueStatus && !expense.isPaid && (
-                          <StyledView className="flex-row items-center gap-1 mt-1 bg-amber-500/10 px-2 py-0.5 rounded-md self-start">
-                            <Clock size={12} color="#D97706" />
-                            <StyledText className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                          <StyledView className="flex-row items-center gap-1 mt-1 bg-secondary/10 px-2 py-0.5 rounded-md self-start">
+                            <Clock size={12} color={colors.secondary} />
+                            <StyledText className="text-label-bold font-bold text-secondary">
                               {dueStatus.text}
                             </StyledText>
                           </StyledView>
@@ -544,17 +544,17 @@ export default function ExpensesScreen() {
                         <StyledTouchableOpacity
                           onPress={() => handleTogglePaid(expense)}
                           className={`flex-row items-center gap-1 px-2 py-0.5 rounded-md mt-1 ${
-                            expense.isPaid ? 'bg-secondary/15' : 'bg-amber-500/15'
+                            expense.isPaid ? 'bg-success-container' : 'bg-secondary-container'
                           }`}
                         >
                           <CheckCircle
                             size={12}
-                            color={expense.isPaid ? colors.secondary : '#D97706'}
+                            color={expense.isPaid ? colors.success : colors.onSecondaryContainer}
                             weight={expense.isPaid ? 'fill' : 'regular'}
                           />
                           <StyledText
-                            className={`text-[11px] font-bold ${
-                              expense.isPaid ? 'text-secondary' : 'text-amber-600 dark:text-amber-400'
+                            className={`text-label-bold ${
+                              expense.isPaid ? 'text-on-success-container' : 'text-on-secondary-container'
                             }`}
                           >
                             {expense.isPaid ? 'Paid' : 'Pending'}
@@ -570,14 +570,14 @@ export default function ExpensesScreen() {
                         className="flex-row items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-container active:opacity-80"
                       >
                         <PencilSimple size={15} color={colors.onSurface} />
-                        <StyledText className="text-xs font-semibold text-on-surface">Edit</StyledText>
+                        <StyledText className="text-label-bold font-semibold text-on-surface">Edit</StyledText>
                       </StyledTouchableOpacity>
                       <StyledTouchableOpacity
                         onPress={() => confirmDeleteExpense(expense.id)}
                         className="flex-row items-center gap-1 px-3 py-1.5 rounded-lg bg-error/10 active:opacity-80"
                       >
                         <Trash size={15} color={colors.error} />
-                        <StyledText className="text-xs font-semibold text-error">Delete</StyledText>
+                        <StyledText className="text-label-bold font-semibold text-error">Delete</StyledText>
                       </StyledTouchableOpacity>
                     </StyledView>
                   </Surface>
@@ -588,220 +588,203 @@ export default function ExpensesScreen() {
         </StyledView>
       </StyledScrollView>
 
-      {/* Modal for Record / Edit Expense */}
-      <Modal
+      {/* Record / Edit Expense */}
+      <BottomSheet
         visible={isModalOpen}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setIsModalOpen(false)}
+        onClose={() => setIsModalOpen(false)}
+        title={editingExpense ? 'Edit Expense' : 'Record Expense'}
+        subtitle={editingExpense ? 'Update this expense record.' : 'Log a cost so your profit stays honest.'}
+        icon={<Receipt size={20} color={colors.onPrimaryContainer} />}
+        maxHeightRatio={0.9}
+        contentClassName="pt-4"
+        footer={
+          <Button size="lg" onPress={handleSaveExpense} isDisabled={isSubmitting}>
+            {isSubmitting
+              ? 'Saving...'
+              : editingExpense
+                ? 'Update Expense'
+                : 'Save Expense Record'}
+          </Button>
+        }
       >
-        <StyledView className="flex-1 bg-black/60 justify-end">
-          <StyledView className="bg-surface rounded-t-3xl p-6 border-t border-outline-variant/30 max-h-[90%]">
-            <StyledView className="flex-row justify-between items-center mb-5">
-              <StyledText className="text-xl font-bold text-on-surface">
-                {editingExpense ? 'Edit Expense' : 'Record Expense'}
-              </StyledText>
+        <StyledView className="gap-4 pb-4">
+          {/* Amount */}
+          <StyledView>
+            <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-1.5">
+              Amount (₦) *
+            </StyledText>
+            <StyledView className="flex-row items-center bg-surface-container-low border border-outline-variant rounded-xl px-4 h-12">
+              <StyledText className="text-lg font-bold text-primary mr-2">₦</StyledText>
+              <StyledTextInput
+                className="flex-1 text-base font-bold text-on-surface"
+                placeholder="0.00"
+                placeholderTextColor={colors.outline}
+                keyboardType="decimal-pad"
+                value={amountInput}
+                onChangeText={setAmountInput}
+              />
+            </StyledView>
+          </StyledView>
+
+          {/* Description */}
+          <StyledView>
+            <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-1.5">
+              Description *
+            </StyledText>
+            <StyledTextInput
+              className="bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-body-sm text-on-surface"
+              placeholder="e.g. NEPA light bill, Transport to market, Staff wages"
+              placeholderTextColor={colors.outline}
+              value={descriptionInput}
+              onChangeText={setDescriptionInput}
+            />
+          </StyledView>
+
+          {/* Category Selection */}
+          <StyledView>
+            <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-1.5">
+              Expense Category
+            </StyledText>
+            <StyledView className="flex-row flex-wrap gap-2">
+              {CATEGORIES.filter((c) => c !== 'All').map((cat) => {
+                const isSelected = categoryInput === cat;
+                return (
+                  <StyledTouchableOpacity
+                    key={cat}
+                    onPress={() => setCategoryInput(cat)}
+                    className={`px-3 py-2 rounded-xl border ${
+                      isSelected
+                        ? 'bg-primary border-primary'
+                        : 'bg-surface-container-low border-outline-variant/40'
+                    }`}
+                  >
+                    <StyledText
+                      className={`text-label-bold font-bold ${
+                        isSelected ? 'text-on-primary' : 'text-on-surface-variant'
+                      }`}
+                    >
+                      {cat}
+                    </StyledText>
+                  </StyledTouchableOpacity>
+                );
+              })}
+            </StyledView>
+          </StyledView>
+
+          {/* Recurring Expense Checkbox */}
+          <StyledView className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/40 gap-3">
+            <StyledView className="flex-row justify-between items-center">
+              <StyledView className="flex-row items-center gap-2.5 flex-1 pr-2">
+                <Repeat size={20} color={colors.primary} />
+                <StyledView className="flex-1">
+                  <StyledText className="text-body-sm font-bold text-on-surface">
+                    Recurring Expense
+                  </StyledText>
+                </StyledView>
+              </StyledView>
+              <Switch
+                value={isRecurringInput}
+                onValueChange={setIsRecurringInput}
+                trackColor={{ false: colors.surfaceContainer, true: colors.primary }}
+              />
+            </StyledView>
+
+            {isRecurringInput && (
+              <StyledView className="pt-2 border-t border-outline-variant/30 gap-3">
+                <StyledText className="text-label-bold font-semibold text-on-surface-variant">
+                  Recurring Frequency
+                </StyledText>
+                <StyledView className="flex-row gap-2">
+                  {RECURRING_FREQUENCIES.map((freq) => {
+                    const isSelected = frequencyInput === freq;
+                    return (
+                      <StyledTouchableOpacity
+                        key={freq}
+                        onPress={() => setFrequencyInput(freq)}
+                        className={`flex-1 py-2 rounded-xl border items-center ${
+                          isSelected
+                            ? 'bg-primary border-primary'
+                            : 'bg-surface-container border-outline-variant/40'
+                        }`}
+                      >
+                        <StyledText
+                          className={`text-label-bold font-bold capitalize ${
+                            isSelected ? 'text-on-primary' : 'text-on-surface-variant'
+                          }`}
+                        >
+                          {freq}
+                        </StyledText>
+                      </StyledTouchableOpacity>
+                    );
+                  })}
+                </StyledView>
+              </StyledView>
+            )}
+          </StyledView>
+
+          {/* Payment Status & Reminder Lead Time */}
+          <StyledView className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/40 gap-3">
+            <StyledView className="flex-row justify-between items-center">
+              <StyledView className="flex-row items-center gap-2">
+                <CheckCircle size={20} color={isPaidInput ? colors.success : colors.onSecondaryContainer} />
+                <StyledText className="text-body-sm font-bold text-on-surface">
+                  Payment Status
+                </StyledText>
+              </StyledView>
               <StyledTouchableOpacity
-                onPress={() => setIsModalOpen(false)}
-                className="size-8 rounded-full bg-surface-container justify-center items-center"
+                onPress={() => setIsPaidInput(!isPaidInput)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isPaidInput }}
+                className={`px-3 py-1.5 rounded-lg border ${
+                  isPaidInput
+                    ? 'bg-success-container border-success'
+                    : 'bg-secondary-container border-secondary'
+                }`}
               >
-                <StyledText className="text-base font-bold text-on-surface-variant">✕</StyledText>
+                <StyledText
+                  className={`text-label-bold ${
+                    isPaidInput ? 'text-on-success-container' : 'text-on-secondary-container'
+                  }`}
+                >
+                  {isPaidInput ? 'Paid' : 'Pending / Due'}
+                </StyledText>
               </StyledTouchableOpacity>
             </StyledView>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <StyledView className="gap-4 mb-6">
-                {/* Amount */}
-                <StyledView>
-                  <StyledText className="text-xs font-semibold text-on-surface-variant mb-1.5">
-                    Amount (₦) *
-                  </StyledText>
-                  <StyledView className="flex-row items-center bg-surface-container-low border border-outline-variant rounded-xl px-4 h-12">
-                    <StyledText className="text-lg font-bold text-primary mr-2">₦</StyledText>
-                    <StyledTextInput
-                      className="flex-1 text-base font-bold text-on-surface"
-                      placeholder="0.00"
-                      placeholderTextColor={colors.outline}
-                      keyboardType="decimal-pad"
-                      value={amountInput}
-                      onChangeText={setAmountInput}
-                    />
-                  </StyledView>
-                </StyledView>
-
-                {/* Description */}
-                <StyledView>
-                  <StyledText className="text-xs font-semibold text-on-surface-variant mb-1.5">
-                    Description *
-                  </StyledText>
-                  <StyledTextInput
-                    className="bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm text-on-surface"
-                    placeholder="e.g. NEPA light bill, Transport to market, Staff wages"
-                    placeholderTextColor={colors.outline}
-                    value={descriptionInput}
-                    onChangeText={setDescriptionInput}
-                  />
-                </StyledView>
-
-                {/* Category Selection */}
-                <StyledView>
-                  <StyledText className="text-xs font-semibold text-on-surface-variant mb-1.5">
-                    Expense Category
-                  </StyledText>
-                  <StyledView className="flex-row flex-wrap gap-2">
-                    {CATEGORIES.filter((c) => c !== 'All').map((cat) => {
-                      const isSelected = categoryInput === cat;
-                      return (
-                        <StyledTouchableOpacity
-                          key={cat}
-                          onPress={() => setCategoryInput(cat)}
-                          className={`px-3 py-2 rounded-xl border ${
-                            isSelected
-                              ? 'bg-primary border-primary'
-                              : 'bg-surface-container-low border-outline-variant/40'
-                          }`}
-                        >
-                          <StyledText
-                            className={`text-xs font-bold ${
-                              isSelected ? 'text-onPrimary' : 'text-on-surface-variant'
-                            }`}
-                          >
-                            {cat}
-                          </StyledText>
-                        </StyledTouchableOpacity>
-                      );
-                    })}
-                  </StyledView>
-                </StyledView>
-
-                {/* Recurring Expense Checkbox */}
-                <StyledView className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/40 gap-3">
-                  <StyledView className="flex-row justify-between items-center">
-                    <StyledView className="flex-row items-center gap-2.5 flex-1 pr-2">
-                      <Repeat size={20} color={colors.primary} />
-                      <StyledView className="flex-1">
-                        <StyledText className="text-sm font-bold text-on-surface">
-                          Recurring Expense
-                        </StyledText>
-                      </StyledView>
-                    </StyledView>
-                    <Switch
-                      value={isRecurringInput}
-                      onValueChange={setIsRecurringInput}
-                      trackColor={{ false: colors.surfaceContainer, true: colors.primary }}
-                    />
-                  </StyledView>
-
-                  {isRecurringInput && (
-                    <StyledView className="pt-2 border-t border-outline-variant/30 gap-3">
-                      <StyledText className="text-xs font-semibold text-on-surface-variant">
-                        Recurring Frequency
-                      </StyledText>
-                      <StyledView className="flex-row gap-2">
-                        {RECURRING_FREQUENCIES.map((freq) => {
-                          const isSelected = frequencyInput === freq;
-                          return (
-                            <StyledTouchableOpacity
-                              key={freq}
-                              onPress={() => setFrequencyInput(freq)}
-                              className={`flex-1 py-2 rounded-xl border items-center ${
-                                isSelected
-                                  ? 'bg-primary border-primary'
-                                  : 'bg-surface-container border-outline-variant/40'
-                              }`}
-                            >
-                              <StyledText
-                                className={`text-xs font-bold capitalize ${
-                                  isSelected ? 'text-onPrimary' : 'text-on-surface-variant'
-                                }`}
-                              >
-                                {freq}
-                              </StyledText>
-                            </StyledTouchableOpacity>
-                          );
-                        })}
-                      </StyledView>
-                    </StyledView>
-                  )}
-                </StyledView>
-
-                {/* Payment Status & Reminder Lead Time */}
-                <StyledView className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/40 gap-3">
-                  <StyledView className="flex-row justify-between items-center">
-                    <StyledView className="flex-row items-center gap-2">
-                      <CheckCircle size={20} color={isPaidInput ? colors.secondary : '#D97706'} />
-                      <StyledText className="text-sm font-bold text-on-surface">
-                        Payment Status
-                      </StyledText>
-                    </StyledView>
-                    <StyledTouchableOpacity
-                      onPress={() => setIsPaidInput(!isPaidInput)}
-                      className={`px-3 py-1.5 rounded-lg border ${
-                        isPaidInput
-                          ? 'bg-secondary/15 border-secondary'
-                          : 'bg-amber-500/15 border-amber-500'
-                      }`}
-                    >
-                      <StyledText
-                        className={`text-xs font-bold ${
-                          isPaidInput ? 'text-secondary' : 'text-amber-600 dark:text-amber-400'
+            {!isPaidInput && (
+              <StyledView className="pt-2 border-t border-outline-variant/30 gap-2">
+                <StyledText className="text-label-bold font-semibold text-on-surface-variant">
+                  Reminder Lead Time
+                </StyledText>
+                <StyledView className="flex-row gap-2">
+                  {['1', '3', '7'].map((days) => {
+                    const isSelected = reminderDaysInput === days;
+                    return (
+                      <StyledTouchableOpacity
+                        key={days}
+                        onPress={() => setReminderDaysInput(days)}
+                        className={`flex-1 py-1.5 rounded-lg border items-center ${
+                          isSelected
+                            ? 'bg-primary border-primary'
+                            : 'bg-surface-container border-outline-variant/40'
                         }`}
                       >
-                        {isPaidInput ? 'Paid' : 'Pending / Due'}
-                      </StyledText>
-                    </StyledTouchableOpacity>
-                  </StyledView>
-
-                  {!isPaidInput && (
-                    <StyledView className="pt-2 border-t border-outline-variant/30 gap-2">
-                      <StyledText className="text-xs font-semibold text-on-surface-variant">
-                        Reminder Lead Time
-                      </StyledText>
-                      <StyledView className="flex-row gap-2">
-                        {['1', '3', '7'].map((days) => {
-                          const isSelected = reminderDaysInput === days;
-                          return (
-                            <StyledTouchableOpacity
-                              key={days}
-                              onPress={() => setReminderDaysInput(days)}
-                              className={`flex-1 py-1.5 rounded-lg border items-center ${
-                                isSelected
-                                  ? 'bg-primary border-primary'
-                                  : 'bg-surface-container border-outline-variant/40'
-                              }`}
-                            >
-                              <StyledText
-                                className={`text-xs font-bold ${
-                                  isSelected ? 'text-onPrimary' : 'text-on-surface-variant'
-                                }`}
-                              >
-                                {days} Days Before
-                              </StyledText>
-                            </StyledTouchableOpacity>
-                          );
-                        })}
-                      </StyledView>
-                    </StyledView>
-                  )}
+                        <StyledText
+                          className={`text-label-bold font-bold ${
+                            isSelected ? 'text-on-primary' : 'text-on-surface-variant'
+                          }`}
+                        >
+                          {days} Days Before
+                        </StyledText>
+                      </StyledTouchableOpacity>
+                    );
+                  })}
                 </StyledView>
               </StyledView>
-
-              <Button
-                size="lg"
-                onPress={handleSaveExpense}
-                isDisabled={isSubmitting}
-                className="mb-4"
-              >
-                {isSubmitting
-                  ? 'Saving...'
-                  : editingExpense
-                  ? 'Update Expense'
-                  : 'Save Expense Record'}
-              </Button>
-            </ScrollView>
+            )}
           </StyledView>
         </StyledView>
-      </Modal>
+      </BottomSheet>
     </Container>
   );
 }
