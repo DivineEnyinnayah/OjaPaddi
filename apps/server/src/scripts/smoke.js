@@ -5,20 +5,20 @@
  * sale -> analytics -> returns -> void -> refresh -> logout. Run with:
  *   pnpm --filter @ojapaddi/server exec tsx src/scripts/smoke.ts
  */
-process.env.TURSO_DATABASE_URL =
-    process.env.SMOKE_DB ?? "file:/tmp/opencode/ojapaddi-smoke.db";
+process.env.TURSO_DATABASE_URL = process.env.SMOKE_DB ?? "file:/tmp/opencode/ojapaddi-smoke.db";
 // SAFETY: this suite DELETEs FROM every table before it starts. `apps/server/.env`
 // now points at the production Turso database, so a mis-set SMOKE_DB would wipe
 // real data. Refuse to run against anything remote unless explicitly forced.
 if (!process.env.TURSO_DATABASE_URL.startsWith("file:") && process.env.SMOKE_ALLOW_REMOTE !== "1") {
-    console.error("\n✗ REFUSING TO RUN.\n" +
-        `  SMOKE_DB is set to a remote database (${new URL(process.env.TURSO_DATABASE_URL).host}).\n` +
-        "  This suite deletes every row before running. Point SMOKE_DB at a scratch\n" +
-        "  database, or set SMOKE_ALLOW_REMOTE=1 if you truly mean it.\n");
+    console.error(
+        "\n✗ REFUSING TO RUN.\n" +
+            `  SMOKE_DB is set to a remote database (${new URL(process.env.TURSO_DATABASE_URL).host}).\n` +
+            "  This suite deletes every row before running. Point SMOKE_DB at a scratch\n" +
+            "  database, or set SMOKE_ALLOW_REMOTE=1 if you truly mean it.\n",
+    );
     process.exit(1);
 }
-process.env.BETTER_AUTH_SECRET =
-    process.env.BETTER_AUTH_SECRET ?? "smoke-test-secret-at-least-32-characters-long";
+process.env.BETTER_AUTH_SECRET = process.env.BETTER_AUTH_SECRET ?? "smoke-test-secret-at-least-32-characters-long";
 process.env.BETTER_AUTH_URL = process.env.BETTER_AUTH_URL ?? "http://localhost:3001";
 process.env.R2_PUBLIC_URL = process.env.R2_PUBLIC_URL ?? "https://images.example.com";
 process.env.NODE_ENV = "test";
@@ -26,13 +26,13 @@ process.env.NODE_ENV = "test";
 // provider's HTTPS call rather than sending mail, and asserts on the real
 // request payload — so the production path is verified without an API key.
 process.env.EMAIL_API_KEY = "smoke-test-key";
-process.env.EMAIL_FROM = "OjaPaddi <noreply@example.com>";
+process.env.EMAIL_FROM = "OjaPaddi <support@example.com>";
 const { migrate } = await import("drizzle-orm/libsql/migrator");
 const { createDb, getClient } = await import("@ojapaddi/db");
 const { user: userTable, businesses: businessTable } = await import("@ojapaddi/db/schema");
 const sentEmails = [];
 const realFetch = globalThis.fetch;
-globalThis.fetch = (async (input, init) => {
+globalThis.fetch = async (input, init) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input?.url;
     if (url?.includes("api.resend.com")) {
         const payload = JSON.parse(String(init?.body ?? "{}"));
@@ -50,7 +50,7 @@ globalThis.fetch = (async (input, init) => {
         });
     }
     return realFetch(input, init);
-});
+};
 /** Pulls the reset code out of the emailed body (it sits on its own line). */
 function codeFromEmail(mail) {
     return /^[ \t]{4}(\S+)[ \t]*$/m.exec(mail.text)?.[1];
@@ -63,8 +63,7 @@ function check(name, cond, detail) {
     if (cond) {
         passed++;
         console.log(`  ✓ ${name}`);
-    }
-    else {
+    } else {
         failed++;
         console.log(`  ✗ ${name}`, detail !== undefined ? JSON.stringify(detail) : "");
     }
@@ -74,8 +73,7 @@ async function api(path, init = {}) {
         "Content-Type": "application/json",
         ...init.headers,
     };
-    if (init.token)
-        headers.Authorization = `Bearer ${init.token}`;
+    if (init.token) headers.Authorization = `Bearer ${init.token}`;
     const res = await app.request(`http://localhost${path}`, {
         ...init,
         headers,
@@ -84,8 +82,7 @@ async function api(path, init = {}) {
     let body;
     try {
         body = JSON.parse(text);
-    }
-    catch {
+    } catch {
         body = text;
     }
     return { status: res.status, body };
@@ -95,7 +92,18 @@ const db = createDb();
 await migrate(db, { migrationsFolder: MIGRATIONS });
 // Clear previous runs so ids are stable across iterations.
 await getClient().execute("PRAGMA foreign_keys = ON");
-for (const t of ["sale_items", "sales", "products", "customers", "expenses", "businesses", "session", "account", "verification", "user"]) {
+for (const t of [
+    "sale_items",
+    "sales",
+    "products",
+    "customers",
+    "expenses",
+    "businesses",
+    "session",
+    "account",
+    "verification",
+    "user",
+]) {
     await getClient().execute(`DELETE FROM "${t}"`);
 }
 const stamp = Date.now();
@@ -118,7 +126,11 @@ const reg = await api("/v1/auth/complete-registration", {
 check("registration returns 201", reg.status === 201, reg.body);
 check("has access_token", typeof reg.body?.data?.access_token === "string", reg.body);
 check("has refresh_token", typeof reg.body?.data?.refresh_token === "string");
-check("refresh_token is snake_case (mobile contract)", "refresh_token" in (reg.body?.data ?? {}), Object.keys(reg.body?.data ?? {}));
+check(
+    "refresh_token is snake_case (mobile contract)",
+    "refresh_token" in (reg.body?.data ?? {}),
+    Object.keys(reg.body?.data ?? {}),
+);
 const token = reg.body?.data?.access_token;
 console.log("\n▶ login");
 const login = await api("/v1/auth/login", {
@@ -126,12 +138,20 @@ const login = await api("/v1/auth/login", {
     body: JSON.stringify({ email, password }),
 });
 check("login returns 200", login.status === 200, login.body);
-check("login returns businessName + plan", typeof login.body?.data?.user?.businessName === "string" &&
-    login.body?.data?.user?.plan === "free", login.body?.data?.user);
-check("wrong password is rejected", (await api("/v1/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password: "wrong" }),
-})).status === 401);
+check(
+    "login returns businessName + plan",
+    typeof login.body?.data?.user?.businessName === "string" && login.body?.data?.user?.plan === "free",
+    login.body?.data?.user,
+);
+check(
+    "wrong password is rejected",
+    (
+        await api("/v1/auth/login", {
+            method: "POST",
+            body: JSON.stringify({ email, password: "wrong" }),
+        })
+    ).status === 401,
+);
 console.log("\n▶ auth guards");
 check("no token -> 401", (await api("/v1/products")).status === 401);
 check("garbage token -> 401", (await api("/v1/products", { token: "nope" })).status === 401);
@@ -190,7 +210,11 @@ const dupPhone = await api("/v1/customers", {
     token,
     body: JSON.stringify({ name: "Dup Mart", phone: "08099998888" }),
 });
-check("duplicate customer phone rejected", dupPhone.status === 409 || dupPhone.status === 400, dupPhone.body?.error?.code);
+check(
+    "duplicate customer phone rejected",
+    dupPhone.status === 409 || dupPhone.status === 400,
+    dupPhone.body?.error?.code,
+);
 console.log("\n▶ sales");
 const s1 = await api("/v1/sales", {
     method: "POST",
@@ -211,7 +235,11 @@ const saleId = s1.body?.data?.id;
 const afterSale = await api(`/v1/products/${productId}`, { token });
 check("stock decremented to 8", afterSale.body?.data?.quantity === 8, afterSale.body?.data?.quantity);
 const custAfter = await api(`/v1/customers/${customerId}`, { token });
-check("customer totalSpent = 89000.00", custAfter.body?.data?.totalSpent === "89000.00", custAfter.body?.data?.totalSpent);
+check(
+    "customer totalSpent = 89000.00",
+    custAfter.body?.data?.totalSpent === "89000.00",
+    custAfter.body?.data?.totalSpent,
+);
 check("customer orderCount = 1", custAfter.body?.data?.orderCount === 1);
 const oversell = await api("/v1/sales", {
     method: "POST",
@@ -247,12 +275,18 @@ console.log("\n▶ analytics (SQLite date bucketing + text money sums)");
 const summary = await api("/v1/analytics/summary", { token });
 check("summary -> 200", summary.status === 200, summary.body);
 check(
-// 2 x 45000 less the 1000 discount, minus the 45000 returned unit = 44000.
-"summary revenue reflects the return (44000)", Number(summary.body?.data?.totalRevenue) === 44000, summary.body?.data);
+    // 2 x 45000 less the 1000 discount, minus the 45000 returned unit = 44000.
+    "summary revenue reflects the return (44000)",
+    Number(summary.body?.data?.totalRevenue) === 44000,
+    summary.body?.data,
+);
 const chart = await api("/v1/analytics/revenue-chart", { token });
 check("revenue chart -> 200", chart.status === 200, chart.body);
-check("chart rows are YYYY-MM-DD", Array.isArray(chart.body?.data) &&
-    chart.body.data.every((r) => /^\d{4}-\d{2}-\d{2}$/.test(r.date)), chart.body?.data);
+check(
+    "chart rows are YYYY-MM-DD",
+    Array.isArray(chart.body?.data) && chart.body.data.every(r => /^\d{4}-\d{2}-\d{2}$/.test(r.date)),
+    chart.body?.data,
+);
 const topCustomers = await api("/v1/analytics/top-customers", { token });
 check("top customers -> 200", topCustomers.status === 200, topCustomers.body);
 const prodAnalytics = await api(`/v1/analytics/product/${productId}`, { token });
@@ -300,7 +334,13 @@ const reg2 = await api("/v1/auth/complete-registration", {
     method: "POST",
     body: JSON.stringify({
         registration: { fullName: "Mallory", email: `other${stamp}@example.com`, password },
-        onboarding: { businessName: "Other Shop", category: "General", whatsappNumber: "08055556666", city: "Abuja", state: "FCT" },
+        onboarding: {
+            businessName: "Other Shop",
+            category: "General",
+            whatsappNumber: "08055556666",
+            city: "Abuja",
+            state: "FCT",
+        },
     }),
 });
 const token2 = reg2.body?.data?.access_token;
@@ -314,8 +354,15 @@ const refreshed = await api("/v1/auth/refresh", {
     body: JSON.stringify({ refresh_token: reg.body.data.refresh_token }),
 });
 check("refresh -> 200", refreshed.status === 200, refreshed.body);
-check("refresh returns snake_case refresh_token", "refresh_token" in (refreshed.body?.data ?? {}), Object.keys(refreshed.body?.data ?? {}));
-check("refreshed token works", (await api("/v1/products", { token: refreshed.body?.data?.access_token })).status === 200);
+check(
+    "refresh returns snake_case refresh_token",
+    "refresh_token" in (refreshed.body?.data ?? {}),
+    Object.keys(refreshed.body?.data ?? {}),
+);
+check(
+    "refreshed token works",
+    (await api("/v1/products", { token: refreshed.body?.data?.access_token })).status === 200,
+);
 const badRefresh = await api("/v1/auth/refresh", {
     method: "POST",
     body: JSON.stringify({ refresh_token: "garbage" }),
@@ -327,7 +374,10 @@ const out = await api("/v1/auth/logout", {
     body: JSON.stringify({ refresh_token: refreshed.body.data.refresh_token }),
 });
 check("logout -> 200", out.status === 200, out.body);
-check("token revoked after logout", (await api("/v1/products", { token: refreshed.body?.data?.access_token })).status === 401);
+check(
+    "token revoked after logout",
+    (await api("/v1/products", { token: refreshed.body?.data?.access_token })).status === 401,
+);
 // ── Supabase-cutover flow: account exists, password never set ──────────
 console.log("\n▶ migrated user (no password yet)");
 const db2 = createDb();
@@ -358,32 +408,60 @@ const migratedLogin = await api("/v1/auth/login", {
     body: JSON.stringify({ email: migratedEmail, password: "any-old-password" }),
 });
 check("login is rejected", migratedLogin.status === 401, migratedLogin.status);
-check("login reports PASSWORD_RESET_REQUIRED", migratedLogin.body?.error?.code === "PASSWORD_RESET_REQUIRED", migratedLogin.body?.error);
-check("PASSWORD_RESET_REQUIRED echoes the email for the next screen", migratedLogin.body?.error?.email === migratedEmail, migratedLogin.body?.error);
+check(
+    "login reports PASSWORD_RESET_REQUIRED",
+    migratedLogin.body?.error?.code === "PASSWORD_RESET_REQUIRED",
+    migratedLogin.body?.error,
+);
+check(
+    "PASSWORD_RESET_REQUIRED echoes the email for the next screen",
+    migratedLogin.body?.error?.email === migratedEmail,
+    migratedLogin.body?.error,
+);
 // A user who already has a password must NOT get the reset code.
 const normalWrong = await api("/v1/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password: "definitely-wrong" }),
 });
-check("existing user with wrong password gets LOGIN_FAILED, not reset", normalWrong.body?.error?.code === "LOGIN_FAILED", normalWrong.body?.error);
+check(
+    "existing user with wrong password gets LOGIN_FAILED, not reset",
+    normalWrong.body?.error?.code === "LOGIN_FAILED",
+    normalWrong.body?.error,
+);
 const forgot = await api("/v1/auth/forgot-password", {
     method: "POST",
     body: JSON.stringify({ email: migratedEmail }),
 });
 check("forgot-password -> 200", forgot.status === 200, forgot.body);
-check("response never contains the code (email-only delivery)", forgot.body?.data?.code === undefined, Object.keys(forgot.body?.data ?? {}));
-const emailed = sentEmails.find((e) => e.to === migratedEmail);
-check("an email was actually sent to the user", Boolean(emailed), sentEmails.map((e) => e.to));
+check(
+    "response never contains the code (email-only delivery)",
+    forgot.body?.data?.code === undefined,
+    Object.keys(forgot.body?.data ?? {}),
+);
+const emailed = sentEmails.find(e => e.to === migratedEmail);
+check(
+    "an email was actually sent to the user",
+    Boolean(emailed),
+    sentEmails.map(e => e.to),
+);
 check("the request authenticated with EMAIL_API_KEY", emailed?.apiKey === "smoke-test-key", emailed?.apiKey);
-check("the email came from EMAIL_FROM", emailed?.from === "OjaPaddi <noreply@example.com>", emailed?.from);
+check("the email came from EMAIL_FROM", emailed?.from === "OjaPaddi <support@example.com>", emailed?.from);
 const resetCode = emailed ? codeFromEmail(emailed) : undefined;
 check("the emailed body contains a reset code", typeof resetCode === "string", emailed?.text);
 const unknownForgot = await api("/v1/auth/forgot-password", {
     method: "POST",
     body: JSON.stringify({ email: `nobody${stamp}@example.com` }),
 });
-check("unknown email still reports success (no enumeration)", unknownForgot.status === 200 && unknownForgot.body?.success === true, unknownForgot.body);
-check("unknown email triggers no outbound email", !sentEmails.some((e) => e.to === `nobody${stamp}@example.com`), sentEmails.map((e) => e.to));
+check(
+    "unknown email still reports success (no enumeration)",
+    unknownForgot.status === 200 && unknownForgot.body?.success === true,
+    unknownForgot.body,
+);
+check(
+    "unknown email triggers no outbound email",
+    !sentEmails.some(e => e.to === `nobody${stamp}@example.com`),
+    sentEmails.map(e => e.to),
+);
 const badCode = await api("/v1/auth/reset-password", {
     method: "POST",
     body: JSON.stringify({ token: "not-a-real-code", new_password: "NewPass123!" }),
@@ -399,8 +477,11 @@ const afterSet = await api("/v1/auth/login", {
     body: JSON.stringify({ email: migratedEmail, password: "BrandNewPass123!" }),
 });
 check("migrated user can now log in", afterSet.status === 200, afterSet.body);
-check("login returns both tokens", typeof afterSet.body?.data?.access_token === "string" &&
-    typeof afterSet.body?.data?.refresh_token === "string", afterSet.body?.data);
+check(
+    "login returns both tokens",
+    typeof afterSet.body?.data?.access_token === "string" && typeof afterSet.body?.data?.refresh_token === "string",
+    afterSet.body?.data,
+);
 const replay = await api("/v1/auth/reset-password", {
     method: "POST",
     body: JSON.stringify({ token: resetCode, new_password: "AnotherPass123!" }),
@@ -410,7 +491,11 @@ const nowWrongPassword = await api("/v1/auth/login", {
     method: "POST",
     body: JSON.stringify({ email: migratedEmail, password: "any-old-password" }),
 });
-check("no longer reports PASSWORD_RESET_REQUIRED once a password is set", nowWrongPassword.body?.error?.code === "LOGIN_FAILED", nowWrongPassword.body?.error);
+check(
+    "no longer reports PASSWORD_RESET_REQUIRED once a password is set",
+    nowWrongPassword.body?.error?.code === "LOGIN_FAILED",
+    nowWrongPassword.body?.error,
+);
 console.log(`\n${"─".repeat(46)}\n  passed: ${passed}   failed: ${failed}\n${"─".repeat(46)}\n`);
 process.exit(failed > 0 ? 1 : 0);
 export {};

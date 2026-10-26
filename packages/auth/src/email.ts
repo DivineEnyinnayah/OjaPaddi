@@ -24,27 +24,34 @@ export interface EmailMessage {
 
 export async function sendEmail(message: EmailMessage): Promise<void> {
   console.log(`[EMAIL] Attempting to send email to ${message.to} via Resend...`);
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.EMAIL_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: env.EMAIL_FROM,
-      to: [message.to],
-      subject: message.subject,
-      text: message.text,
-      ...(message.html ? { html: message.html } : {}),
-    }),
-  });
+  console.log(`[EMAIL] From: ${env.EMAIL_FROM}`);
 
-  if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    console.error(`[EMAIL] Failed to send email to ${message.to}. Status: ${res.status}, Detail: ${detail}`);
-    throw new Error(
-      `Email provider returned ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ""}`
-    );
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.EMAIL_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: env.EMAIL_FROM,
+        to: [message.to],
+        subject: message.subject,
+        text: message.text,
+        ...(message.html ? { html: message.html } : {}),
+      }),
+    });
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "No detail available");
+      console.error(`[EMAIL] Resend API Error: ${res.status} - ${detail}`);
+      throw new Error(
+        `Email provider returned ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ""}`
+      );
+    }
+    console.log(`[EMAIL] Successfully sent email to ${message.to}`);
+  } catch (error) {
+    console.error(`[EMAIL] Unexpected failure sending to ${message.to}:`, error);
+    throw error;
   }
-  console.log(`[EMAIL] Successfully sent email to ${message.to}`);
 }

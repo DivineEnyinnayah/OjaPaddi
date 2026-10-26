@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import { account, businesses, user, verification } from "@ojapaddi/db/schema";
 import { auth } from "@ojapaddi/auth";
 import { and, eq, or, sql } from "drizzle-orm";
+import { sendEmail } from "@ojapaddi/auth/email";
 
 /**
  * Raised when a user account exists but has never set a password — the state
@@ -216,6 +217,7 @@ export async function requestPasswordResetCode(db: Database, email: string) {
 
   // Store in verification table (expires in 10 minutes)
   await db.insert(verification).values({
+    id: crypto.randomUUID(),
     identifier: normalizedEmail,
     value,
     expiresAt: new Date(Date.now() + 10 * 60 * 1000),
@@ -239,27 +241,40 @@ export async function requestPasswordResetCode(db: Database, email: string) {
 }
 
 /** Validates a reset code and sets the new password. */
-export async function resetPassword(token: string, newPassword: string) {
-  // The 'token' passed from the app is actually the 6-digit code.
+export async function resetPassword(db: Database, token: string, newPassword: string) {
+  console.log(`[AUTH] Attempting reset with code: ${token}`);
+  
+  // The 'token' passed from the app is the 6-digit code.
   // We look for a verification record that starts with this code.
-  const [v] = await auth.db.select()
+  const [v] = await db.select()
     .from(verification)
     .where(and(
       sql`value LIKE ${token + ":%"}`,
-      sql`expires_at > ${new Date().toISOString()}`
+      sql`expires_at > ${Date.now()}`
     ))
     .limit(1);
 
-  if (!v) throw new Error("Invalid or expired verification code");
+  if (!v) {
+    console.error(`[AUTH] No valid verification record found for code: ${token}`);
+    throw new Error("Invalid or expired verification code");
+  }
+
+  console.log(`[AUTH] Found matching token: ${v.value.split(":")[1].slice(0, 5)}...`);
 
   const [, longToken] = v.value.split(":");
 
-  await auth.api.resetPassword({
-    body: { token: longToken, newPassword },
-  });
+  try {
+    await auth.api.resetPassword({
+      body: { token: longToken, newPassword },
+    });
+    console.log(`[AUTH] Better Auth successfully reset password for ${v.identifier}`);
+  } catch (e: any) {
+    console.error(`[AUTH] Better Auth rejected token ${longToken.slice(0, 5)}...: ${e.message}`);
+    throw e;
+  }
 
   // Cleanup
-  await auth.db.delete(verification).where(eq(verification.id, v.id));
+  await db.delete(verification).where(eq(verification.id, v.id));
 }
 
 /**

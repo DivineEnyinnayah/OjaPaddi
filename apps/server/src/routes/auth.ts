@@ -82,16 +82,19 @@ authRoutes.post("/forgot-password", validate(ForgotPasswordSchema), async (c) =>
     await requestPasswordResetCode(db, email);
     return c.json({ success: true, data: { message: "Reset email sent" } }, 200);
   } catch (error: unknown) {
+    console.error("[AUTH] Forgot password failed:", error);
     return c.json({ success: false, error: { code: "FORGOT_PASSWORD_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });
 
 authRoutes.post("/reset-password", validate(ResetPasswordSchema), async (c) => {
   try {
+    const db = c.get("db");
     const { token, new_password } = c.get("validatedBody");
-    await resetPassword(token, new_password);
+    await resetPassword(db, token, new_password);
     return c.json({ success: true, data: { message: "Password reset successful" } }, 200);
   } catch (error: unknown) {
+    console.error("[AUTH] Reset password failed:", error);
     return c.json({ success: false, error: { code: "RESET_PASSWORD_FAILED", message: error instanceof Error ? error.message : String(error) } }, 400);
   }
 });

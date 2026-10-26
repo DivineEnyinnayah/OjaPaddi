@@ -33,7 +33,7 @@ echo "5/6 — Email API key (Resend: https://resend.com)"
 npx wrangler secret put EMAIL_API_KEY
 
 echo ""
-echo "6/6 — Email from address (e.g. OjaPaddi <noreply@yourdomain.com>)"
+echo "6/6 — Email from address (e.g. OjaPaddi <support@yourdomain.com>)"
 npx wrangler secret put EMAIL_FROM
 
 echo ""

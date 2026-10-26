@@ -4,7 +4,6 @@ import { bearer } from "better-auth/plugins";
 import { env } from "@ojapaddi/env/server";
 import { createDb } from "@ojapaddi/db";
 import * as schema from "@ojapaddi/db/schema";
-import { sendEmail } from "./email";
 import { dash } from "@better-auth/infra"
 
 /**
@@ -41,9 +40,26 @@ export const auth = betterAuth({
      * password, so it must be wired to a real transport — the code is the sole
      * proof that the requester controls the inbox.
      */
-    sendResetPassword: async () => {
-      // Disabled to prevent Cloudflare Worker background task failures.
-      // Manual flow implemented in authService.ts.
+    sendResetPassword: async ({ user, token }) => {
+      // We derive a 6-digit code from the token to keep the UX consistent
+      // while using Better Auth's secure token for the actual reset.
+      const code = token.slice(0, 6).toUpperCase();
+      
+      await sendEmail({
+        to: user.email,
+        subject: "Reset your OjaPaddi password",
+        text: [
+          "Hi,",
+          "",
+          "Use this code to set a new password for your OjaPaddi account:",
+          "",
+          `    ${code}`,
+          "",
+          "It expires in 10 minutes.",
+          "",
+          "If you did not request this, you can ignore this email.",
+        ].join("\n"),
+      });
     },
   },
 
