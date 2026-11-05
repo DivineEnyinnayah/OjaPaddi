@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, View, Text, Image, TouchableOpacity, TextInput, ScrollView } from 'react-native';
+import { KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Check, CheckCircle, Eye, EyeSlash, ArrowRight } from 'phosphor-react-native';
+import { Check, Eye, EyeSlash } from 'phosphor-react-native';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Container } from '@/components/container';
 import { useToast } from '@/components/ui/toast';
 import { useAuthStore } from '../../stores/authStore';
-import { StyledView, StyledText, StyledImage, StyledTouchableOpacity, StyledTextInput, StyledKeyboardAvoidingView } from '@/components/ui/styled';
+import {
+  StyledView,
+  StyledText,
+  StyledTextInput,
+  StyledTouchableOpacity,
+  StyledScrollView,
+} from '@/components/ui/styled';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { colorTokens, typeScale } from '@/constants/tokens';
 
 interface FormErrors {
   fullName?: string;
@@ -17,10 +23,22 @@ interface FormErrors {
   password?: string;
 }
 
+/**
+ * FigCraft `02.3 — Create account` (frame 469), 390×844.
+ *
+ * VISUAL ONLY. Inspection of frame 469 shows YOUR NAME / BUSINESS NAME /
+ * EMAIL / PASSWORD; this screen deliberately collects fullName / email /
+ * phone / password and defers business name to onboarding. The field set,
+ * validation, store hand-off and PASSWORD_RESET flow are preserved as-is —
+ * only the visual language (eyebrow, title, 54px field boxes, brand CTA) is
+ * applied. The mismatch is flagged in the rebuild report rather than
+ * silently reconciled.
+ */
 export default function RegisterScreen() {
   const router = useRouter();
-  const setPendingRegistration = useAuthStore(state => state.setPendingRegistration);
+  const setPendingRegistration = useAuthStore((state) => state.setPendingRegistration);
   const colors = useThemeColor();
+  const C = colorTokens;
   const toast = useToast();
 
   const [formData, setFormData] = useState({
@@ -33,6 +51,7 @@ export default function RegisterScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<keyof FormErrors | null>(null);
 
   const validateForm = () => {
     const newErrors: FormErrors = {};
@@ -87,9 +106,9 @@ export default function RegisterScreen() {
   };
 
   const updateField = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
@@ -105,174 +124,246 @@ export default function RegisterScreen() {
 
   const passwordStrength = getPasswordStrength(formData.password);
 
+  const fieldBorder = (field: keyof FormErrors) =>
+    errors[field] ? 'border-danger' : focusedField === field ? 'border-brand' : 'border-border';
+
   return (
-    <Container isScrollable={false} withSafeAreaTop={true} className="bg-background">
-      <StyledKeyboardAvoidingView
+    <Container isScrollable={false} withSafeAreaTop className="bg-background">
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 24 }}
+        <StyledScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 28 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <StyledView className="items-center mb-8">
-            <StyledView className="h-16 mb-2">
-              <StyledImage
-                source={require('@/assets/images/logo.png')}
-                className="h-full"
-                resizeMode="contain"
-              />
-            </StyledView>
-            <StyledText className="text-display font-bold text-primary mb-1">OjaPaddi</StyledText>
-            <StyledText className="text-body-lg text-on-surface-variant text-center text-pretty">
-              Join thousands of entrepreneurs growing their business today.
-            </StyledText>
+          {/* Eyebrow */}
+          <StyledText className="font-label uppercase tracking-[2px]" style={{ fontSize: 9, color: colors.accent }}>
+            START FREE
+          </StyledText>
+
+          {/* Title */}
+          <StyledText
+            className="mt-3 font-display"
+            style={{ fontSize: 31, lineHeight: 34, letterSpacing: -0.31, color: colors.ink }}
+          >
+            Open your stall.
+          </StyledText>
+
+          {/* Sub */}
+          <StyledText className="mt-4 font-body" style={{ fontSize: 13, lineHeight: 18, color: colors.muted }}>
+            Everything lives on your phone — even when data is weak.
+          </StyledText>
+
+          {/* Your name */}
+          <StyledText className="mt-8 font-label uppercase tracking-[1.5px]" style={{ fontSize: 9, color: colors.muted }}>
+            YOUR NAME
+          </StyledText>
+          <StyledView
+            className={`mt-2 h-[54px] flex-row items-center rounded-input border bg-card px-4 ${fieldBorder('fullName')}`}
+          >
+            <StyledTextInput
+              className="flex-1 px-0 font-body text-body text-ink"
+              placeholder="e.g., Tope Adeyemi"
+              placeholderTextColor={colors.muted}
+              value={formData.fullName}
+              onChangeText={(value) => updateField('fullName', value)}
+              onFocus={() => setFocusedField('fullName')}
+              onBlur={() => setFocusedField(null)}
+              autoCapitalize="words"
+              accessibilityLabel="Your name"
+            />
+            {formData.fullName && !errors.fullName ? <Check size={18} color={colors.brand} weight="bold" /> : null}
           </StyledView>
+          {errors.fullName ? (
+            <StyledText className="mt-1.5 ml-1 font-body text-micro text-danger" accessibilityRole="alert">
+              {errors.fullName}
+            </StyledText>
+          ) : null}
 
-          <StyledView className="bg-surface-container-lowest rounded-[16px] border border-outline-variant p-6 gap-5">
-            <StyledView className="gap-1.5">
-              <StyledText className="text-body-sm font-semibold text-on-surface">Full Name</StyledText>
-              <StyledView
-                className={`flex-row items-center border rounded-input px-4 h-12 bg-surface-container ${errors.fullName ? 'border-error' : 'border-outline-variant'}`}
-              >
-                <StyledTextInput
-                  className="flex-1 text-body-lg text-on-surface px-0"
-                  placeholder="e.g., Tope Adeyemi"
-                  placeholderTextColor={colors.outline}
-                  value={formData.fullName}
-                  onChangeText={(value) => updateField('fullName', value)}
-                  autoCapitalize="words"
-                />
-                {formData.fullName && !errors.fullName && (
-                  <CheckCircle size={20} color={colors.primary} />
-                )}
-              </StyledView>
-              {formData.fullName && !errors.fullName && (
-                <StyledView className="flex-row items-center gap-1 mt-1 ml-1">
-                  <StyledText className="text-label-sm text-primary">Looks great!</StyledText>
-                </StyledView>
-              )}
-              {errors.fullName && (
-                <StyledText className="text-body-sm text-error">{errors.fullName}</StyledText>
-              )}
+          {/* Phone */}
+          <StyledText className="mt-6 font-label uppercase tracking-[1.5px]" style={{ fontSize: 9, color: colors.muted }}>
+            PHONE
+          </StyledText>
+          <StyledView
+            className={`mt-2 h-[54px] flex-row items-center overflow-hidden rounded-input border bg-card ${fieldBorder('phone')}`}
+          >
+            <StyledView className="h-full justify-center border-r border-border px-4">
+              <StyledText className="font-label" style={{ fontSize: 15, color: colors.ink }}>
+                +234
+              </StyledText>
             </StyledView>
+            <StyledTextInput
+              className="flex-1 px-4 py-0 font-body text-body text-ink"
+              placeholder="8012345678"
+              placeholderTextColor={colors.muted}
+              value={formData.phone}
+              onChangeText={(value) => updateField('phone', value)}
+              onFocus={() => setFocusedField('phone')}
+              onBlur={() => setFocusedField(null)}
+              keyboardType="phone-pad"
+              accessibilityLabel="Phone number"
+            />
+          </StyledView>
+          {errors.phone ? (
+            <StyledText className="mt-1.5 ml-1 font-body text-micro text-danger" accessibilityRole="alert">
+              {errors.phone}
+            </StyledText>
+          ) : null}
 
-            <StyledView className="gap-1.5">
-              <StyledText className="text-body-sm font-semibold text-on-surface">Phone Number</StyledText>
-              <StyledView
-                className={`flex-row items-center border rounded-input h-12 bg-surface-container overflow-hidden ${errors.phone ? 'border-error' : 'border-outline-variant'}`}
-              >
-                <StyledView className="h-full px-3 border-r border-outline-variant justify-center">
-                  <StyledText className="text-body-lg font-semibold text-on-surface">+234</StyledText>
-                </StyledView>
-                <StyledTextInput
-                  className="flex-1 text-body-lg text-on-surface px-4 py-0"
-                  placeholder="8012345678"
-                  placeholderTextColor={colors.outline}
-                  value={formData.phone}
-                  onChangeText={(value) => updateField('phone', value)}
-                  keyboardType="phone-pad"
-                />
-              </StyledView>
-              {errors.phone && (
-                <StyledText className="text-body-sm text-error">{errors.phone}</StyledText>
-              )}
-            </StyledView>
-
-            <Input
-              label="Email Address"
+          {/* Email */}
+          <StyledText className="mt-6 font-label uppercase tracking-[1.5px]" style={{ fontSize: 9, color: colors.muted }}>
+            EMAIL
+          </StyledText>
+          <StyledView
+            className={`mt-2 h-[54px] flex-row items-center rounded-input border bg-card px-4 ${fieldBorder('email')}`}
+          >
+            <StyledTextInput
+              className="flex-1 px-0 font-body text-body text-ink"
               placeholder="tope@gmail.com"
+              placeholderTextColor={colors.muted}
               value={formData.email}
               onChangeText={(value) => updateField('email', value)}
+              onFocus={() => setFocusedField('email')}
+              onBlur={() => setFocusedField(null)}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              error={errors.email}
-              className="bg-surface-container rounded-input"
+              accessibilityLabel="Email address"
             />
+            {formData.email && !errors.email ? <Check size={18} color={colors.brand} weight="bold" /> : null}
+          </StyledView>
+          {errors.email ? (
+            <StyledText className="mt-1.5 ml-1 font-body text-micro text-danger" accessibilityRole="alert">
+              {errors.email}
+            </StyledText>
+          ) : null}
 
-            <StyledView className="gap-1.5">
-              <StyledText className="text-body-sm font-semibold text-on-surface">Password</StyledText>
-              <StyledView
-                className={`flex-row items-center border rounded-input px-4 h-12 bg-surface-container ${errors.password ? 'border-error' : 'border-outline-variant'}`}
-              >
-                <StyledTextInput
-                  className="flex-1 text-body-lg text-on-surface px-0"
-                  placeholder="••••••••"
-                  placeholderTextColor={colors.outline}
-                  value={formData.password}
-                  onChangeText={(value) => updateField('password', value)}
-                  secureTextEntry={!showPassword}
-                />
-                <StyledTouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  className="ml-1"
-                  accessibilityRole="button"
-                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
-                  accessibilityState={{ expanded: showPassword }}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                >
-                  {showPassword ? <Eye size={20} color={colors.outline} /> : <EyeSlash size={20} color={colors.outline} />}
-                </StyledTouchableOpacity>
-              </StyledView>
-              {formData.password.length > 0 && (
-                <StyledView className="flex-row gap-1.5 mt-2">
-                  {[0, 1, 2, 3].map(index => (
-                    <StyledView
-                      key={index}
-                      className={`flex-1 h-1.5 rounded-full ${index < passwordStrength ? 'bg-primary' : 'bg-outline-variant'}`}
-                    />
-                  ))}
-                </StyledView>
-              )}
-              {errors.password && (
-                <StyledText className="text-body-sm text-error">{errors.password}</StyledText>
-              )}
-            </StyledView>
+          {/* Password */}
+          <StyledText className="mt-6 font-label uppercase tracking-[1.5px]" style={{ fontSize: 9, color: colors.muted }}>
+            PASSWORD
+          </StyledText>
+          <StyledView
+            className={`mt-2 h-[54px] flex-row items-center rounded-input border bg-card px-4 ${fieldBorder('password')}`}
+          >
+            <StyledTextInput
+              className="flex-1 px-0 font-body text-body text-ink"
+              placeholder="••••••••"
+              placeholderTextColor={colors.muted}
+              value={formData.password}
+              onChangeText={(value) => updateField('password', value)}
+              onFocus={() => setFocusedField('password')}
+              onBlur={() => setFocusedField(null)}
+              secureTextEntry={!showPassword}
+              accessibilityLabel="Password"
+            />
+            <StyledTouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+              accessibilityState={{ expanded: showPassword }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              {showPassword ? <Eye size={20} color={colors.muted} /> : <EyeSlash size={20} color={colors.muted} />}
+            </StyledTouchableOpacity>
           </StyledView>
 
+          {/* Password strength meter + helper (frame 469 PASSWORD helper) */}
+          {formData.password.length > 0 ? (
+            <StyledView className="mt-2 flex-row gap-1.5">
+              {[0, 1, 2, 3].map((index) => (
+                <StyledView
+                  key={index}
+                  className="h-1.5 flex-1 rounded-pill"
+                  style={{ backgroundColor: index < passwordStrength ? C.brand.light : C.border.light }}
+                />
+              ))}
+            </StyledView>
+          ) : null}
+          {errors.password ? (
+            <StyledText className="mt-1.5 ml-1 font-body text-micro text-danger" accessibilityRole="alert">
+              {errors.password}
+            </StyledText>
+          ) : (
+            <StyledText className="mt-2 font-label" style={{ fontSize: 10, color: colors.brand }}>
+              Strong — add one symbol or number.
+            </StyledText>
+          )}
+
+          {/* Terms */}
           <StyledTouchableOpacity
-            className="flex-row items-start gap-3 mt-6 mb-8"
+            className="mt-6 flex-row items-start gap-3"
             onPress={() => setAgreedToTerms(!agreedToTerms)}
             accessibilityRole="checkbox"
             accessibilityLabel="Agree to terms and conditions"
             accessibilityState={{ checked: agreedToTerms }}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <StyledView className={`w-4 h-4 rounded-[4px] border flex-row items-center justify-center mt-0.5 ${agreedToTerms ? 'bg-primary border-primary' : 'border-outline-variant bg-surface'}`}>
-              {agreedToTerms && <Check size={12} color={colors.onPrimary} />}
+            <StyledView
+              className={`mt-0.5 h-4 w-4 flex-row items-center justify-center rounded-[4px] border ${
+                agreedToTerms ? 'border-brand bg-brand' : 'border-border bg-card'
+              }`}
+            >
+              {agreedToTerms ? <Check size={12} color={colors.card} weight="bold" /> : null}
             </StyledView>
-            <StyledText className="text-body-sm text-on-surface-variant flex-1">
-              I agree to the <StyledText className="text-primary font-bold">Terms of Service</StyledText> and <StyledText className="text-primary font-bold">Privacy Policy</StyledText>
+            <StyledText className="flex-1 font-body" style={{ fontSize: 11, lineHeight: 16, color: colors.muted }}>
+              I agree to the{' '}
+              <StyledText className="font-label" style={{ fontSize: 11, color: colors.brand }}>
+                Terms of Service
+              </StyledText>{' '}
+              and{' '}
+              <StyledText className="font-label" style={{ fontSize: 11, color: colors.brand }}>
+                Privacy Policy
+              </StyledText>
             </StyledText>
           </StyledTouchableOpacity>
 
-          <StyledView className="mt-auto gap-6 pb-10">
-            <Button
-              size="lg"
-              variant="primary"
-              onPress={handleRegister}
-              isDisabled={isLoading}
-              className="w-full"
-            >
-              <StyledView className="flex-row items-center gap-2">
-                <StyledText className="text-h2 text-on-primary font-semibold">{isLoading ? 'Creating account...' : 'Create Account'}</StyledText>
-                <ArrowRight size={20} color={colors.onPrimary} />
-              </StyledView>
-            </Button>
+          {/* CTA */}
+          <StyledTouchableOpacity
+            className={`mt-7 h-14 flex-row items-center justify-center rounded-button bg-brand ${
+              isLoading ? 'opacity-50' : ''
+            }`}
+            onPress={handleRegister}
+            disabled={isLoading}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: isLoading, busy: isLoading }}
+          >
+            <StyledText className="font-label" style={{ fontSize: typeScale.body.fontSize, color: colors.card }}>
+              {isLoading ? 'Creating account…' : 'Create free account'}
+            </StyledText>
+          </StyledTouchableOpacity>
 
-            <StyledView className="flex-row justify-center">
-              <StyledText className="text-body-lg text-on-surface-variant">Already have an account? </StyledText>
-              <StyledTouchableOpacity onPress={() => router.push('/login')} accessibilityRole="button" accessibilityLabel="Log in">
-                <StyledText className="text-body-lg font-bold text-primary" style={{ textDecorationLine: 'underline' }}>
-                  Log in
-                </StyledText>
-              </StyledTouchableOpacity>
-            </StyledView>
+          {/* Terms blurb */}
+          <StyledText className="mt-4 font-body" style={{ fontSize: 11, lineHeight: 16, color: colors.muted }}>
+            By continuing, you agree to fair use. Never enter card data — OjaPaddi never asks for it.
+          </StyledText>
+
+          {/* Sign in link */}
+          <StyledView className="mt-4 flex-row items-center justify-center gap-1">
+            <StyledText className="font-body" style={{ fontSize: 12, color: colors.muted }}>
+              Already have an account?
+            </StyledText>
+            <StyledTouchableOpacity
+              onPress={() => router.push('/login')}
+              className="min-h-11 justify-center"
+              accessibilityRole="button"
+              accessibilityLabel="Log in"
+            >
+              <StyledText className="font-label" style={{ fontSize: 13, color: colors.brand }}>
+                Log in
+              </StyledText>
+            </StyledTouchableOpacity>
           </StyledView>
-        </ScrollView>
-      </StyledKeyboardAvoidingView>
+
+          <StyledView className="flex-1" />
+
+          {/* Free proof */}
+          <StyledText className="mt-8 text-center font-label" style={{ fontSize: 11, color: colors.brand }}>
+            Free plan · 50 products · Unlimited sales · No card
+          </StyledText>
+        </StyledScrollView>
+      </KeyboardAvoidingView>
     </Container>
   );
 }

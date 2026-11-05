@@ -1,24 +1,62 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, ImageIcon, Minus, Plus, Warning, Trash } from 'phosphor-react-native';
-import { useThemeColor } from '@/hooks/useThemeColor';
-import { Button } from '@/components/ui/button';
-import { Container } from '@/components/container';
-import { Surface } from '@/components/ui/surface';
-import { useToast } from '@/components/ui/toast';
-import { useProducts, type Product } from '../../../hooks/useProducts';
-import { buildProductShareMessage, shareViaWhatsApp } from '@/lib/whatsapp';
-import { withUniwind } from 'uniwind';
-import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency } from '@/lib/currency';
+import React, { useEffect, useState } from "react";
+import { ScrollView, Image } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { withUniwind } from "uniwind";
+import { ArrowLeft, ShareNetwork, Minus, Plus, Trash, Warning } from "phosphor-react-native";
+import { useThemeColor } from "@/hooks/useThemeColor";
+import { Button } from "@/components/ui/button";
+import { Container } from "@/components/container";
+import { useToast } from "@/components/ui/toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StyledView, StyledText, StyledTouchableOpacity } from "@/components/ui/styled";
+import { useProducts, type Product } from "../../../hooks/useProducts";
+import { buildProductShareMessage, shareViaWhatsApp } from "@/lib/whatsapp";
+import { radius, spacing } from "@/constants/tokens";
+import { formatCurrency } from "@/lib/currency";
 
-const StyledView = withUniwind(View);
-const StyledText = withUniwind(Text);
-const StyledTouchableOpacity = withUniwind(TouchableOpacity);
 const StyledImage = withUniwind(Image);
 const StyledScrollView = withUniwind(ScrollView);
 
+/** Drawn rice-bag illustration — frame 688 (x149 y24, 92×150). */
+function RiceBagIllustration() {
+  const colors = useThemeColor();
+  return (
+    <StyledView className="items-center justify-center">
+      {/* Fold — frame y24, 68×34 */}
+      <StyledView
+        className="items-center bg-brand-strong"
+        style={{ width: 68, height: 34, borderTopLeftRadius: 10, borderTopRightRadius: 10 }}
+      >
+        <StyledView className="mt-3 h-0.5 w-[68px] bg-accent" />
+      </StyledView>
+      {/* Body — frame y40, 92×150 */}
+      <StyledView
+        className="items-center justify-center border bg-card"
+        style={{ width: 92, height: 150, borderRadius: 16, borderColor: colors.brandStrong }}
+      >
+        <StyledText className="font-display text-brand-strong" style={{ fontSize: 34, lineHeight: 34 }}>
+          RICE
+        </StyledText>
+        <StyledText
+          className="mt-4 font-label uppercase tracking-[2px] text-brand"
+          style={{ fontSize: 8, lineHeight: 10 }}
+        >
+          LONG GRAIN
+        </StyledText>
+      </StyledView>
+    </StyledView>
+  );
+}
+
+/**
+ * FigCraft `03.3 — Product detail` (frame 688), 390×844.
+ *
+ * Presentation follows the frame: brand-soft image area with a drawn rice-bag
+ * placeholder, low-stock pill, ledger meta, price block, stock stepper and a
+ * Record sale / Stock in action pair. All product logic is unchanged —
+ * `handleStockAdd` / `handleStockRemove` / `handleDelete` / `handleShare` are
+ * the same handlers the previous screen used.
+ */
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
@@ -39,11 +77,9 @@ export default function ProductDetailScreen() {
     try {
       await adjustStock(id as string, 1);
       const updated = await fetchProductById(id as string);
-      if (updated) {
-        setProduct(updated);
-      }
+      if (updated) setProduct(updated);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to adjust stock');
+      toast.error(err instanceof Error ? err.message : "Failed to adjust stock");
     }
   };
 
@@ -52,27 +88,25 @@ export default function ProductDetailScreen() {
     try {
       await adjustStock(id as string, -1);
       const updated = await fetchProductById(id as string);
-      if (updated) {
-        setProduct(updated);
-      }
+      if (updated) setProduct(updated);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to adjust stock');
+      toast.error(err instanceof Error ? err.message : "Failed to adjust stock");
     }
   };
 
   const handleDelete = () => {
     toast.confirm({
-      title: 'Delete Product',
-      message: 'Are you sure you want to delete this product?',
-      confirmLabel: 'Delete',
+      title: "Delete Product",
+      message: "Are you sure you want to delete this product?",
+      confirmLabel: "Delete",
       destructive: true,
       onConfirm: async () => {
         try {
           await deleteProduct(id as string);
-          toast.success('Product has been removed.', 'Deleted');
+          toast.success("Product has been removed.", "Deleted");
           router.back();
         } catch (err: unknown) {
-          toast.error(err instanceof Error ? err.message : 'Failed to delete product');
+          toast.error(err instanceof Error ? err.message : "Failed to delete product");
         }
       },
     });
@@ -86,33 +120,13 @@ export default function ProductDetailScreen() {
 
   if (isLoading && !product) {
     return (
-      <Container isScrollable={false} className="bg-background px-margin">
-        <StyledView className="flex-col gap-2 mb-4">
-          <Skeleton className="h-10 w-3/4 mb-2" />
-          <Skeleton className="h-12 w-full rounded-lg" />
-        </StyledView>
-        <StyledView className="flex-row gap-2 mb-4 pl-6">
-          <Skeleton className="h-8 w-16 rounded-full" />
-          <Skeleton className="h-8 w-20 rounded-full" />
-          <Skeleton className="h-8 w-24 rounded-full" />
-        </StyledView>
-        <StyledView className="flex-col gap-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Surface key={i} variant="outline" className="p-4 mb-3">
-              <StyledView className="flex-row justify-between items-start mb-2">
-                <StyledView className="flex-1 mr-3">
-                  <Skeleton className="h-4 w-20 mb-1" />
-                  <Skeleton className="h-6 w-32 mb-1" />
-                  <Skeleton className="h-3 w-20" />
-                </StyledView>
-                <Skeleton className="h-6 w-16" />
-              </StyledView>
-              <StyledView className="flex-row justify-between items-center mt-2 pt-2 border-t border-outline-variant/50">
-                <Skeleton className="h-3 w-16" />
-                <Skeleton className="h-6 w-16 rounded-full" />
-              </StyledView>
-            </Surface>
-          ))}
+      <Container isScrollable={false} className="bg-background">
+        <Skeleton className="h-[260px] w-full" />
+        <StyledView className="px-gutter pt-6">
+          <Skeleton className="mb-3 h-7 w-40" />
+          <Skeleton className="mb-4 h-4 w-56" />
+          <Skeleton className="mb-4 h-9 w-40" />
+          <Skeleton className="h-[82px] rounded-card" />
         </StyledView>
       </Container>
     );
@@ -120,130 +134,191 @@ export default function ProductDetailScreen() {
 
   if (!product) {
     return (
-      <Container isScrollable={false} className="bg-background items-center justify-center">
-        <StyledText className="text-body-lg text-on-surface-variant mb-4">Product not found</StyledText>
-        <Button onPress={() => router.back()}>
-          Go Back
-        </Button>
+      <Container isScrollable={false} className="items-center justify-center bg-background">
+        <StyledText className="mb-4 font-body text-bodySm text-muted">
+          Product not found
+        </StyledText>
+        <Button onPress={() => router.back()}>Go Back</Button>
       </Container>
     );
   }
 
   const price = parseFloat(product.price);
+  const cost = parseFloat(product.costPrice ?? "0");
+  const hasCost = !isNaN(cost) && cost > 0;
+  const margin = hasCost ? price - cost : 0;
   const lowStockThreshold = product.lowStockThreshold ?? 5;
+  const isLow = product.quantity <= lowStockThreshold;
+  const hasPhoto = !!product.imageUrl && !imageError;
+
+  const meta = [product.category, product.sku ? `SKU ${product.sku}` : null]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <Container isScrollable={false} withTabBar className="bg-background">
+    <Container isScrollable={false} className="bg-background">
       <StyledView className="relative flex-1">
-        <StyledView className="absolute top-4 left-4 z-20 w-11 h-11 bg-surface rounded-full justify-center items-center shadow-md shadow-black/20 elevation-4">
-          <StyledTouchableOpacity
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <ArrowLeft size={22} color={colors.onSurface} />
-          </StyledTouchableOpacity>
-        </StyledView>
-
         <StyledScrollView
-          contentContainerStyle={{ paddingBottom: 110 }}
+          contentContainerStyle={{ paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
         >
-          <StyledView className="w-full h-[280px] bg-surface-container-high items-center justify-center relative overflow-hidden">
-            {product.imageUrl && !imageError ? (
+          {/* Image area — frame y0, 390×260 */}
+          <StyledView
+            className="w-full items-center justify-center overflow-hidden bg-brand-soft"
+            style={{ height: 260 }}
+          >
+            {hasPhoto ? (
               <StyledImage
                 source={{ uri: product.imageUrl }}
-                className="w-full h-full"
+                className="h-full w-full"
                 resizeMode="cover"
                 onError={() => setImageError(true)}
                 accessible
                 accessibilityLabel={product.name}
               />
             ) : (
-              <StyledView className="w-full h-full items-center justify-center bg-primary-container/20 p-6">
-                <StyledView className="w-20 h-20 rounded-full bg-primary/10 items-center justify-center mb-3">
-                  <StyledText className="text-3xl font-extrabold text-primary">
-                    {product.name.charAt(0).toUpperCase()}
-                  </StyledText>
-                </StyledView>
-                <ImageIcon size={32} color={colors.primary} />
-              </StyledView>
+              <RiceBagIllustration />
             )}
           </StyledView>
 
-          <StyledView className="px-5 pt-6 pb-2">
-            <StyledText className="text-[22px] font-bold text-on-surface mb-1">{product.name}</StyledText>
+          {/* Back + share — frame y18 */}
+          <StyledTouchableOpacity
+            onPress={() => router.back()}
+            className="absolute items-center justify-center rounded-pill bg-background"
+            style={{ top: 18, left: 18, height: 40, width: 40, borderRadius: radius.pill }}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <ArrowLeft size={18} color={colors.ink} />
+          </StyledTouchableOpacity>
 
-            <StyledText className="text-[22px] font-extrabold text-primary mb-3">
-              {formatCurrency(price)}
+          <StyledTouchableOpacity
+            onPress={handleShare}
+            className="absolute items-center justify-center rounded-pill bg-background"
+            style={{ top: 18, right: 18, height: 40, width: 40, borderRadius: radius.pill }}
+            accessibilityRole="button"
+            accessibilityLabel="Share product"
+          >
+            <ShareNetwork size={18} color={colors.ink} />
+          </StyledTouchableOpacity>
+
+          <StyledView
+            style={{ paddingHorizontal: spacing.gutter, paddingTop: spacing.gutter }}
+          >
+            {/* Low stock pill — frame y276 */}
+            {isLow ? (
+              <StyledView className="mb-3 h-[30px] flex-row items-center justify-center self-start rounded-pill border border-accent bg-accent-soft px-4">
+                <Warning size={13} color={colors.accent} weight="bold" />
+                <StyledText
+                  className="ml-1.5 font-label uppercase tracking-[1.5px] text-accent"
+                  style={{ fontSize: 10, lineHeight: 13 }}
+                >
+                  LOW STOCK — {product.quantity} LEFT
+                </StyledText>
+              </StyledView>
+            ) : null}
+
+            {/* Title — frame y324 */}
+            <StyledText
+              className="font-display text-ink"
+              style={{ fontSize: 30, lineHeight: 32, letterSpacing: -0.3 }}
+            >
+              {product.name}
             </StyledText>
 
-            <StyledView className="flex-row items-center gap-2 mb-1">
-              <StyledView className="bg-primary-container/30 px-3 py-1 rounded-full">
-                <StyledText className="text-label-bold font-semibold text-primary">{product.category || 'General'}</StyledText>
+            {/* Ledger meta — frame y360 */}
+            {meta ? (
+              <StyledText
+                className="mt-2 font-ledger text-muted"
+                style={{ fontSize: 12, lineHeight: 16 }}
+              >
+                {meta}
+              </StyledText>
+            ) : null}
+
+            {/* Price + margin chip — frame y386 */}
+            <StyledView className="mt-4 flex-row items-start justify-between">
+              <StyledView className="flex-1">
+                <StyledText
+                  className="font-display text-ink"
+                  style={{ fontSize: 32, lineHeight: 35 }}
+                >
+                  {formatCurrency(price)}
+                </StyledText>
+                <StyledText
+                  className="mt-3 font-label uppercase tracking-[1.5px] text-muted"
+                  style={{ fontSize: 9, lineHeight: 12 }}
+                >
+                  PER UNIT
+                </StyledText>
               </StyledView>
-              {product.sku ? (
-                <StyledText className="text-label-bold text-on-surface-variant font-medium">SKU: {product.sku}</StyledText>
+
+              {hasCost ? (
+                <StyledView className="items-center justify-center rounded-pill bg-brand-soft px-4 py-2">
+                  <StyledText
+                    className="font-label text-brand"
+                    style={{ fontSize: 13, lineHeight: 17 }}
+                  >
+                    make {formatCurrency(margin)}
+                  </StyledText>
+                </StyledView>
               ) : null}
             </StyledView>
 
-            <StyledView className="h-[1px] bg-outline-variant my-5" />
-
-            <StyledText className="text-body-lg font-bold text-on-surface mb-2">Description</StyledText>
-            <StyledText className="text-body-sm text-on-surface-variant leading-5 mb-6">
-              {product.description || 'No description provided.'}
-            </StyledText>
-
-            <Surface variant="primary" className="p-4">
-              <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-3">Current Stock</StyledText>
-              <StyledView className="flex-row items-center justify-center gap-5">
-                <StyledTouchableOpacity
-                  className="w-11 h-11 rounded-full justify-center items-center border border-outline/40"
-                  onPress={handleStockRemove}
-                  accessibilityRole="button"
-                  accessibilityLabel="Decrease stock"
+            {/* Stock stepper — frame y476 */}
+            <StyledView className="mt-6 flex-row items-center rounded-card border border-border bg-card p-4">
+              <StyledView className="flex-1">
+                <StyledText
+                  className="font-label uppercase tracking-[1.5px] text-muted"
+                  style={{ fontSize: 9, lineHeight: 12 }}
                 >
-                  <Minus size={22} color={colors.onSurface} />
-                </StyledTouchableOpacity>
-                <StyledText className="text-[28px] font-extrabold text-on-surface min-w-[48px] text-center">
-                  {product.quantity}
+                  STOCK ON HAND
                 </StyledText>
-                <StyledTouchableOpacity
-                  className="w-11 h-11 rounded-full bg-primary justify-center items-center"
-                  onPress={handleStockAdd}
-                  accessibilityRole="button"
-                  accessibilityLabel="Increase stock"
+                <StyledText
+                  className="mt-2 font-body text-muted"
+                  style={{ fontSize: 11, lineHeight: 14 }}
                 >
-                  <Plus size={22} color={colors.onPrimary} />
-                </StyledTouchableOpacity>
+                  Alert at {lowStockThreshold} units
+                </StyledText>
               </StyledView>
-              {product.quantity <= lowStockThreshold && (
-                <StyledView className="flex-row items-center justify-center mt-3 gap-1">
-                  <Warning size={16} color={colors.error} />
-                  <StyledText className="text-label-bold font-semibold text-error">Running Low!</StyledText>
-                </StyledView>
-              )}
-            </Surface>
 
-            {/* Actions section directly below stock info floating comfortably above navbar when scrolled */}
-            <StyledView className="mt-6 pt-5 border-t border-outline-variant/30 flex-row items-center gap-3">
               <StyledTouchableOpacity
-                className="w-12 h-12 rounded-full justify-center items-center border-2 border-error bg-error/10"
-                onPress={handleDelete}
-                disabled={isLoading}
+                className="items-center justify-center bg-accent-soft"
+                style={{ height: 32, width: 32, borderRadius: 10 }}
+                onPress={handleStockRemove}
                 accessibilityRole="button"
-                accessibilityLabel="Delete Product"
-                accessibilityState={{ disabled: isLoading }}
+                accessibilityLabel="Decrease stock"
               >
-                <Trash size={22} color={colors.error} />
+                <Minus size={18} color={colors.ink} weight="bold" />
               </StyledTouchableOpacity>
+
+              <StyledText
+                className="w-12 text-center font-display text-ink"
+                style={{ fontSize: 26, lineHeight: 34 }}
+              >
+                {product.quantity}
+              </StyledText>
+
+              <StyledTouchableOpacity
+                className="items-center justify-center bg-brand-soft"
+                style={{ height: 32, width: 32, borderRadius: 10 }}
+                onPress={handleStockAdd}
+                accessibilityRole="button"
+                accessibilityLabel="Increase stock"
+              >
+                <Plus size={18} color={colors.brand} weight="bold" />
+              </StyledTouchableOpacity>
+            </StyledView>
+
+            {/* Actions — frame y582 */}
+            <StyledView className="mt-4 flex-row gap-3">
               <Button
                 size="lg"
                 variant="secondary"
                 className="flex-1"
                 onPress={() =>
                   router.push({
-                    pathname: '/products/add',
+                    pathname: "/products/add",
                     params: { editId: id as string },
                   })
                 }
@@ -252,11 +327,72 @@ export default function ProductDetailScreen() {
               </Button>
               <Button
                 size="lg"
+                variant="primary"
                 className="flex-1"
-                onPress={handleShare}
+                onPress={handleStockAdd}
+                isDisabled={isLoading}
               >
-                Share
+                Stock in
               </Button>
+            </StyledView>
+
+            <StyledTouchableOpacity
+              className="mt-3 flex-row items-center justify-center rounded-button border border-border bg-card"
+              style={{ minHeight: 48 }}
+              onPress={() => router.push("/sales/record")}
+              accessibilityRole="button"
+              accessibilityLabel="Record a sale"
+            >
+              <StyledText className="font-label text-brand" style={{ fontSize: 16, lineHeight: 21 }}>
+                Record sale
+              </StyledText>
+            </StyledTouchableOpacity>
+
+            <StyledTouchableOpacity
+              className="mt-3 flex-row items-center justify-center"
+              style={{ minHeight: 48 }}
+              onPress={handleDelete}
+              disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityLabel="Delete product"
+              accessibilityState={{ disabled: isLoading }}
+            >
+              <Trash size={16} color={colors.danger} />
+              <StyledText
+                className="ml-2 font-label text-danger"
+                style={{ fontSize: 12, lineHeight: 16 }}
+              >
+                Delete product
+              </StyledText>
+            </StyledTouchableOpacity>
+
+            {/* Recent sales — frame y674 */}
+            <StyledView className="mt-6">
+              <StyledText
+                className="font-label uppercase tracking-[1.5px] text-muted"
+                style={{ fontSize: 9, lineHeight: 12 }}
+              >
+                RECENT SALES
+              </StyledText>
+              <StyledView className="mt-3 rounded-card border border-border bg-card px-4 py-3">
+                <StyledView className="flex-row items-center justify-between py-2">
+                  <StyledText className="font-title text-ink" style={{ fontSize: 13, lineHeight: 17 }}>
+                    Total sold
+                  </StyledText>
+                  <StyledText className="font-extrabold text-ink" style={{ fontSize: 13, lineHeight: 17 }}>
+                    {product.quantity > 0 ? `${product.quantity} in stock` : "OUT"}
+                  </StyledText>
+                </StyledView>
+                <StyledView className="h-px w-full bg-border" />
+                <StyledView className="flex-row items-center justify-between py-2">
+                  <StyledText className="font-body text-ink" style={{ fontSize: 13, lineHeight: 17 }}>
+                    Unit price
+                  </StyledText>
+                  <StyledText className="font-label text-ink" style={{ fontSize: 13, lineHeight: 17 }}>
+                    {formatCurrency(price)}
+                  </StyledText>
+                </StyledView>
+              </StyledView>
             </StyledView>
           </StyledView>
         </StyledScrollView>

@@ -1,13 +1,5 @@
 import React, { useEffect, useCallback, useMemo, useRef } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  RefreshControl,
-  TouchableOpacity,
-  Animated,
-  Share,
-} from "react-native";
+import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Animated, Share } from "react-native";
 import { useRouter } from "expo-router";
 import {
   ArrowLeft,
@@ -22,7 +14,7 @@ import {
   Warning,
   Storefront,
 } from "phosphor-react-native";
-import { useCustomers, type Customer } from "@/hooks/useCustomers";
+import { useCustomers } from "@/hooks/useCustomers";
 import { type ProductAnalytics, type SupermarketAnalytics } from "@/hooks/useAnalytics";
 import Svg, {
   Rect,
@@ -44,6 +36,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/currency";
 import { useResponsive } from "@/lib/responsive";
+import { typeScale } from "@/constants/tokens";
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -105,6 +98,13 @@ function buildChartSeries(points: RevenueChartPoint[], period: Period): ChartDay
 
 const CHART_HEIGHT = 180;
 
+/**
+ * FigCraft `06.1 — Insights` (frame 1691), 390×844.
+ *
+ * Layout from the frame: hairline header, hero net-profit panel, sales chart,
+ * "what moves the money" driver rows and a margin warning. All analytics
+ * fetching, period switching, drilldown sheets and CSV export are untouched.
+ */
 export default function AnalyticsScreen() {
   const {
     summary,
@@ -129,13 +129,13 @@ export default function AnalyticsScreen() {
   const [chartData, setChartData] = React.useState<RevenueChartPoint[]>([]);
   const [chartLoading, setChartLoading] = React.useState(false);
 
-  // Drilldown modal states
   const [productModalVisible, setProductModalVisible] = React.useState(false);
   const [selectedProductStat, setSelectedProductStat] = React.useState<ProductAnalytics | null>(null);
   const [loadingProductStat, setLoadingProductStat] = React.useState(false);
 
   const [supermarketModalVisible, setSupermarketModalVisible] = React.useState(false);
-  const [selectedSupermarketStat, setSelectedSupermarketStat] = React.useState<SupermarketAnalytics | null>(null);
+  const [selectedSupermarketStat, setSelectedSupermarketStat] =
+    React.useState<SupermarketAnalytics | null>(null);
   const [loadingSupermarketStat, setLoadingSupermarketStat] = React.useState(false);
 
   const chartAnim = useRef(new Animated.Value(0)).current;
@@ -198,13 +198,13 @@ export default function AnalyticsScreen() {
       csv += `Total Products,${summary.totalProducts}\n\n`;
 
       csv += "Top Products,Quantity Sold,Revenue\n";
-      summary.topProducts.forEach(p => {
+      summary.topProducts.forEach((p) => {
         csv += `"${p.name}",${p.quantitySold},${p.revenue}\n`;
       });
 
       if (chartData.length > 0) {
         csv += "\nDaily Revenue\nDate,Revenue,Sales\n";
-        chartData.forEach(p => {
+        chartData.forEach((p) => {
           csv += `${p.date},${p.revenue},${p.count}\n`;
         });
       }
@@ -222,10 +222,7 @@ export default function AnalyticsScreen() {
     loadData();
   }, [loadData]);
 
-  const dailySales = useMemo(
-    () => buildChartSeries(chartData, period),
-    [chartData, period],
-  );
+  const dailySales = useMemo(() => buildChartSeries(chartData, period), [chartData, period]);
 
   useEffect(() => {
     if (dailySales.length > 0) {
@@ -253,7 +250,20 @@ export default function AnalyticsScreen() {
       summary && summary.totalSalesCount > 0
         ? summary.totalRevenue / summary.totalSalesCount
         : 0,
-    [summary?.totalRevenue, summary?.totalSalesCount],
+    [summary],
+  );
+
+  const marginPercent = useMemo(
+    () =>
+      summary && summary.totalRevenue > 0
+        ? Math.round((summary.netProfit / summary.totalRevenue) * 100)
+        : 0,
+    [summary],
+  );
+
+  const periodLabel = useMemo(
+    () => new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase(),
+    [],
   );
 
   const barGap = dailySales.length > 12 ? 2 : 6;
@@ -275,312 +285,265 @@ export default function AnalyticsScreen() {
       .join(" ");
   }, [dailySales, barWidth, barGap, chartInnerHeight, maxTransactions]);
 
+  const maxDriverRevenue = useMemo(
+    () => Math.max(...(summary?.topProducts.map((p) => p.revenue) ?? [0]), 1),
+    [summary],
+  );
+
   const summaryCards = useMemo(
     () => [
-      {
-        icon: CurrencyDollar,
-        label: "Revenue",
-        value: formatCurrency(summary?.totalRevenue ?? 0),
-        color: colors.primary,
-      },
-      {
-        icon: ShoppingCart,
-        label: "Sales",
-        value: `${summary?.totalSalesCount ?? 0}`,
-        color: colors.secondary,
-      },
-      {
-        icon: TrendUp,
-        label: "Profit",
-        value: formatCurrency(summary?.netProfit ?? 0),
-        color: colors.tertiary,
-      },
-      {
-        icon: Receipt,
-        label: "Avg Order",
-        value: formatCurrency(averageOrderValue),
-        color: colors.primary,
-      },
+      { icon: CurrencyDollar, label: "REVENUE", value: formatCurrency(summary?.totalRevenue ?? 0), color: colors.brand },
+      { icon: ShoppingCart, label: "SALES", value: `${summary?.totalSalesCount ?? 0}`, color: colors.brand },
+      { icon: TrendUp, label: "PROFIT", value: formatCurrency(summary?.netProfit ?? 0), color: colors.accent },
+      { icon: Receipt, label: "AVG ORDER", value: formatCurrency(averageOrderValue), color: colors.brand },
     ],
     [summary, averageOrderValue, colors],
   );
 
   return (
-    <Container isScrollable={false} withTabBar={false} className="bg-background px-auto flex-1">
-      <StyledView className="bg-surface border-b border-outline-variant h-14 px-margin flex-row justify-between items-center z-[var(--z-header)]">
-        <StyledView className="flex-row items-center gap-3">
-          <StyledTouchableOpacity
-            onPress={() => router.back()}
-            className="w-10 h-10 items-center justify-center"
-            accessibilityLabel="Go back"
-          >
-            <ArrowLeft size={24} color={colors.onSurface} />
-          </StyledTouchableOpacity>
-          <StyledText className="text-h2 text-on-surface text-balance">Analytics</StyledText>
-        </StyledView>
-        <StyledView className="flex-row items-center gap-2">
-          <StyledTouchableOpacity
-            onPress={() => router.push('/expenses')}
-            className="flex-row items-center gap-1 px-3 py-1.5 bg-primary-container/20 border border-primary/30 rounded-full"
-          >
-            <Receipt size={16} color={colors.primary} />
-            <StyledText className="text-primary font-semibold text-label-bold">Expenses</StyledText>
-          </StyledTouchableOpacity>
-          <StyledTouchableOpacity
-            onPress={handleExportCSV}
-            className="flex-row items-center gap-1.5 px-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-full"
-          >
-            <ShareIcon size={16} color={colors.primary} />
-            <StyledText className="text-primary font-semibold text-label-bold">Export</StyledText>
-          </StyledTouchableOpacity>
-        </StyledView>
+    <Container isScrollable={false} withTabBar={false} className="flex-1 bg-background">
+      {/* Header — frame y18 */}
+      <StyledView className="flex-row items-center gap-4 px-6 pt-4 pb-4">
+        <StyledTouchableOpacity
+          onPress={() => router.back()}
+          className="h-9 w-9 items-center justify-center rounded-pill border border-border bg-card"
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <ArrowLeft size={18} color={colors.ink} />
+        </StyledTouchableOpacity>
+        <StyledText
+          className="flex-1 font-title text-ink"
+          style={{ fontSize: typeScale.section.fontSize, lineHeight: typeScale.section.lineHeight }}
+        >
+          Insights
+        </StyledText>
+        <StyledTouchableOpacity
+          onPress={handleExportCSV}
+          className="h-10 w-11 items-center justify-center rounded-input border border-border bg-card"
+          accessibilityRole="button"
+          accessibilityLabel="Export analytics as CSV"
+        >
+          <ShareIcon size={17} color={colors.ink} />
+        </StyledTouchableOpacity>
       </StyledView>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: 32, paddingHorizontal: 24 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={isLoading && !!summary}
-            onRefresh={loadData}
-            colors={[colors.primary]}
-          />
+          <RefreshControl refreshing={isLoading && !!summary} onRefresh={loadData} colors={[colors.brand]} />
         }
       >
-        <StyledView className="px-margin pt-4 pb-2">
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8 }}
-          >
-            {PERIODS.map((p) => (
-              <StyledTouchableOpacity
-                key={p.key}
-                onPress={() => setPeriod(p.key)}
-                className={`px-4 py-2 rounded-full border ${
-                  period === p.key
-                    ? "bg-primary border-primary"
-                    : "bg-surface-container-lowest border-outline-variant"
-                }`}
-              >
-                <StyledText
-                  className={`text-label-caps font-semibold ${
-                    period === p.key ? "text-on-primary" : "text-on-surface-variant"
-                  }`}
-                >
-                  {p.label}
-                </StyledText>
-              </StyledTouchableOpacity>
-            ))}
-          </ScrollView>
-        </StyledView>
-
         {isLoading && !summary ? (
-          <StyledView className="px-margin mt-4">
-            <StyledView className="flex-col gap-2 mb-4">
-              <Skeleton className="h-10 w-3/4 mb-2" />
-              <Skeleton className="h-12 w-full rounded-lg" />
-            </StyledView>
-            <StyledView className="flex-row gap-2 mb-4">
-              <Skeleton className="h-8 w-20 rounded-full" />
-              <Skeleton className="h-8 w-24 rounded-full" />
-              <Skeleton className="h-8 w-28 rounded-full" />
-            </StyledView>
-            <StyledView className="flex-col gap-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Surface key={i} variant="outline" className="rounded-lg p-4 mb-3">
-                  <StyledView className="flex-row justify-between items-start mb-2">
-                    <StyledView className="flex-1 mr-3">
-                      <Skeleton className="h-4 w-24 mb-1" />
-                      <Skeleton className="h-6 w-32 mb-1" />
-                      <Skeleton className="h-3 w-20" />
-                    </StyledView>
-                    <Skeleton className="h-6 w-16" />
-                  </StyledView>
-                  <StyledView className="flex-row justify-between items-center mt-2 pt-2 border-t border-outline-variant/50">
-                    <Skeleton className="h-3 w-16" />
-                    <Skeleton className="h-6 w-16 rounded-full" />
-                  </StyledView>
-                </Surface>
-              ))}
-            </StyledView>
+          /* FigCraft `07.1 — Loading shop`: quiet skeleton blocks */
+          <StyledView className="mt-2 gap-3">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-[116px] w-full rounded-card" />
+            <Skeleton className="h-[154px] w-full rounded-card" />
+            <Skeleton className="h-3 w-40" />
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-6 w-full rounded-pill" />
+            ))}
           </StyledView>
         ) : error ? (
-          <StyledView className="mx-margin mt-24 items-center p-6 bg-surface-container-low rounded-lg border border-outline-variant">
-            <Warning size={40} color={colors.error} />
-            <StyledText className="text-error text-center mt-3 mb-4 text-body-lg font-semibold">
-              {error}
-            </StyledText>
-            <StyledTouchableOpacity
-              className="px-6 py-3 bg-primary rounded-lg"
-              onPress={loadData}
-            >
-              <StyledText className="text-on-primary font-semibold">Retry</StyledText>
-            </StyledTouchableOpacity>
+          <StyledView className="mt-20 items-center px-6" accessibilityRole="alert">
+            <Surface variant="warning" className="items-center p-6">
+              <Warning size={36} color={colors.accent} />
+              <StyledText className="mt-3 mb-4 text-center font-body text-body text-ink">{error}</StyledText>
+              <StyledTouchableOpacity
+                className="min-h-12 items-center justify-center rounded-button bg-accent px-6"
+                onPress={loadData}
+                accessibilityRole="button"
+                accessibilityLabel="Retry"
+              >
+                <StyledText className="font-label text-body text-ink">Retry</StyledText>
+              </StyledTouchableOpacity>
+            </Surface>
           </StyledView>
         ) : summary ? (
           <>
-            <StyledView className="mt-3 px-margin mb-0">
-              <StyledView className="flex-row justify-between items-center mb-4">
-                <StyledText className="font-h2 text-on-surface">
-                  Revenue Trend
+            {/* Period + selector — frame y66 */}
+            <StyledText className="pt-1 font-label text-micro uppercase tracking-[1.5px] text-muted">
+              {periodLabel}
+            </StyledText>
+            <StyledScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 8, paddingVertical: 8 }}
+            >
+              {PERIODS.map((p) => {
+                const active = period === p.key;
+                return (
+                  <StyledTouchableOpacity
+                    key={p.key}
+                    onPress={() => setPeriod(p.key)}
+                    className={`min-h-10 items-center justify-center rounded-pill border px-4 ${
+                      active ? "border-brand bg-brand" : "border-border bg-card"
+                    }`}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    accessibilityLabel={`Show ${p.label}`}
+                  >
+                    <StyledText className={`font-label text-label ${active ? "text-card" : "text-muted"}`}>
+                      {p.label}
+                    </StyledText>
+                  </StyledTouchableOpacity>
+                );
+              })}
+            </StyledScrollView>
+
+            {/* Hero net profit — frame y90 */}
+            <Surface variant="hero" className="mt-1 overflow-hidden rounded-[22px] p-4">
+              <StyledText className="font-label text-[8px] uppercase tracking-[1px]" style={{ color: colors.mint }}>
+                Net profit · after expenses
+              </StyledText>
+              <StyledView className="mt-2 flex-row items-start justify-between">
+                <StyledView className="flex-1">
+                  <StyledText
+                    className="font-display text-card"
+                    style={{ fontSize: typeScale.hero.fontSize, lineHeight: typeScale.hero.lineHeight }}
+                  >
+                    {formatCurrency(summary.netProfit)}
+                  </StyledText>
+                  <StyledText className="mt-1 font-label text-micro" style={{ color: colors.accent }}>
+                    {`${summary.totalSalesCount} sales · ${formatCurrency(summary.totalRevenue)} revenue`}
+                  </StyledText>
+                </StyledView>
+                <StyledView className="items-end">
+                  <StyledText
+                    className="font-display"
+                    style={{ fontSize: 26, lineHeight: 26, color: colors.mint }}
+                  >
+                    {marginPercent}%
+                  </StyledText>
+                  <StyledText className="font-body text-[9px]" style={{ color: colors.mint }}>
+                    margin
+                  </StyledText>
+                </StyledView>
+              </StyledView>
+            </Surface>
+
+            {/* Chart — frame y220 */}
+            <Surface variant="primary" className="mt-4 rounded-card p-4">
+              <StyledView className="flex-row items-center justify-between">
+                <StyledText className="font-label text-micro uppercase tracking-[1px] text-muted">
+                  Sales — {period === "today" ? "today" : period === "month" ? "last 30 days" : "last 7 days"}
+                </StyledText>
+                <StyledText className="font-label text-label text-brand">
+                  {formatCurrency(averageOrderValue)} avg
                 </StyledText>
               </StyledView>
+
               {chartLoading && chartData.length === 0 ? (
-                <StyledView className="p-6 items-center bg-surface-container-lowest rounded-lg">
-                  <StyledView className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center">
-                    <StyledView className="w-8 h-8 rounded-full bg-primary/20 animate-pulse" />
-                  </StyledView>
+                <StyledView className="h-[154px] items-center justify-center">
+                  <Skeleton className="h-[120px] w-full rounded-input" />
                 </StyledView>
               ) : dailySales.every((d) => d.amount === 0) ? (
-                <StyledView className="p-6 items-center bg-surface-container-lowest rounded-lg border border-dashed border-outline-variant">
-                  <StyledText className="text-on-surface-variant text-body-sm font-medium">
+                <StyledView className="h-[154px] items-center justify-center">
+                  <StyledText className="font-body text-body-sm text-muted">
                     No sales recorded in this period.
                   </StyledText>
                 </StyledView>
               ) : (
                 <Animated.View
+                  className="mt-3"
                   style={{
                     opacity: chartAnim,
                     transform: [
-                      {
-                        translateY: chartAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [20, 0],
-                        }),
-                      },
+                      { translateY: chartAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) },
                     ],
                   }}
                 >
-                  <Surface
-                    variant="primary"
-                    className="rounded-lg border border-outline-variant p-md overflow-hidden"
-                  >
-                    <View
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        backgroundColor: colors.surfaceContainerLowest + "40",
-                        borderRadius: 12,
-                      }}
-                      pointerEvents="none"
+                  <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
+                    <Defs>
+                      <LinearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                        <Stop offset="0" stopColor={colors.brand} stopOpacity="1" />
+                        <Stop offset="1" stopColor={colors.mint} stopOpacity="0.55" />
+                      </LinearGradient>
+                    </Defs>
+                    {dailySales.map((day, idx) => {
+                      const isLast = idx === dailySales.length - 1;
+                      const barHeight = Math.max(
+                        (day.amount / Math.max(maxRevenue, 1)) * (chartInnerHeight - 20),
+                        4,
+                      );
+                      const x = idx * (barWidth + barGap);
+                      const y = chartInnerHeight - barHeight;
+                      return (
+                        <G key={idx}>
+                          <Rect
+                            x={x}
+                            y={y}
+                            width={barWidth}
+                            height={barHeight}
+                            rx={Math.min(barWidth / 2, 12)}
+                            fill={isLast ? colors.accent : "url(#barGrad)"}
+                          />
+                        </G>
+                      );
+                    })}
+                    <Polyline
+                      points={transactionPoints}
+                      fill="none"
+                      stroke={colors.muted}
+                      strokeWidth={2}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
                     />
-                    <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
-                      <Defs>
-                        <LinearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                          <Stop offset="0" stopColor={colors.primary} stopOpacity="1" />
-                          <Stop
-                            offset="1"
-                            stopColor={colors.primaryContainer}
-                            stopOpacity="0.6"
-                          />
-                        </LinearGradient>
-                      </Defs>
-                      {dailySales.map((day, idx) => {
-                        const barHeight = Math.max(
-                          (day.amount / Math.max(maxRevenue, 1)) *
-                            (chartInnerHeight - 20),
-                          4,
-                        );
-                        const x = idx * (barWidth + barGap);
-                        const y = chartInnerHeight - barHeight;
-                        return (
-                          <G key={idx}>
-                            <Rect
-                              x={x}
-                              y={y}
-                              width={barWidth}
-                              height={barHeight}
-                              rx={4}
-                              fill="url(#barGrad)"
-                            />
-                          </G>
-                        );
-                      })}
-                      <Polyline
-                        points={transactionPoints}
-                        fill="none"
-                        stroke={colors.secondary}
-                        strokeWidth={2}
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                      />
-                      {dailySales.map((day, idx) => {
-                        const cx = idx * (barWidth + barGap) + barWidth / 2;
-                        const cy =
-                          chartInnerHeight -
-                          (day.transactions / Math.max(maxTransactions, 1)) *
-                            chartInnerHeight *
-                            0.5 -
-                          10;
-                        return (
-                          <Circle
-                            key={`dot-${idx}`}
-                            cx={cx}
-                            cy={cy}
-                            r={3}
-                            fill={colors.secondary}
-                          />
-                        );
-                      })}
-                      {dailySales.map((day, idx) =>
-                        idx % labelStep === 0 ? (
-                          <SvgText
-                            key={`label-${idx}`}
-                            x={idx * (barWidth + barGap) + barWidth / 2}
-                            y={CHART_HEIGHT - 4}
-                            fontSize={10}
-                            fill={colors.onSurfaceVariant}
-                            textAnchor="middle"
-                          >
-                            {day.date}
-                          </SvgText>
-                        ) : null,
-                      )}
-                    </Svg>
-                    <StyledView className="flex-row justify-center items-center gap-4 mt-2">
-                      <StyledView className="flex-row items-center gap-1">
-                        <StyledView
-                          className="w-3 h-3 rounded-sm"
-                          style={{ backgroundColor: colors.primary }}
-                        />
-                        <StyledText className="text-label-bold text-on-surface-variant">
-                          Revenue
-                        </StyledText>
-                      </StyledView>
-                      <StyledView className="flex-row items-center gap-1">
-                        <StyledView
-                          className="w-3 h-0.5 rounded-full"
-                          style={{ backgroundColor: colors.secondary }}
-                        />
-                        <StyledText className="text-label-bold text-on-surface-variant">
-                          Transactions
-                        </StyledText>
-                      </StyledView>
+                    {dailySales.map((day, idx) => {
+                      const cx = idx * (barWidth + barGap) + barWidth / 2;
+                      const cy =
+                        chartInnerHeight -
+                        (day.transactions / Math.max(maxTransactions, 1)) * chartInnerHeight * 0.5 -
+                        10;
+                      return <Circle key={`dot-${idx}`} cx={cx} cy={cy} r={3} fill={colors.muted} />;
+                    })}
+                    {dailySales.map((day, idx) =>
+                      idx % labelStep === 0 ? (
+                        <SvgText
+                          key={`label-${idx}`}
+                          x={idx * (barWidth + barGap) + barWidth / 2}
+                          y={CHART_HEIGHT - 4}
+                          fontSize={9}
+                          fontWeight="600"
+                          fill={colors.muted}
+                          textAnchor="middle"
+                        >
+                          {day.date}
+                        </SvgText>
+                      ) : null,
+                    )}
+                  </Svg>
+                  <StyledView className="mt-2 flex-row items-center justify-center gap-4">
+                    <StyledView className="flex-row items-center gap-1.5">
+                      <StyledView className="h-2.5 w-2.5 rounded-sm bg-brand" />
+                      <StyledText className="font-label text-micro text-muted">Revenue</StyledText>
                     </StyledView>
-                  </Surface>
+                    <StyledView className="flex-row items-center gap-1.5">
+                      <StyledView className="h-0.5 w-3.5 rounded-pill bg-muted" />
+                      <StyledText className="font-label text-micro text-muted">Transactions</StyledText>
+                    </StyledView>
+                  </StyledView>
                 </Animated.View>
               )}
-            </StyledView>
+            </Surface>
 
-            <StyledView className="flex-row flex-wrap px-margin mt-3 gap-3">
+            {/* Metric rows — 2×2 grid */}
+            <StyledView className="mt-4 flex-row flex-wrap gap-3">
               {summaryCards.map((card) => {
                 const IconComponent = card.icon;
                 return (
-                  <Surface
-                    key={card.label}
-                    variant="primary"
-                    className="w-[calc(50%-6px)] rounded-lg border border-outline-variant p-md"
-                  >
-                    <StyledView className="flex-row items-center gap-2 mb-2">
-                      <StyledView className="w-8 h-8 rounded-full bg-surface-container items-center justify-center">
-                        <IconComponent size={16} color={card.color} />
+                  <Surface key={card.label} variant="primary" className="w-[47.6%] rounded-card p-4">
+                    <StyledView className="flex-row items-center gap-2">
+                      <StyledView className="h-7 w-7 items-center justify-center rounded-pill bg-brand-soft">
+                        <IconComponent size={15} color={card.color} />
                       </StyledView>
-                      <StyledText className="text-label-caps text-on-surface-variant">
+                      <StyledText className="font-label text-micro uppercase tracking-[0.5px] text-muted">
                         {card.label}
                       </StyledText>
                     </StyledView>
-                    <StyledText className="font-h1 text-on-surface">
+                    <StyledText className="mt-2 font-title text-ink" style={{ fontSize: 20, lineHeight: 24 }}>
                       {card.value}
                     </StyledText>
                   </Surface>
@@ -588,142 +551,149 @@ export default function AnalyticsScreen() {
               })}
             </StyledView>
 
-            <StyledView className="mt-6 px-margin">
-              <StyledView className="bg-tertiary-container rounded-lg p-md flex-row items-center justify-between">
-                <StyledView className="flex-1 pr-4">
-                  <StyledView className="flex-row items-center gap-2 mb-1">
-                    <Sparkle size={20} color={colors.tertiary} />
-                    <StyledText className="text-h3 font-bold text-on-tertiary-container">
-                      Smart Recommendations
-                    </StyledText>
-                  </StyledView>
-                  <StyledText className="text-body-sm text-on-tertiary-container">
-                    Discover which products your customers frequently buy together using Market
-                    Basket Analysis.
-                  </StyledText>
-                </StyledView>
-                <StyledTouchableOpacity
-                  className="bg-tertiary rounded-full px-4 py-2"
-                  onPress={() => router.push("/mba")}
-                >
-                  <StyledText className="text-on-tertiary font-semibold text-label-bold">
-                    View
-                  </StyledText>
-                </StyledTouchableOpacity>
-              </StyledView>
-            </StyledView>
-
-            <StyledView className="mt-6 px-margin">
-              <StyledView className="flex-row justify-between items-center mb-3">
-                <StyledText className="font-h2 text-on-surface">
-                  Top Products
-                </StyledText>
-                <StyledTouchableOpacity
-                  className="flex-row items-center gap-1"
-                  onPress={() => router.push("/products")}
-                >
-                  <StyledText className="text-primary font-label-bold">
-                    See All
-                  </StyledText>
-                  <ArrowRight size={16} color={colors.primary} />
-                </StyledTouchableOpacity>
-              </StyledView>
-
+            {/* What moves the money — frame y388 */}
+            <StyledText className="mt-6 font-label text-micro uppercase tracking-[1px] text-muted">
+              What moves the money
+            </StyledText>
+            <StyledView className="mt-1">
               {summary.topProducts.length === 0 ? (
-                <StyledView className="p-6 items-center bg-surface-container-lowest rounded-lg border border-dashed border-outline-variant">
-                  <Package size={36} color={colors.emptyStateIcon} />
-                  <StyledText className="text-on-surface-variant text-body-sm font-medium mt-2">
+                <StyledView className="mt-3 items-center rounded-card border border-dashed border-border p-6">
+                  <Package size={32} color={colors.muted} />
+                  <StyledText className="mt-2 font-body text-body-sm text-muted">
                     No products sold yet.
                   </StyledText>
                 </StyledView>
               ) : (
-                <Surface
-                  variant="primary"
-                  className="rounded-lg border border-outline-variant overflow-hidden"
-                >
-                  {summary.topProducts.map((product, idx) => (
+                summary.topProducts.slice(0, 4).map((product, idx) => {
+                  const pct =
+                    summary.totalRevenue > 0
+                      ? Math.round((product.revenue / summary.totalRevenue) * 100)
+                      : 0;
+                  const barPct = Math.max((product.revenue / maxDriverRevenue) * 100, 4);
+                  return (
                     <StyledTouchableOpacity
-                      key={`top-${idx}`}
+                      key={product.id ?? `driver-${idx}`}
                       onPress={() => handleOpenProductAnalytics(product.id)}
-                      className={`flex-row items-center justify-between px-md py-3 active:opacity-70 ${
-                        idx < summary.topProducts.length - 1
-                          ? "border-b border-outline-variant"
-                          : ""
-                      }`}
+                      className="mt-4 active:opacity-70"
+                      accessibilityRole="button"
+                      accessibilityLabel={`${product.name}, ${formatCurrency(product.revenue)}, ${pct}% of sales. View breakdown.`}
                     >
-                      <StyledView className="flex-row items-center gap-3 flex-1">
-                        <StyledView className="w-10 h-10 rounded-lg bg-surface-container items-center justify-center">
-                          <Package size={20} color={colors.primary} />
-                        </StyledView>
-                        <StyledView className="flex-1">
-                          <StyledText
-                            className="text-label-bold text-on-surface"
-                            numberOfLines={1}
-                          >
-                            {product.name}
-                          </StyledText>
-                          <StyledText className="text-body-sm text-on-surface-variant">
-                            {product.quantitySold} net sold
-                            {product.returnsCount ? ` (${product.returnsCount} returns)` : ""}
-                          </StyledText>
-                        </StyledView>
-                      </StyledView>
-                      <StyledView className="items-end">
-                        <StyledText className="font-label-bold text-on-surface ml-3">
+                      <StyledView className="flex-row items-start justify-between">
+                        <StyledText className="flex-1 pr-3 font-label text-label text-ink" numberOfLines={1}>
+                          {product.name}
+                        </StyledText>
+                        <StyledText className="font-title text-ink" style={{ fontSize: 16, lineHeight: 21 }}>
                           {formatCurrency(product.revenue)}
                         </StyledText>
-                        <StyledText className="text-label-bold text-primary font-medium">
-                          View Breakdown
-                        </StyledText>
                       </StyledView>
+                      <StyledView className="mt-2 h-1.5 w-full overflow-hidden rounded-pill bg-border">
+                        <StyledView
+                          className="h-full rounded-pill bg-brand"
+                          style={{ width: `${barPct}%` }}
+                        />
+                      </StyledView>
+                      <StyledText className="mt-1.5 font-label text-[8px] uppercase tracking-[0.5px] text-muted">
+                        {pct}% of sales · {product.quantitySold} sold
+                      </StyledText>
                     </StyledTouchableOpacity>
-                  ))}
-                </Surface>
+                  );
+                })
               )}
             </StyledView>
 
-            {/* Supermarket Analytics Section */}
+            {summary.topProducts.length > 0 ? (
+              <StyledTouchableOpacity
+                onPress={() => router.push("/products")}
+                className="mt-4 min-h-12 flex-row items-center justify-center gap-1.5"
+                accessibilityRole="button"
+                accessibilityLabel="See all products"
+              >
+                <StyledText className="font-label text-label text-brand">See all products</StyledText>
+                <ArrowRight size={15} color={colors.brand} />
+              </StyledTouchableOpacity>
+            ) : null}
+
+            {/* Margin warning — frame y608 */}
+            <Surface variant="warning" className="mt-4 flex-row gap-3 rounded-input p-4">
+              <Warning size={20} color={colors.accent} />
+              <StyledView className="flex-1">
+                <StyledText className="font-label text-micro text-ink">
+                  {summary.lowStockCount > 0
+                    ? `${summary.lowStockCount} products are running low on stock.`
+                    : "Review your sell prices to protect your margin."}
+                </StyledText>
+                <StyledTouchableOpacity
+                  onPress={() => router.push("/products")}
+                  className="mt-1.5 min-h-8 justify-center self-start"
+                  accessibilityRole="button"
+                  accessibilityLabel="Fix prices in stock"
+                >
+                  <StyledText className="font-label text-micro text-brand">Fix price in stock →</StyledText>
+                </StyledTouchableOpacity>
+              </StyledView>
+            </Surface>
+
+            {/* Smart recommendations */}
+            <Surface variant="quiet" className="mt-4 flex-row items-center rounded-card p-4">
+              <Sparkle size={20} color={colors.brand} />
+              <StyledView className="ml-3 flex-1 pr-3">
+                <StyledText className="font-title text-card-title text-brand-strong">
+                  Smart recommendations
+                </StyledText>
+                <StyledText className="mt-0.5 font-body text-micro text-muted">
+                  See which products your customers buy together.
+                </StyledText>
+              </StyledView>
+              <StyledTouchableOpacity
+                className="min-h-10 items-center justify-center rounded-button bg-brand px-4"
+                onPress={() => router.push("/mba")}
+                accessibilityRole="button"
+                accessibilityLabel="View smart recommendations"
+              >
+                <StyledText className="font-label text-label text-card">View</StyledText>
+              </StyledTouchableOpacity>
+            </Surface>
+
+            {/* Supermarket performance */}
             {supermarkets.length > 0 && (
-              <StyledView className="mt-6 px-margin">
-                <StyledView className="flex-row justify-between items-center mb-3">
-                  <StyledText className="font-h2 text-on-surface">
-                    Supermarket Performance
-                  </StyledText>
-                </StyledView>
-                <Surface variant="primary" className="rounded-lg border border-outline-variant overflow-hidden">
+              <>
+                <StyledText className="mt-6 font-label text-micro uppercase tracking-[1px] text-muted">
+                  Supermarket performance
+                </StyledText>
+                <Surface variant="primary" className="mt-2 overflow-hidden rounded-card p-0">
                   {supermarkets.map((sm, idx) => (
                     <StyledTouchableOpacity
                       key={sm.id}
                       onPress={() => handleOpenStoreAnalytics(sm.id)}
-                      className={`flex-row items-center justify-between px-md py-3 active:opacity-70 ${
-                        idx < supermarkets.length - 1 ? "border-b border-outline-variant" : ""
+                      className={`min-h-16 flex-row items-center justify-between px-4 py-3 active:opacity-70 ${
+                        idx < supermarkets.length - 1 ? "border-b border-border" : ""
                       }`}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${sm.name}. View store analytics.`}
                     >
-                      <StyledView className="flex-row items-center gap-3 flex-1">
-                        <StyledView className="w-10 h-10 rounded-lg bg-secondary/10 items-center justify-center">
-                          <Storefront size={20} color={colors.secondary} />
+                      <StyledView className="flex-1 flex-row items-center gap-3">
+                        <StyledView className="h-10 w-10 items-center justify-center rounded-pill bg-brand-soft">
+                          <Storefront size={18} color={colors.brand} />
                         </StyledView>
                         <StyledView className="flex-1">
-                          <StyledText className="text-label-bold text-on-surface" numberOfLines={1}>
+                          <StyledText className="font-label text-body text-ink" numberOfLines={1}>
                             {sm.name}
                           </StyledText>
-                          <StyledText className="text-body-sm text-on-surface-variant">
+                          <StyledText className="font-body text-micro text-muted">
                             {sm.expectedPaymentPeriodDays || 14} days payment term
                           </StyledText>
                         </StyledView>
                       </StyledView>
                       <StyledView className="items-end">
-                        <StyledText className="font-label-bold text-primary">
+                        <StyledText className="font-label text-label text-brand">
                           {formatCurrency(parseFloat(sm.totalSpent || "0"))}
                         </StyledText>
-                        <StyledText className="text-label-bold text-primary font-medium">
-                          Store Analytics →
-                        </StyledText>
+                        <StyledText className="font-body text-micro text-muted">Store analytics →</StyledText>
                       </StyledView>
                     </StyledTouchableOpacity>
                   ))}
                 </Surface>
-              </StyledView>
+              </>
             )}
           </>
         ) : null}
@@ -735,65 +705,64 @@ export default function AnalyticsScreen() {
         onClose={() => setProductModalVisible(false)}
         title={selectedProductStat?.product.name || "Product Breakdown"}
         subtitle="Performance for this product across all sales."
-        icon={<Package size={20} color={colors.onPrimaryContainer} />}
+        icon={<Package size={20} color={colors.brand} />}
         contentClassName="pt-4 pb-2"
       >
         {loadingProductStat ? (
-          <StyledView className="py-16 items-center">
-            <StyledText className="text-body-sm text-on-surface-variant">Loading product metrics...</StyledText>
+          <StyledView className="items-center py-16">
+            <StyledText className="font-body text-body-sm text-muted">Loading product metrics...</StyledText>
           </StyledView>
         ) : selectedProductStat ? (
           <StyledView className="gap-3">
-            <Surface variant="outline" className="p-3.5 rounded-xl">
-              <StyledText className="text-label-bold text-on-surface-variant mb-1">
-                Current Retail Price: <StyledText className="font-bold text-on-surface">{formatCurrency(parseFloat(selectedProductStat.product.price))}</StyledText>
+            <Surface variant="quiet" className="rounded-input p-3.5">
+              <StyledText className="font-label text-label text-muted">
+                Current retail price:{" "}
+                <StyledText className="font-label text-ink">
+                  {formatCurrency(parseFloat(selectedProductStat.product.price))}
+                </StyledText>
               </StyledText>
-              <StyledText className="text-label-bold text-on-surface-variant">
-                In-Stock Inventory: <StyledText className="font-bold text-on-surface">{selectedProductStat.product.quantity} units</StyledText>
+              <StyledText className="mt-1 font-label text-label text-muted">
+                In-stock inventory:{" "}
+                <StyledText className="font-label text-ink">
+                  {selectedProductStat.product.quantity} units
+                </StyledText>
               </StyledText>
             </Surface>
 
             <StyledView className="flex-row gap-2">
-              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
-                <StyledText className="text-label-caps text-on-surface-variant">
-                  Net Units Sold
-                </StyledText>
-                <StyledText className="text-h3 font-black text-primary mt-1">
+              <Surface variant="primary" className="flex-1 rounded-input p-3">
+                <StyledText className="font-label text-micro uppercase text-muted">Net units sold</StyledText>
+                <StyledText className="mt-1 font-title text-brand" style={{ fontSize: 22, lineHeight: 26 }}>
                   {selectedProductStat.totalSold}
                 </StyledText>
               </Surface>
-              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
-                <StyledText className="text-label-caps text-on-surface-variant">
-                  Units Returned
-                </StyledText>
-                <StyledText className="text-h3 font-black text-error mt-1">
+              <Surface variant="primary" className="flex-1 rounded-input p-3">
+                <StyledText className="font-label text-micro uppercase text-muted">Units returned</StyledText>
+                <StyledText className="mt-1 font-title text-danger" style={{ fontSize: 22, lineHeight: 26 }}>
                   {selectedProductStat.totalReturned}
                 </StyledText>
               </Surface>
             </StyledView>
 
             <StyledView className="flex-row gap-2">
-              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
-                <StyledText className="text-label-caps text-on-surface-variant">
-                  Gross Revenue
-                </StyledText>
-                <StyledText className="text-body-lg font-bold text-on-surface mt-1">
+              <Surface variant="primary" className="flex-1 rounded-input p-3">
+                <StyledText className="font-label text-micro uppercase text-muted">Gross revenue</StyledText>
+                <StyledText className="mt-1 font-label text-body text-ink">
                   {formatCurrency(selectedProductStat.grossRevenue)}
                 </StyledText>
               </Surface>
-              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
-                <StyledText className="text-label-caps text-on-surface-variant">
-                  Net Revenue
-                </StyledText>
-                <StyledText className="text-body-lg font-bold text-success mt-1">
+              <Surface variant="primary" className="flex-1 rounded-input p-3">
+                <StyledText className="font-label text-micro uppercase text-muted">Net revenue</StyledText>
+                <StyledText className="mt-1 font-label text-body text-brand">
                   {formatCurrency(selectedProductStat.netRevenue)}
                 </StyledText>
               </Surface>
             </StyledView>
 
-            <Surface variant="primary" className="p-3.5 rounded-xl">
-              <StyledText className="text-label-bold text-on-surface-variant">
-                Distinct Sales Transactions: <StyledText className="font-bold text-on-surface">{selectedProductStat.orderCount}</StyledText>
+            <Surface variant="primary" className="rounded-input p-3.5">
+              <StyledText className="font-label text-label text-muted">
+                Distinct sales transactions:{" "}
+                <StyledText className="font-label text-ink">{selectedProductStat.orderCount}</StyledText>
               </StyledText>
             </Surface>
           </StyledView>
@@ -806,72 +775,67 @@ export default function AnalyticsScreen() {
         onClose={() => setSupermarketModalVisible(false)}
         title={selectedSupermarketStat?.supermarket.name || "Store Analytics"}
         subtitle="Invoiced, paid, and returned value for this store."
-        icon={<Storefront size={20} color={colors.onSecondaryContainer} />}
+        icon={<Storefront size={20} color={colors.brand} />}
         contentClassName="pt-4 pb-2"
       >
         {loadingSupermarketStat ? (
-          <StyledView className="py-16 items-center">
-            <StyledText className="text-body-sm text-on-surface-variant">Loading store metrics...</StyledText>
+          <StyledView className="items-center py-16">
+            <StyledText className="font-body text-body-sm text-muted">Loading store metrics...</StyledText>
           </StyledView>
         ) : selectedSupermarketStat ? (
           <StyledView className="gap-3">
             <StyledView className="flex-row gap-2">
-              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
-                <StyledText className="text-label-caps text-on-surface-variant">
-                  Total Invoiced
-                </StyledText>
-                <StyledText className="text-body-lg font-black text-on-surface mt-1">
+              <Surface variant="primary" className="flex-1 rounded-input p-3">
+                <StyledText className="font-label text-micro uppercase text-muted">Total invoiced</StyledText>
+                <StyledText className="mt-1 font-title text-ink" style={{ fontSize: 18, lineHeight: 22 }}>
                   {formatCurrency(selectedSupermarketStat.totalBilled)}
                 </StyledText>
               </Surface>
-              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
-                <StyledText className="text-label-caps text-on-surface-variant">
-                  Total Paid
-                </StyledText>
-                <StyledText className="text-body-lg font-black text-success mt-1">
+              <Surface variant="primary" className="flex-1 rounded-input p-3">
+                <StyledText className="font-label text-micro uppercase text-muted">Total paid</StyledText>
+                <StyledText className="mt-1 font-title text-brand" style={{ fontSize: 18, lineHeight: 22 }}>
                   {formatCurrency(selectedSupermarketStat.totalPaid)}
                 </StyledText>
               </Surface>
             </StyledView>
 
             <StyledView className="flex-row gap-2">
-              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
-                <StyledText className="text-label-caps text-on-surface-variant">
-                  Returned Value
-                </StyledText>
-                <StyledText className="text-body-lg font-black text-error mt-1">
+              <Surface variant="primary" className="flex-1 rounded-input p-3">
+                <StyledText className="font-label text-micro uppercase text-muted">Returned value</StyledText>
+                <StyledText className="mt-1 font-title text-danger" style={{ fontSize: 18, lineHeight: 22 }}>
                   {formatCurrency(selectedSupermarketStat.totalReturnsAmount)}
                 </StyledText>
               </Surface>
-              <Surface variant="primary" className="flex-1 p-3 rounded-xl">
-                <StyledText className="text-label-caps text-on-surface-variant">
-                  Receivable Due
-                </StyledText>
-                <StyledText className="text-body-lg font-black text-primary mt-1">
+              <Surface variant="primary" className="flex-1 rounded-input p-3">
+                <StyledText className="font-label text-micro uppercase text-muted">Receivable due</StyledText>
+                <StyledText className="mt-1 font-title text-brand-strong" style={{ fontSize: 18, lineHeight: 22 }}>
                   {formatCurrency(selectedSupermarketStat.netReceivable)}
                 </StyledText>
               </Surface>
             </StyledView>
 
-            <Surface variant="primary" className="p-4 rounded-xl mt-1">
-              <StyledText className="text-body-sm font-bold text-on-surface mb-2">
-                Supplied Products & Return Rates
+            <Surface variant="primary" className="mt-1 rounded-input p-4">
+              <StyledText className="mb-2 font-label text-body text-ink">
+                Supplied products & return rates
               </StyledText>
               {selectedSupermarketStat.productsSupplied.length === 0 ? (
-                <StyledText className="text-label-bold text-on-surface-variant italic">No deliveries recorded</StyledText>
+                <StyledText className="font-body text-label italic text-muted">
+                  No deliveries recorded
+                </StyledText>
               ) : (
                 selectedSupermarketStat.productsSupplied.map((item) => (
-                  <StyledView key={item.productId} className="py-2 border-b border-outline-variant/20">
-                    <StyledView className="flex-row justify-between items-center">
-                      <StyledText className="text-label-bold text-on-surface flex-1 mr-2">
+                  <StyledView key={item.productId} className="border-b border-border py-2">
+                    <StyledView className="flex-row items-center justify-between">
+                      <StyledText className="mr-2 flex-1 font-label text-label text-ink">
                         {item.productName}
                       </StyledText>
-                      <StyledText className="text-label-bold text-primary">
+                      <StyledText className="font-label text-label text-brand">
                         {formatCurrency(item.totalValue)}
                       </StyledText>
                     </StyledView>
-                    <StyledText className="text-label-bold text-on-surface-variant mt-0.5">
-                      Supplied: {item.quantitySupplied} | Returned: {item.quantityReturned} | Net: {item.netDelivered}
+                    <StyledText className="mt-0.5 font-body text-micro text-muted">
+                      Supplied: {item.quantitySupplied} | Returned: {item.quantityReturned} | Net:{" "}
+                      {item.netDelivered}
                     </StyledText>
                   </StyledView>
                 ))

@@ -1,34 +1,88 @@
-import React, { useEffect, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  Image,
-  ScrollView, 
-  RefreshControl, 
-  TouchableOpacity, 
-} from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { Warning, ShoppingCart, Package, CreditCard, TrendUp, ArrowRight, Receipt, Plus } from 'phosphor-react-native';
-import { useAuthStore } from '../../stores/authStore';
-import { useAnalytics } from '../../hooks/useAnalytics';
-import { useThemeColor } from '@/hooks/useThemeColor';
-import { Container } from '@/components/container';
-import { Surface } from '@/components/ui/surface';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { StyledView, StyledText, StyledTouchableOpacity } from '@/components/ui/styled';
-import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
-import { formatCurrency } from '@/lib/currency';
+import React, { useEffect, useCallback, useMemo } from "react";
+import { RefreshControl, ScrollView } from "react-native";
+import { useRouter, useFocusEffect } from "expo-router";
+import { withUniwind } from "uniwind";
+import {
+  Bell,
+  Warning,
+  Package,
+  CreditCard,
+  Receipt,
+} from "phosphor-react-native";
+import { useAuthStore } from "../../stores/authStore";
+import { useAnalytics } from "../../hooks/useAnalytics";
+import { useSales, type Sale } from "../../hooks/useSales";
+import { useThemeColor } from "@/hooks/useThemeColor";
+import { Container } from "@/components/container";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StyledView, StyledText, StyledTouchableOpacity } from "@/components/ui/styled";
+import { TAB_BAR_OFFSET } from "@/lib/tab-bar";
+import { radius, spacing } from "@/constants/tokens";
+import { formatCurrency } from "@/lib/currency";
 
+const StyledScrollView = withUniwind(ScrollView);
+
+const PROFIT_BARS = [
+  { id: "bar-1", height: 38, color: "mint" as const },
+  { id: "bar-2", height: 61, color: "accent" as const },
+  { id: "bar-3", height: 25, color: "mint" as const },
+];
+
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "GOOD MORNING";
+  if (hour < 17) return "GOOD AFTERNOON";
+  return "GOOD EVENING";
+}
+
+function initials(name?: string): string {
+  if (!name) return "OP";
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((part) => part.charAt(0))
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function saleTime(sale: Sale): string {
+  return new Date(sale.soldAt).toLocaleTimeString("en-NG", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+function saleLabel(sale: Sale): string {
+  const customer = sale.customer?.name ?? "Walk-in";
+  const units = sale.items.reduce((sum, item) => sum + item.quantity, 0);
+  return `${customer} — ${units} ${units === 1 ? "item" : "items"}`;
+}
+
+function saleStatus(sale: Sale): "CASH" | "CREDIT" {
+  return sale.paymentStatus === "paid" ? "CASH" : "CREDIT";
+}
+
+/**
+ * FigCraft `03.1 — Home` (frame 563), 390×844.
+ *
+ * Presentation rebuilt to the frame; the analytics/sales data flow is
+ * unchanged (`useAnalytics` for the day's numbers, `useSales` for the row
+ * list, both already used elsewhere in the app).
+ */
 export default function HomeScreen() {
   const { user } = useAuthStore();
   const { summary, isLoading, fetchSummary, error } = useAnalytics();
+  const { sales, fetchSales } = useSales();
   const router = useRouter();
   const colors = useThemeColor();
 
   const loadData = useCallback(() => {
     fetchSummary();
-  }, [fetchSummary]);
+    fetchSales({ limit: "5" });
+  }, [fetchSummary, fetchSales]);
 
   useEffect(() => {
     loadData();
@@ -37,256 +91,407 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+    }, [loadData]),
   );
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  };
+  const recentSales = useMemo(() => sales.slice(0, 2), [sales]);
+
+  const firstName = user?.fullName?.split(" ")[0] || "Seller";
 
   return (
-    <Container isScrollable={false} withTabBar className="bg-background flex-1">
-      <StyledView className="bg-surface-container-lowest border-b border-outline-variant/30 h-14 px-margin flex-row justify-between items-center z-[var(--z-header)]">
-        <StyledView className="flex-row items-center gap-3">
+    <Container isScrollable={false} withTabBar className="flex-1 bg-background">
+      <StyledScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.gutter,
+          paddingTop: 24,
+          paddingBottom: TAB_BAR_OFFSET + 24,
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading && !!summary}
+            onRefresh={loadData}
+            colors={[colors.brand]}
+            tintColor={colors.brand}
+          />
+        }
+      >
+        {/* Greeting header — frame y24 */}
+        <StyledView className="flex-row items-center">
           <StyledTouchableOpacity
-            onPress={() => router.push('/more')}
-            className="size-10 rounded-full overflow-hidden border-2 border-primary justify-center items-center bg-primary-container"
+            onPress={() => router.push("/more")}
+            className="h-11 w-11 items-center justify-center rounded-pill bg-brand"
             accessibilityRole="button"
             accessibilityLabel="Open menu"
             hitSlop={8}
           >
-            <StyledText className="text-on-primary-container font-body-lg font-bold text-balance">
-                {user?.fullName?.charAt(0).toUpperCase() || 'O'}
-              </StyledText>
+            <StyledText className="font-display text-body text-card">
+              {initials(user?.fullName)}
+            </StyledText>
           </StyledTouchableOpacity>
-          <StyledView className="flex-col">
-            <StyledText className="font-label-bold text-on-surface-variant uppercase tracking-wide leading-tight">Welcome back</StyledText>
-            <StyledText className="font-h1 text-primary leading-tight text-balance">OjaPaddi</StyledText>
-          </StyledView>
-        </StyledView>
-      </StyledView>
 
-      <ScrollView 
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100, paddingTop: 16 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl 
-            refreshing={isLoading && !!summary} 
-            onRefresh={loadData} 
-            colors={[colors.primary]} 
-          />
-        }
-      >
+          <StyledView className="ml-3 flex-1">
+            <StyledText
+              className="font-label uppercase tracking-[1.5px] text-muted"
+              style={{ fontSize: 9, lineHeight: 12 }}
+            >
+              {greeting()}
+            </StyledText>
+            <StyledText
+              className="font-title text-ink"
+              style={{ fontSize: 17, lineHeight: 22 }}
+              numberOfLines={1}
+            >
+              {user?.fullName || firstName}
+            </StyledText>
+          </StyledView>
+
+          <StyledTouchableOpacity
+            onPress={() => router.push("/more")}
+            className="h-9 w-9 items-center justify-center rounded-pill border border-border bg-card"
+            accessibilityRole="button"
+            accessibilityLabel="Notifications"
+            hitSlop={8}
+          >
+            <Bell size={16} color={colors.ink} />
+            <StyledView
+              className="absolute h-2 w-2 rounded-pill bg-accent"
+              style={{ top: 5, right: 5 }}
+            />
+          </StyledTouchableOpacity>
+        </StyledView>
+
         {isLoading && !summary ? (
-          <StyledView className="flex-col gap-gutter">
-            <StyledView className="flex-col gap-1 mb-gutter">
-              <Skeleton className="h-8 w-3/4 mb-2" />
-              <Skeleton className="h-5 w-1/2" />
+          <StyledView className="mt-6 gap-4">
+            <Skeleton className="h-[108px] rounded-card" />
+            <StyledView className="flex-row gap-3">
+              <Skeleton className="h-20 flex-1 rounded-card" />
+              <Skeleton className="h-20 flex-1 rounded-card" />
             </StyledView>
-            <StyledView className="flex-col gap-gutter mb-gutter">
-              <Skeleton className="h-32 rounded-xl" />
-              <Skeleton className="h-32 rounded-xl" />
-              <Skeleton className="h-32 rounded-xl" />
-            </StyledView>
-            <StyledView className="flex-row gap-sm mb-gutter">
-              <Skeleton className="flex-1 h-20 rounded-xl" />
-              <Skeleton className="flex-1 h-20 rounded-xl" />
-              <Skeleton className="flex-1 h-20 rounded-xl" />
-            </StyledView>
-            <StyledView className="flex-col gap-2">
-              <Skeleton className="h-5 w-1/3 mb-2" />
-              <Skeleton className="h-16 rounded-xl" />
-              <Skeleton className="h-16 rounded-xl" />
-              <Skeleton className="h-16 rounded-xl" />
-            </StyledView>
+            <Skeleton className="h-[68px] rounded-card" />
+            <Skeleton className="h-14 rounded-button" />
           </StyledView>
         ) : error ? (
-          <StyledView className="mt-24 items-center p-6 bg-surface-container-low rounded-xl border border-outline-variant">
-            <StyledText className="text-error text-center mb-4 text-body-lg font-semibold">{error}</StyledText>
-            <StyledTouchableOpacity className="px-6 py-3 bg-primary rounded-xl" onPress={loadData}>
-              <StyledText className="text-on-primary font-semibold">Retry</StyledText>
-            </StyledTouchableOpacity>
+          <StyledView
+            className="mt-8 items-center rounded-card border border-border bg-card p-6"
+            accessibilityRole="alert"
+          >
+            <StyledText className="mb-4 text-center font-label text-bodySm text-danger">
+              {error}
+            </StyledText>
+            <Button size="sm" variant="secondary" onPress={loadData}>
+              Retry
+            </Button>
           </StyledView>
         ) : summary ? (
-          <>
-            <StyledView className="flex-col gap-1 mb-gutter">
-              <StyledText className="font-extrabold text-2xl text-on-surface text-balance">
-                {getGreeting()}, {user?.fullName?.split(' ')[0] || 'Seller'}
-              </StyledText>
-              {/* <StyledText className="font-body-lg text-on-surface-variant text-pretty">Here's how your shop is performing today.</StyledText> */}
-            </StyledView>
-
-            <StyledView className="flex-col gap-gutter mb-gutter">
-              <Surface variant="primary" className="rounded-xl shadow-sm border border-outline-variant/30 p-lg">
-                <StyledView className="flex-row justify-between items-start">
-                  <StyledView className="flex-1 items-center justify-center">
-                    <StyledText className="font-label-caps text-on-surface-variant mb-2">REVENUE</StyledText>
-                    <StyledText className="text-3xl font-extrabold text-primary tabular-nums">{formatCurrency(summary.totalRevenue)}</StyledText>
-                  </StyledView>
-                </StyledView>
-              </Surface>
-
-              <Surface variant="outline" className="rounded-xl border border-outline-variant/30 p-lg">
-                  <StyledView className="flex-row justify-center items-center">
-                  <StyledView className="flex-1 items-center justify-center">
-                    <StyledText className="font-label-caps text-on-surface-variant mb-2">SALES</StyledText>
-                    <StyledText className="text-3xl font-extrabold text-on-surface tabular-nums">{summary.totalSalesCount}</StyledText>
-                    <StyledText className="mt-2 text-on-surface-variant font-body-sm text-pretty">Transactions processed</StyledText>
-                  </StyledView>
-                </StyledView>
-              </Surface>
-
-              <Surface variant="secondary" className="rounded-xl border border-outline-variant/30 p-lg">
-                <StyledView className="flex-row justify-between items-start">
-                  <StyledView className="flex-1 items-center justify-center">
-                    <StyledText className="font-label-caps text-on-surface-variant mb-2">PROFIT</StyledText>
-                    <StyledText className="text-3xl font-extrabold text-secondary tabular-nums">{formatCurrency(summary.netProfit)}</StyledText>
-                  </StyledView>
-                </StyledView>
-              </Surface>
-            </StyledView>
-
-            {summary.lowStockCount > 0 && (
-              <StyledView className="bg-secondary-container/20 border border-secondary-container/40 rounded-xl p-md flex-row items-center gap-md mb-gutter">
-                <StyledView className="size-10 rounded-full bg-secondary-container/30 items-center justify-center">
-                  <Warning size={20} color={colors.secondary} />
-                </StyledView>
+          <StyledView className="mt-6">
+            {/* Profit hero — frame x24 y84, 342×108 */}
+            <StyledView
+              className="bg-brand-strong"
+              style={{ borderRadius: 22, padding: spacing.gutter }}
+            >
+              <StyledView className="flex-row items-start justify-between">
                 <StyledView className="flex-1">
-                  <StyledText className="font-label-bold text-on-secondary-container text-balance">
-                    {summary.lowStockCount} {summary.lowStockCount === 1 ? 'product is' : 'products are'} running low on stock
+                  <StyledText
+                    className="font-label uppercase tracking-[1.5px]"
+                    style={{ fontSize: 9, lineHeight: 12, color: colors.mint }}
+                  >
+                    PROFIT TODAY
                   </StyledText>
-                  <StyledText className="text-label-bold text-secondary font-medium uppercase tracking-wide">Restock needed soon</StyledText>
+                  <StyledText
+                    className="mt-2 font-display text-card"
+                    style={{ fontSize: 39, lineHeight: 40 }}
+                  >
+                    {formatCurrency(summary.netProfit)}
+                  </StyledText>
                 </StyledView>
-                <StyledTouchableOpacity
-                  className="bg-on-secondary-container min-w-[44px] min-h-[44px] px-4 py-2.5 rounded-lg"
-                  onPress={() => router.push('/products')}
-                  accessibilityRole="button"
-                  accessibilityLabel="View low stock products"
-                >
-                  <StyledText className="font-label-bold text-secondary-container">View</StyledText>
-                </StyledTouchableOpacity>
+
+                {/* Three mini chart bars — frame x282 */}
+                <StyledView className="flex-row items-end gap-2 self-center">
+                  {PROFIT_BARS.map((bar) => (
+                    <StyledView
+                      key={bar.id}
+                      style={{
+                        width: 10,
+                        height: bar.height,
+                        borderRadius: radius.pill,
+                        backgroundColor:
+                          bar.color === "accent" ? colors.accent : colors.mint,
+                      }}
+                    />
+                  ))}
+                </StyledView>
               </StyledView>
-            )}
 
-            <StyledView className="flex-row gap-sm mb-gutter">
-<StyledTouchableOpacity 
-        onPress={() => router.push('/sales/record')}
-        className="flex-1 items-center justify-center p-md bg-primary rounded-xl active:scale-95 shadow-sm"
-        accessibilityLabel="Record Sale"
-        accessibilityRole="button"
-      >
-                <ShoppingCart size={24} color={colors.onPrimary} />
-                <StyledText className="font-label-bold text-on-primary mt-1">Record Sale</StyledText>
-              </StyledTouchableOpacity>
-
-              <StyledTouchableOpacity 
-                onPress={() => router.push('/products/add')}
-                className="flex-1 items-center justify-center p-md bg-surface-container-lowest border border-outline-variant rounded-xl active:scale-95"
-                accessibilityLabel="Add Product"
-                accessibilityRole="button"
+              <StyledText
+                className="mt-3 font-label"
+                style={{ fontSize: 11, lineHeight: 14, color: colors.mint }}
               >
-                <Package size={24} color={colors.primary} />
-                <StyledText className="font-label-bold text-on-surface mt-1">Add Product</StyledText>
+                ▲ {formatCurrency(summary.totalExpenses)} expenses today
+              </StyledText>
+            </StyledView>
+
+            {/* Revenue + Sales mini cards — frame y208 */}
+            <StyledView className="mt-4 flex-row gap-3">
+              <StyledView className="flex-1 justify-center rounded-card border border-border bg-card p-4">
+                <StyledText
+                  className="font-label uppercase tracking-[1.5px] text-muted"
+                  style={{ fontSize: 8, lineHeight: 11 }}
+                >
+                  REVENUE
+                </StyledText>
+                <StyledText
+                  className="mt-1 font-display text-ink"
+                  style={{ fontSize: 21, lineHeight: 27 }}
+                >
+                  {formatCurrency(summary.totalRevenue)}
+                </StyledText>
+                <StyledText
+                  className="mt-1 font-body text-muted"
+                  style={{ fontSize: 10, lineHeight: 13 }}
+                  numberOfLines={1}
+                >
+                  Sales recorded today
+                </StyledText>
+              </StyledView>
+
+              <StyledView className="flex-1 justify-center rounded-card border border-border bg-card p-4">
+                <StyledText
+                  className="font-label uppercase tracking-[1.5px] text-muted"
+                  style={{ fontSize: 8, lineHeight: 11 }}
+                >
+                  SALES
+                </StyledText>
+                <StyledText
+                  className="mt-1 font-display text-ink"
+                  style={{ fontSize: 21, lineHeight: 27 }}
+                >
+                  {summary.totalSalesCount}
+                </StyledText>
+                <StyledText
+                  className="mt-1 font-body text-muted"
+                  style={{ fontSize: 10, lineHeight: 13 }}
+                  numberOfLines={1}
+                >
+                  {summary.totalProducts} products in stock
+                </StyledText>
+              </StyledView>
+            </StyledView>
+
+            {/* Restock alert — frame y304 */}
+            {summary.lowStockCount > 0 ? (
+              <StyledTouchableOpacity
+                onPress={() => router.push("/products")}
+                className="mt-4 flex-row items-center rounded-card bg-accent-soft p-4"
+                accessibilityRole="button"
+                accessibilityLabel="View low stock products"
+              >
+                <Warning size={22} color={colors.accent} weight="bold" />
+                <StyledView className="ml-3 flex-1">
+                  <StyledText
+                    className="font-extrabold text-ink"
+                    style={{ fontSize: 13, lineHeight: 17 }}
+                  >
+                    {summary.lowStockCount}{" "}
+                    {summary.lowStockCount === 1 ? "product is" : "products are"} running low
+                  </StyledText>
+                  <StyledText
+                    className="mt-0.5 font-body text-ink"
+                    style={{ fontSize: 11, lineHeight: 14 }}
+                  >
+                    Restock before you run out
+                  </StyledText>
+                </StyledView>
+                <StyledText
+                  className="font-label text-brand"
+                  style={{ fontSize: 12, lineHeight: 16 }}
+                >
+                  Restock ›
+                </StyledText>
+              </StyledTouchableOpacity>
+            ) : null}
+
+            {/* Record sale CTA — frame y388 */}
+            <StyledTouchableOpacity
+              onPress={() => router.push("/sales/record")}
+              className="mt-4 flex-row items-center rounded-button bg-accent px-4"
+              style={{ minHeight: 54 }}
+              accessibilityRole="button"
+              accessibilityLabel="Record a sale"
+            >
+              <StyledText
+                className="font-extrabold text-ink"
+                style={{ fontSize: 17, lineHeight: 22 }}
+              >
+                Record sale
+              </StyledText>
+              <StyledView className="flex-1" />
+              <StyledText
+                className="font-label text-ink"
+                style={{ fontSize: 11, lineHeight: 14 }}
+              >
+                {formatCurrency(summary.totalRevenue)} recorded today
+              </StyledText>
+            </StyledTouchableOpacity>
+
+            {/* Add product / Add expense — frame y456 */}
+            <StyledView className="mt-4 flex-row gap-3">
+              <StyledTouchableOpacity
+                onPress={() => router.push("/products/add")}
+                className="min-h-12 flex-1 flex-row items-center justify-center rounded-button border border-border bg-card"
+                accessibilityRole="button"
+                accessibilityLabel="Add product"
+              >
+                <Package size={18} color={colors.brand} />
+                <StyledText
+                  className="ml-2 font-label text-brand"
+                  style={{ fontSize: 13, lineHeight: 16 }}
+                >
+                  Add product
+                </StyledText>
               </StyledTouchableOpacity>
 
               <StyledTouchableOpacity
-                onPress={() => router.push('/expenses')}
-                className="flex-1 items-center justify-center p-md bg-surface-container-lowest border border-outline-variant rounded-xl active:scale-95"
-                accessibilityLabel="Add Expense"
+                onPress={() => router.push("/expenses")}
+                className="min-h-12 flex-1 flex-row items-center justify-center rounded-button border border-border bg-card"
                 accessibilityRole="button"
-                hitSlop={4}
+                accessibilityLabel="Add expense"
               >
-                <CreditCard size={24} color={colors.tertiary} />
-                <StyledText className="font-label-bold text-on-surface mt-1">Add Expense</StyledText>
+                <CreditCard size={18} color={colors.brand} />
+                <StyledText
+                  className="ml-2 font-label text-brand"
+                  style={{ fontSize: 13, lineHeight: 16 }}
+                >
+                  Add expense
+                </StyledText>
               </StyledTouchableOpacity>
             </StyledView>
 
-            {summary.totalProducts === 0 ? (
-              <StyledView className="mb-6">
-                <StyledView className="bg-primary/5 rounded-2xl border-2 border-dashed border-primary/30 p-6 items-center">
-                <StyledView className="size-16 rounded-full bg-primary/10 border border-primary/20 items-center justify-center mb-4">
-                  <Package size={32} color={colors.primary} weight="duotone" />
-                </StyledView>
-                  <StyledText className="text-h2 font-bold text-on-surface text-center mb-2 text-balance">Welcome to OjaPaddi!</StyledText>
-                  <StyledText className="text-body-lg text-on-surface-variant text-center mb-6 text-pretty">
-                    Your first step to market success — add your first product and start selling!
-                  </StyledText>
-                  <Button
-                    size="lg"
-                    variant="primary"
-                    onPress={() => router.push('/products/add')}
-                  >
-                    Add Your First Product
-                  </Button>
-                  <StyledTouchableOpacity
-                    className="mt-4 flex-row items-center gap-2"
-                    onPress={() => router.push('/sales/record')}
-                  >
-                    <TrendUp size={18} color={colors.primary} />
-                    <StyledText className="text-label-bold text-primary">I already made a sale</StyledText>
-                  </StyledTouchableOpacity>
-                </StyledView>
+            {/* TODAY header — frame y538 */}
+            <StyledView className="mt-8 flex-row items-center justify-between">
+              <StyledText
+                className="font-label uppercase tracking-[1.5px] text-muted"
+                style={{ fontSize: 9, lineHeight: 12 }}
+              >
+                TODAY
+              </StyledText>
+              <StyledText
+                className="font-title text-ink"
+                style={{ fontSize: 17, lineHeight: 22 }}
+              >
+                {summary.totalSalesCount} sales
+              </StyledText>
+            </StyledView>
+
+            <StyledTouchableOpacity
+              onPress={() => router.push("/sales")}
+              className="mt-2 items-end"
+              accessibilityRole="button"
+              accessibilityLabel="See all sales"
+            >
+              <StyledText
+                className="font-label text-brand"
+                style={{ fontSize: 12, lineHeight: 16 }}
+              >
+                See all sales →
+              </StyledText>
+            </StyledTouchableOpacity>
+
+            {/* Recent sale rows — frame y586 */}
+            {recentSales.length === 0 ? (
+              <StyledView className="mt-3 items-center rounded-button border border-border bg-card p-6">
+                <Receipt size={26} color={colors.brand} weight="duotone" />
+                <StyledText
+                  className="mt-2 font-body text-muted"
+                  style={{ fontSize: 12, lineHeight: 16 }}
+                >
+                  No sales recorded yet.
+                </StyledText>
               </StyledView>
             ) : (
-              <StyledView className="mb-6">
-                <StyledView className="flex-row justify-between items-center mb-4">
-                  <StyledText className="font-h2 text-on-surface text-balance">Recent Sales</StyledText>
-                  <StyledTouchableOpacity
-                    onPress={() => router.push('/sales')}
-                    className="flex-row items-center gap-1"
-                  >
-                    <StyledText className="text-primary font-label-bold">See All</StyledText>
-                    <ArrowRight size={16} color={colors.primary} />
-                  </StyledTouchableOpacity>
-                </StyledView>
-
-                {!summary.topProducts || summary.topProducts.length === 0 ? (
-                  <StyledView className="p-8 items-center bg-surface-container-lowest rounded-2xl border border-dashed border-outline-variant">
-                    <StyledView className="size-16 rounded-2xl bg-surface-container-lowest border border-outline-variant items-center justify-center">
-                      <Receipt size={30} color={colors.primary} weight="duotone" />
-                    </StyledView>
-                    <StyledText className="text-on-surface-variant text-body-sm font-medium mt-2 text-pretty">No sales recorded yet.</StyledText>
-                    <StyledText className="text-on-surface-variant text-body-sm mt-1 text-pretty">Start by recording your first sale!</StyledText>
-                  </StyledView>
-                ) : (
-                  <StyledView className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden">
-                    {summary.topProducts.map((product, index, arr) => (
-                      <StyledView
-                        key={`product-${index}`}
-                        className={`flex-row items-center p-md ${index !== arr.length - 1 ? 'border-b border-outline-variant/20' : ''}`}
-                      >
-                        <StyledView className="size-10 rounded-lg bg-surface-container items-center justify-center">
-                          <Receipt size={20} color={colors.primary} />
-                        </StyledView>
-                        <StyledView className="flex-1 ml-3">
-                          <StyledText className="font-label-bold text-on-surface text-balance">{product.name}</StyledText>
-                          <StyledText className="font-body-sm text-on-surface-variant mt-0.5">{product.quantitySold ?? 0} sold</StyledText>
-                        </StyledView>
-                        <StyledText className="font-label-bold text-primary tabular-nums">
-                          {formatCurrency(product.revenue || 0)}
+              <StyledView className="mt-3 gap-3">
+                {recentSales.map((sale) => {
+                  const status = saleStatus(sale);
+                  const isCredit = status === "CREDIT";
+                  return (
+                    <StyledView
+                      key={sale.id}
+                      className="flex-row items-center rounded-button border border-border bg-card p-4"
+                    >
+                      <StyledView className="flex-1">
+                        <StyledText
+                          className="font-title text-ink"
+                          style={{ fontSize: 12, lineHeight: 16 }}
+                        >
+                          {saleTime(sale)}
+                        </StyledText>
+                        <StyledText
+                          className="mt-1 font-body text-ink"
+                          style={{ fontSize: 12, lineHeight: 16 }}
+                          numberOfLines={1}
+                        >
+                          {saleLabel(sale)}
                         </StyledText>
                       </StyledView>
-                    ))}
-                  </StyledView>
-                )}
+                      <StyledView className="items-end">
+                        <StyledText
+                          className="font-extrabold text-ink"
+                          style={{ fontSize: 13, lineHeight: 17 }}
+                        >
+                          {formatCurrency(sale.total)}
+                        </StyledText>
+                        <StyledText
+                          className="mt-1 font-label uppercase"
+                          style={{
+                            fontSize: 9,
+                            lineHeight: 12,
+                            letterSpacing: 1,
+                            color: isCredit ? colors.danger : colors.brand,
+                          }}
+                        >
+                          {status}
+                        </StyledText>
+                      </StyledView>
+                    </StyledView>
+                  );
+                })}
               </StyledView>
             )}
-          </>
-        ) : null}
-      </ScrollView>
 
-      <StyledTouchableOpacity
-        onPress={() => router.push('/products/add')}
-        className="absolute right-4 size-14 bg-secondary-container rounded-full shadow-lg items-center justify-center z-[var(--z-fab)] active:scale-95"
-        style={{ bottom: TAB_BAR_OFFSET + 12 }}
-        accessibilityRole="button"
-        accessibilityLabel="Add product"
-      >
-        <Plus size={28} color={colors.onSecondaryContainer} />
-      </StyledTouchableOpacity>
+            {/* Empty-store nudge — kept from the previous screen */}
+            {summary.totalProducts === 0 ? (
+              <StyledView
+                className="mt-4 items-center rounded-card border border-dashed border-brand bg-brand-soft p-6"
+                style={{ borderWidth: 2 }}
+              >
+                <StyledView className="h-14 w-14 items-center justify-center rounded-pill bg-card">
+                  <Package size={28} color={colors.brand} weight="duotone" />
+                </StyledView>
+                <StyledText
+                  className="mt-3 text-center font-title text-ink"
+                  style={{ fontSize: 20, lineHeight: 26 }}
+                >
+                  Welcome to OjaPaddi
+                </StyledText>
+                <StyledText
+                  className="mt-2 text-center font-body text-muted"
+                  style={{ fontSize: 13, lineHeight: 19 }}
+                >
+                  Add your first product and start selling.
+                </StyledText>
+                <Button
+                  size="lg"
+                  variant="primary"
+                  className="mt-5 w-full"
+                  onPress={() => router.push("/products/add")}
+                >
+                  Add your first product
+                </Button>
+              </StyledView>
+            ) : null}
+          </StyledView>
+        ) : null}
+      </StyledScrollView>
     </Container>
   );
 }

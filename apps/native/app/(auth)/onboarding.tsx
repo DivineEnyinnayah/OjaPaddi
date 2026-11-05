@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Platform, ScrollView, useWindowDimensions } from 'react-native';
+import { Animated, Easing, Platform, useWindowDimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,16 @@ import {
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { apiRequest, apiFormDataRequest } from '../../lib/api';
 import { useAuthStore, type User } from '../../stores/authStore';
-import { StyledView, StyledText, StyledTouchableOpacity, StyledTextInput, StyledImage, StyledKeyboardAvoidingView } from '@/components/ui/styled';
+import {
+  StyledView,
+  StyledText,
+  StyledTouchableOpacity,
+  StyledTextInput,
+  StyledImage,
+  StyledKeyboardAvoidingView,
+  StyledScrollView,
+} from '@/components/ui/styled';
+import { colorTokens } from '@/constants/tokens';
 
 interface FormErrors {
   businessName?: string;
@@ -43,6 +52,9 @@ const BUSINESS_CATEGORIES = [
   { label: 'Other', emoji: '✨' },
 ] as const;
 
+/** Chips shown inline on step 1 — a quick pick over the full sheet list. */
+const QUICK_CATEGORIES = ['Clothing & Fashion', 'Food & Beverages', 'Beauty & Cosmetics', 'Other'] as const;
+
 const STEPS = [
   { title: 'Business Basics', subtitle: 'Tell us about your business' },
   { title: 'Location & Contact', subtitle: 'How customers reach you' },
@@ -53,13 +65,23 @@ const STEPS = [
 const STAGGER_STEP = 0.16;
 const STAGGER_SPAN = 0.55;
 
+/**
+ * Onboarding wizard — FigCraft `02.5 — First product` (frame 530) drives the
+ * visual language: amber eyebrow, display title, 3 step dots + `STEP n OF 3`,
+ * 54px field boxes, chip rows, 342×160 photo panel and a brand CTA.
+ *
+ * The screen's own flow (Business Basics → Location & Contact → Final Touch),
+ * validation, store hand-off, slideshow animation, category sheet, logo upload
+ * and skip logic are all preserved unchanged.
+ */
 export default function OnboardingScreen() {
   const router = useRouter();
-  const setUser = useAuthStore(state => state.setUser);
-  const setPendingOnboarding = useAuthStore(state => state.setPendingOnboarding);
-  const clearPendingData = useAuthStore(state => state.clearPendingData);
-  const pendingRegistration = useAuthStore(state => state.pendingRegistration);
+  const setUser = useAuthStore((state) => state.setUser);
+  const setPendingOnboarding = useAuthStore((state) => state.setPendingOnboarding);
+  const clearPendingData = useAuthStore((state) => state.clearPendingData);
+  const pendingRegistration = useAuthStore((state) => state.pendingRegistration);
   const colors = useThemeColor();
+  const C = colorTokens;
   const toast = useToast();
   const { width: screenWidth } = useWindowDimensions();
 
@@ -204,19 +226,22 @@ export default function OnboardingScreen() {
         throw new Error('Missing registration information. Please go back and register first.');
       }
 
-      const result = await apiRequest<{ user: User; access_token: string; refresh_token: string }>('/auth/complete-registration', {
-        method: 'POST',
-        body: JSON.stringify({
-          registration: pendingRegistration,
-          onboarding: {
-            businessName: formData.businessName,
-            category: formData.category,
-            whatsappNumber: formData.whatsappNumber,
-            city: formData.city,
-            state: formData.state,
-          },
-        }),
-      });
+      const result = await apiRequest<{ user: User; access_token: string; refresh_token: string }>(
+        '/auth/complete-registration',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            registration: pendingRegistration,
+            onboarding: {
+              businessName: formData.businessName,
+              category: formData.category,
+              whatsappNumber: formData.whatsappNumber,
+              city: formData.city,
+              state: formData.state,
+            },
+          }),
+        },
+      );
 
       if (result.success && result.data) {
         // Upload logo if one was selected
@@ -262,12 +287,15 @@ export default function OnboardingScreen() {
 
     setIsLoading(true);
     try {
-      const result = await apiRequest<{ user: User; access_token: string; refresh_token: string }>('/auth/complete-registration', {
-        method: 'POST',
-        body: JSON.stringify({
-          registration: pendingRegistration,
-        }),
-      });
+      const result = await apiRequest<{ user: User; access_token: string; refresh_token: string }>(
+        '/auth/complete-registration',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            registration: pendingRegistration,
+          }),
+        },
+      );
 
       if (result.success && result.data) {
         await setUser(result.data.user, result.data.access_token, result.data.refresh_token);
@@ -284,9 +312,9 @@ export default function OnboardingScreen() {
   };
 
   const updateField = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
@@ -308,69 +336,36 @@ export default function OnboardingScreen() {
         toast.error('Please select an image under 5 MB.', 'Image Too Large');
         return;
       }
-      setFormData(prev => ({ ...prev, logoUri: asset.uri }));
+      setFormData((prev) => ({ ...prev, logoUri: asset.uri }));
       setLogoAsset(asset);
     }
   };
 
+  /** FigCraft 530 progress: three dots, the active one brand coloured. */
   const renderStepper = () => (
-    <StyledView className="mb-5">
-      <StyledView className="flex-row items-center justify-between mb-3">
-        <StyledText className="text-label-caps text-primary">
-          Step {currentStep} of {STEPS.length}
-        </StyledText>
-        <StyledText className="text-label-bold text-on-surface-variant">
-          {STEPS[currentStep - 1].title}
-        </StyledText>
-      </StyledView>
-
-      <StyledView className="flex-row items-center">
+    <StyledView className="mb-6">
+      <StyledView className="flex-row items-center gap-1.5">
         {STEPS.map((step, i) => {
           const n = i + 1;
-          const isDone = n < currentStep;
-          const isActive = n === currentStep;
-
+          const isReached = n <= currentStep;
           return (
-            <React.Fragment key={step.title}>
-              {i > 0 ? (
-                <StyledView
-                  className="flex-1 h-[2px] mx-2 rounded-full"
-                  style={{ backgroundColor: n <= currentStep ? colors.primary : colors.outlineVariant }}
-                />
-              ) : null}
-
-              <StyledView
-                className={`rounded-full items-center justify-center ${
-                  isActive
-                    ? 'w-8 h-8 bg-primary'
-                    : isDone
-                      ? 'w-7 h-7 bg-primary-container'
-                      : 'w-7 h-7 bg-surface-container border border-outline-variant'
-                }`}
-                accessible
-                accessibilityLabel={`Step ${n}: ${step.title}${isDone ? ', completed' : isActive ? ', current step' : ', not started'}`}
-              >
-                {isDone ? (
-                  <Check size={14} color={colors.primary} weight="bold" />
-                ) : (
-                  <StyledText className={`text-label-bold ${isActive ? 'text-on-primary' : 'text-on-surface-variant'}`}>
-                    {n}
-                  </StyledText>
-                )}
-              </StyledView>
-            </React.Fragment>
+            <StyledView
+              key={step.title}
+              className="h-2.5 w-2.5 rounded-pill"
+              style={{ backgroundColor: isReached ? C.brand.light : C.border.light }}
+              accessible
+              accessibilityLabel={`Step ${n}: ${step.title}${isReached ? ', current or completed' : ', not started'}`}
+            />
           );
         })}
       </StyledView>
-    </StyledView>
-  );
 
-  const StepHero = ({ icon, caption }: { icon: React.ReactNode; caption: string }) => (
-    <StyledView className="items-center mb-5">
-      <StyledView className="size-20 rounded-3xl bg-primary-container items-center justify-center mb-3">
-        {icon}
-      </StyledView>
-      <StyledText className="text-body-lg text-on-surface-variant text-center text-pretty">{caption}</StyledText>
+      <StyledText
+        className="mt-2 font-label uppercase tracking-[1.5px]"
+        style={{ fontSize: 9, color: colors.muted }}
+      >
+        STEP {currentStep} OF {STEPS.length}
+      </StyledText>
     </StyledView>
   );
 
@@ -384,57 +379,82 @@ export default function OnboardingScreen() {
     children: React.ReactNode;
   }) => (
     <StyledView>
-      <StyledText className="text-label-bold text-on-surface font-semibold mb-2 ml-1">{label}</StyledText>
-      {children}
+      <StyledText className="font-label uppercase tracking-[1.5px]" style={{ fontSize: 9, color: colors.muted }}>
+        {label}
+      </StyledText>
+      <StyledView className="mt-2">{children}</StyledView>
       {error ? (
-        <StyledText className="text-label-bold text-error mt-1.5 ml-1">{error}</StyledText>
+        <StyledText className="mt-1.5 ml-1 font-body text-micro text-danger" accessibilityRole="alert">
+          {error}
+        </StyledText>
       ) : null}
     </StyledView>
   );
 
+  const inputBox = (focused: boolean) =>
+    `h-[54px] flex-row items-center rounded-input border bg-card px-4 ${focused ? 'border-brand' : 'border-border'}`;
+
   const renderStep1 = () => (
     <StyledView>
       <Animated.View style={stagger(0)}>
-        <StepHero
-          icon={<Storefront size={40} color={colors.primary} weight="duotone" />}
-          caption="Let's set up your store in just a few steps!"
-        />
-      </Animated.View>
-
-      <Animated.View style={stagger(1)}>
-        <Field label="Business Name" error={errors.businessName}>
-          <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
-            <Storefront size={20} color={colors.outline} style={{ marginRight: 10 }} />
+        <Field label="BUSINESS NAME" error={errors.businessName}>
+          <StyledView className="h-[54px] flex-row items-center rounded-input border border-border bg-card px-4">
+            <Storefront size={20} color={colors.muted} style={{ marginRight: 10 }} />
             <StyledTextInput
-              className="flex-1 text-body-lg text-on-surface"
+              className="flex-1 px-0 font-body text-body text-ink"
               placeholder="e.g., Tope's Fashion Hub"
-              placeholderTextColor={colors.outline}
+              placeholderTextColor={colors.muted}
               value={formData.businessName}
               onChangeText={(value) => updateField('businessName', value)}
               autoCapitalize="words"
+              accessibilityLabel="Business name"
             />
           </StyledView>
         </Field>
       </Animated.View>
 
-      <Animated.View style={[stagger(2), { marginTop: 16 }]}>
-        <Field label="Business Category" error={errors.category}>
+      <Animated.View style={[stagger(1), { marginTop: 16 }]}>
+        <Field label="CATEGORY" error={errors.category}>
+          <StyledView className="flex-row flex-wrap gap-2">
+            {QUICK_CATEGORIES.map((cat) => {
+              const isActive = formData.category === cat;
+              return (
+                <StyledTouchableOpacity
+                  key={cat}
+                  onPress={() => updateField('category', cat)}
+                  className={`h-9 justify-center rounded-pill border px-4 ${
+                    isActive ? 'border-brand bg-brand' : 'border-border bg-card'
+                  }`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isActive }}
+                  accessibilityLabel={cat}
+                >
+                  <StyledText
+                    className="font-label"
+                    style={{ fontSize: 12, color: isActive ? colors.card : colors.ink }}
+                  >
+                    {cat}
+                  </StyledText>
+                </StyledTouchableOpacity>
+              );
+            })}
+          </StyledView>
+
+          {/* Full list picker — carries the same value as the chips. */}
           <StyledTouchableOpacity
-            className={`flex-row items-center rounded-input border px-4 h-12 ${
-              formData.category ? 'border-primary bg-primary-container/40' : 'border-outline-variant bg-surface-container-lowest'
+            className={`mt-3 h-[54px] flex-row items-center rounded-input border px-4 ${
+              formData.category ? 'border-brand bg-card' : 'border-border bg-card'
             }`}
             onPress={() => setShowCategoryPicker(true)}
             accessibilityRole="button"
-            accessibilityLabel="Business category"
+            accessibilityLabel="Choose another category"
             accessibilityValue={{ text: formData.category || 'Not selected' }}
           >
-            <Folder size={20} color={formData.category ? colors.primary : colors.outline} style={{ marginRight: 10 }} />
-            <StyledText
-              className={`flex-1 text-body-lg ${formData.category ? 'text-on-surface font-medium' : 'text-on-surface-variant'}`}
-            >
-              {formData.category || 'Select a category'}
+            <Folder size={20} color={formData.category ? colors.brand : colors.muted} style={{ marginRight: 10 }} />
+            <StyledText className="flex-1 font-body text-body text-ink" numberOfLines={1}>
+              {formData.category || 'Choose another category'}
             </StyledText>
-            <CaretDown size={20} color={colors.outline} />
+            <CaretDown size={20} color={colors.muted} />
           </StyledTouchableOpacity>
         </Field>
       </Animated.View>
@@ -444,55 +464,53 @@ export default function OnboardingScreen() {
   const renderStep2 = () => (
     <StyledView>
       <Animated.View style={stagger(0)}>
-        <StepHero
-          icon={<Phone size={40} color={colors.primary} weight="duotone" />}
-          caption="Customers reach you through WhatsApp. Let's set that up!"
-        />
-      </Animated.View>
-
-      <Animated.View style={stagger(1)}>
-        <Field label="WhatsApp Number" error={errors.whatsappNumber}>
-          <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
-            <Phone size={20} color={colors.outline} style={{ marginRight: 8 }} />
-            <StyledText className="text-body-lg text-on-surface font-medium">+234</StyledText>
-            <StyledView className="w-px h-6 bg-outline-variant ml-3 mr-3" />
+        <Field label="WHATSAPP NUMBER" error={errors.whatsappNumber}>
+          <StyledView className="h-[54px] flex-row items-center overflow-hidden rounded-input border border-border bg-card">
+            <StyledView className="h-full justify-center border-r border-border px-4">
+              <StyledText className="font-label" style={{ fontSize: 15, color: colors.ink }}>
+                +234
+              </StyledText>
+            </StyledView>
             <StyledTextInput
-              className="flex-1 text-body-lg text-on-surface"
+              className="flex-1 px-4 py-0 font-body text-body text-ink"
               placeholder="801 234 5678"
-              placeholderTextColor={colors.outline}
+              placeholderTextColor={colors.muted}
               value={formData.whatsappNumber}
               onChangeText={(value) => updateField('whatsappNumber', value)}
               keyboardType="phone-pad"
+              accessibilityLabel="WhatsApp number"
+            />
+          </StyledView>
+        </Field>
+      </Animated.View>
+
+      <Animated.View style={[stagger(1), { marginTop: 16 }]}>
+        <Field label="CITY" error={errors.city}>
+          <StyledView className={inputBox(false)}>
+            <MapPin size={20} color={colors.muted} style={{ marginRight: 10 }} />
+            <StyledTextInput
+              className="flex-1 px-0 font-body text-body text-ink"
+              placeholder="e.g., Lagos"
+              placeholderTextColor={colors.muted}
+              value={formData.city}
+              onChangeText={(value) => updateField('city', value)}
+              accessibilityLabel="City"
             />
           </StyledView>
         </Field>
       </Animated.View>
 
       <Animated.View style={[stagger(2), { marginTop: 16 }]}>
-        <Field label="City" error={errors.city}>
-          <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
-            <MapPin size={20} color={colors.outline} style={{ marginRight: 10 }} />
+        <Field label="STATE" error={errors.state}>
+          <StyledView className={inputBox(false)}>
+            <MapTrifold size={20} color={colors.muted} style={{ marginRight: 10 }} />
             <StyledTextInput
-              className="flex-1 text-body-lg text-on-surface"
+              className="flex-1 px-0 font-body text-body text-ink"
               placeholder="e.g., Lagos"
-              placeholderTextColor={colors.outline}
-              value={formData.city}
-              onChangeText={(value) => updateField('city', value)}
-            />
-          </StyledView>
-        </Field>
-      </Animated.View>
-
-      <Animated.View style={[stagger(3), { marginTop: 16 }]}>
-        <Field label="State" error={errors.state}>
-          <StyledView className="flex-row items-center rounded-input border border-outline-variant bg-surface-container-lowest px-4 h-12">
-            <MapTrifold size={20} color={colors.outline} style={{ marginRight: 10 }} />
-            <StyledTextInput
-              className="flex-1 text-body-lg text-on-surface"
-              placeholder="e.g., Lagos"
-              placeholderTextColor={colors.outline}
+              placeholderTextColor={colors.muted}
               value={formData.state}
               onChangeText={(value) => updateField('state', value)}
+              accessibilityLabel="State"
             />
           </StyledView>
         </Field>
@@ -503,56 +521,54 @@ export default function OnboardingScreen() {
   const renderStep3 = () => (
     <StyledView>
       <Animated.View style={stagger(0)}>
-        <StepHero
-          icon={<Check size={40} color={colors.primary} weight="duotone" />}
-          caption="You're almost ready! Review and finish setup."
-        />
-      </Animated.View>
-
-      <Animated.View style={[stagger(1), { alignItems: 'center', marginBottom: 20 }]}>
-        <StyledTouchableOpacity
-          className="w-24 h-24 rounded-3xl items-center justify-center border-2 border-dashed border-outline-variant bg-surface-container-lowest"
-          onPress={pickLogo}
-          accessibilityRole="button"
-          accessibilityLabel="Add business logo"
-        >
-          {formData.logoUri ? (
-            <StyledImage source={{ uri: formData.logoUri }} className="w-full h-full rounded-2xl" />
-          ) : (
-            <StyledView className="items-center">
-              <CameraPlus size={28} color={colors.outline} />
-              <StyledText className="text-label-bold mt-1 text-outline">Logo</StyledText>
-            </StyledView>
-          )}
-        </StyledTouchableOpacity>
-        <StyledTouchableOpacity onPress={pickLogo} hitSlop={8}>
-          <StyledText className="text-body-sm text-primary font-semibold mt-3">
-            {formData.logoUri ? 'Change Logo' : 'Add Logo'}
+        <Field label="PHOTO">
+          {/* FigCraft 530 photo placeholder — 342×160 panel. */}
+          <StyledTouchableOpacity
+            className="h-[160px] w-full items-center justify-center overflow-hidden rounded-card border border-border bg-card"
+            onPress={pickLogo}
+            accessibilityRole="button"
+            accessibilityLabel="Add business logo"
+          >
+            {formData.logoUri ? (
+              <StyledImage source={{ uri: formData.logoUri }} className="h-full w-full" resizeMode="cover" />
+            ) : (
+              <StyledView className="items-center">
+                <StyledView className="h-[60px] w-[60px] items-center justify-center rounded-input border border-brand">
+                  <CameraPlus size={28} color={colors.brand} />
+                </StyledView>
+                <StyledText className="mt-3 font-body" style={{ fontSize: 11, color: colors.muted }}>
+                  Add Logo
+                </StyledText>
+              </StyledView>
+            )}
+          </StyledTouchableOpacity>
+          <StyledText className="mt-2 font-label" style={{ fontSize: 11, color: colors.brand }}>
+            Take a photo — helps customers recognise you fast.
           </StyledText>
-        </StyledTouchableOpacity>
+        </Field>
       </Animated.View>
 
-      <Animated.View style={stagger(2)}>
-        <StyledView className="bg-surface-container-lowest rounded-card border border-outline-variant p-4">
-          <StyledView className="flex-row items-center mb-3 pb-3 border-b border-outline-variant/30">
-            <Storefront size={18} color={colors.primary} />
-            <StyledText className="flex-1 text-body-lg text-on-surface font-semibold ml-3" numberOfLines={1}>
+      <Animated.View style={[stagger(1), { marginTop: 16 }]}>
+        <StyledView className="rounded-card border border-border bg-card p-4">
+          <StyledView className="mb-3 flex-row items-center border-b border-border pb-3">
+            <Storefront size={18} color={colors.brand} />
+            <StyledText className="ml-3 flex-1 font-label text-card-title text-ink" numberOfLines={1}>
               {formData.businessName || 'Your Business'}
             </StyledText>
           </StyledView>
-          <StyledView className="flex-row items-center mb-2">
-            <Folder size={16} color={colors.outline} />
-            <StyledText className="text-body-sm text-on-surface-variant ml-3">{formData.category || 'Not set'}</StyledText>
+          <StyledView className="mb-2 flex-row items-center">
+            <Folder size={16} color={colors.muted} />
+            <StyledText className="ml-3 font-body text-body-sm text-muted">{formData.category || 'Not set'}</StyledText>
           </StyledView>
-          <StyledView className="flex-row items-center mb-2">
-            <Phone size={16} color={colors.outline} />
-            <StyledText className="text-body-sm text-on-surface-variant ml-3">
+          <StyledView className="mb-2 flex-row items-center">
+            <Phone size={16} color={colors.muted} />
+            <StyledText className="ml-3 font-body text-body-sm text-muted">
               +234 {formData.whatsappNumber || 'Not set'}
             </StyledText>
           </StyledView>
           <StyledView className="flex-row items-center">
-            <MapPin size={16} color={colors.outline} />
-            <StyledText className="text-body-sm text-on-surface-variant ml-3">
+            <MapPin size={16} color={colors.muted} />
+            <StyledText className="ml-3 font-body text-body-sm text-muted">
               {formData.city || 'Not set'}
               {formData.state ? `, ${formData.state}` : ''}
             </StyledText>
@@ -562,73 +578,98 @@ export default function OnboardingScreen() {
     </StyledView>
   );
 
-  return (
-    <Container isScrollable={false} withSafeAreaTop={true} className="bg-background">
-      <StyledKeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingVertical: 24 }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-      >
-        <StyledView className="px-6">
-          {renderStepper()}
+  const stepCtaLabel =
+    currentStep === 1 ? 'Next: Location →' : currentStep === 2 ? 'Next: Final touch →' : null;
 
-          <StyledView className="mb-6">
-            <StyledText className="text-h1 font-bold text-on-surface mb-1 text-balance">
+  return (
+    <Container isScrollable={false} withSafeAreaTop className="bg-background">
+      <StyledKeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <StyledScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingVertical: 28 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+        >
+          <StyledView className="px-gutter">
+            {/* Eyebrow */}
+            <StyledText className="font-label uppercase tracking-[2px]" style={{ fontSize: 9, color: colors.accent }}>
+              BUSINESS SETUP
+            </StyledText>
+
+            {/* Title */}
+            <StyledText
+              className="mt-3 font-display"
+              style={{ fontSize: 31, lineHeight: 34, letterSpacing: -0.31, color: colors.ink }}
+            >
               {STEPS[currentStep - 1].title}
             </StyledText>
-            <StyledText className="text-body-lg text-on-surface-variant text-pretty">
+
+            {/* Sub */}
+            <StyledText className="mt-3 font-body" style={{ fontSize: 13, lineHeight: 18, color: colors.muted }}>
               {STEPS[currentStep - 1].subtitle}
             </StyledText>
+
+            <StyledView className="mt-7">{renderStepper()}</StyledView>
           </StyledView>
-        </StyledView>
 
-        <Animated.View
-          style={{
-            transform: [
-              {
-                translateX: slideAnim.interpolate({
-                  inputRange: [1, 2, 3],
-                  outputRange: [0, -screenWidth, -screenWidth * 2],
-                  extrapolate: 'clamp',
-                }),
-              },
-            ],
-            width: screenWidth * STEPS.length,
-            flexDirection: 'row',
-          }}
-        >
-          <StyledView className="px-6" style={{ width: screenWidth }}>{renderStep1()}</StyledView>
-          <StyledView className="px-6" style={{ width: screenWidth }}>{renderStep2()}</StyledView>
-          <StyledView className="px-6" style={{ width: screenWidth }}>{renderStep3()}</StyledView>
-        </Animated.View>
+          <Animated.View
+            style={{
+              transform: [
+                {
+                  translateX: slideAnim.interpolate({
+                    inputRange: [1, 2, 3],
+                    outputRange: [0, -screenWidth, -screenWidth * 2],
+                    extrapolate: 'clamp',
+                  }),
+                },
+              ],
+              width: screenWidth * STEPS.length,
+              flexDirection: 'row',
+            }}
+          >
+            <StyledView className="px-gutter" style={{ width: screenWidth }}>
+              {renderStep1()}
+            </StyledView>
+            <StyledView className="px-gutter" style={{ width: screenWidth }}>
+              {renderStep2()}
+            </StyledView>
+            <StyledView className="px-gutter" style={{ width: screenWidth }}>
+              {renderStep3()}
+            </StyledView>
+          </Animated.View>
 
-        <StyledView className="mt-auto gap-3 pb-6 px-6">
-          {currentStep < 3 ? (
-            <StyledView className="gap-3">
-              <Button size="lg" variant="primary" onPress={handleNext}>
-                Continue
-              </Button>
-              <StyledTouchableOpacity className="items-center" onPress={handleSkip}>
-                <StyledText className="text-body-lg text-on-surface-variant">Complete Later</StyledText>
-              </StyledTouchableOpacity>
-            </StyledView>
-          ) : (
-            <StyledView className="gap-3">
-              <Button size="lg" variant="primary" onPress={handleComplete} isDisabled={isLoading}>
-                {isLoading ? 'Setting up...' : 'Complete Setup'}
-              </Button>
-              <StyledTouchableOpacity className="items-center" onPress={handleBack}>
-                <StyledText className="text-body-lg text-primary font-semibold">← Go Back</StyledText>
-              </StyledTouchableOpacity>
-            </StyledView>
-          )}
-        </StyledView>
-      </ScrollView>
+          <StyledView className="mt-auto gap-3 px-gutter pb-6 pt-6">
+            {currentStep < 3 ? (
+              <StyledView className="gap-3">
+                <Button size="lg" variant="primary" onPress={handleNext}>
+                  {stepCtaLabel ?? 'Continue'}
+                </Button>
+                <StyledTouchableOpacity
+                  className="min-h-12 items-center justify-center"
+                  onPress={handleSkip}
+                  accessibilityRole="button"
+                  accessibilityLabel="Complete setup later"
+                >
+                  <StyledText className="font-body text-body-sm text-muted">Complete later</StyledText>
+                </StyledTouchableOpacity>
+              </StyledView>
+            ) : (
+              <StyledView className="gap-3">
+                <Button size="lg" variant="primary" onPress={handleComplete} isDisabled={isLoading}>
+                  {isLoading ? 'Setting up...' : 'Finish setup'}
+                </Button>
+                <StyledTouchableOpacity
+                  className="min-h-12 items-center justify-center"
+                  onPress={handleBack}
+                  accessibilityRole="button"
+                  accessibilityLabel="Go back a step"
+                >
+                  <StyledText className="font-label text-body-sm text-brand">← Go back</StyledText>
+                </StyledTouchableOpacity>
+              </StyledView>
+            )}
+          </StyledView>
+        </StyledScrollView>
       </StyledKeyboardAvoidingView>
 
       <BottomSheet
@@ -636,20 +677,18 @@ export default function OnboardingScreen() {
         onClose={() => setShowCategoryPicker(false)}
         title="Business Category"
         subtitle="Pick the closest match — you can change this later."
-        icon={<Folder size={20} color={colors.onPrimaryContainer} />}
+        icon={<Folder size={20} color={colors.brand} />}
         maxHeightRatio={0.72}
       >
-        <StyledView className="pb-4 gap-1.5">
+        <StyledView className="gap-1.5 pb-4">
           {BUSINESS_CATEGORIES.map((category) => {
             const isSelected = formData.category === category.label;
 
             return (
               <StyledTouchableOpacity
                 key={category.label}
-                className={`flex-row items-center px-4 py-3 rounded-input border ${
-                  isSelected
-                    ? 'border-primary bg-primary-container'
-                    : 'border-outline-variant bg-surface-container-lowest'
+                className={`flex-row items-center rounded-input border px-4 py-3 ${
+                  isSelected ? 'border-brand bg-brand-soft' : 'border-border bg-card'
                 }`}
                 onPress={() => {
                   updateField('category', category.label);
@@ -658,13 +697,16 @@ export default function OnboardingScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
               >
-                <StyledText className="text-xl mr-3">{category.emoji}</StyledText>
+                <StyledText className="mr-3" style={{ fontSize: 20 }}>
+                  {category.emoji}
+                </StyledText>
                 <StyledText
-                  className={`flex-1 text-body-lg ${isSelected ? 'font-semibold text-on-primary-container' : 'text-on-surface'}`}
+                  className="flex-1 font-body text-body"
+                  style={{ color: isSelected ? colors.brandStrong : colors.ink }}
                 >
                   {category.label}
                 </StyledText>
-                {isSelected ? <Check size={18} color={colors.primary} weight="bold" /> : null}
+                {isSelected ? <Check size={18} color={colors.brand} weight="bold" /> : null}
               </StyledTouchableOpacity>
             );
           })}

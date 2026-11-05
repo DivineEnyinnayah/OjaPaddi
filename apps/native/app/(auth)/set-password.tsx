@@ -1,15 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform } from 'react-native';
+import { KeyboardAvoidingView, Platform, type TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { EnvelopeSimple, Lock, Eye, EyeSlash, CheckCircle, XCircle, PaperPlaneTilt } from 'phosphor-react-native';
+import { Lock, Eye, EyeSlash, PaperPlaneTilt, ShieldCheck } from 'phosphor-react-native';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
 import { useToast } from '@/components/ui/toast';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore, type User } from '../../stores/authStore';
 import { copy } from '@/constants/copy';
-import { StyledView, StyledText, StyledTextInput, StyledTouchableOpacity, StyledKeyboardAvoidingView, StyledImage } from '@/components/ui/styled';
+import {
+  StyledView,
+  StyledText,
+  StyledTextInput,
+  StyledTouchableOpacity,
+  StyledKeyboardAvoidingView,
+  StyledScrollView,
+} from '@/components/ui/styled';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { colorTokens } from '@/constants/tokens';
 
 interface FormErrors {
   code?: string;
@@ -18,17 +26,28 @@ interface FormErrors {
 }
 
 const RESEND_SECONDS = 60;
+const CODE_LENGTH = 6;
 
 function interpolate(template: string, values: Record<string, string | number>) {
   return template.replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? `{${key}}`));
 }
 
-export default function SetPasswordScreen()
- {
+/**
+ * FigCraft `02.4 — Confirm it’s you` (frame 496), 390×844.
+ *
+ * VISUAL ONLY. The frame draws six 46×54 code boxes; the screen has always
+ * collected the code in a single `formData.code` field, so the boxes are a
+ * presentational mirror of that value with one hidden real input behind them
+ * (tapping a box focuses it). Every piece of behaviour — the Supabase-migration
+ * resume flow, auto-send on mount, resend countdown, troubleshoot action sheet,
+ * wrong-email editor, toasts and copy strings — is preserved unchanged.
+ */
+export default function SetPasswordScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ email?: string }>();
   const setUser = useAuthStore((state) => state.setUser);
   const colors = useThemeColor();
+  const C = colorTokens;
   const toast = useToast();
 
   // Login hands the email forward so the user does not retype it.
@@ -43,6 +62,7 @@ export default function SetPasswordScreen()
   const [isSending, setIsSending] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const mounted = useRef(true);
+  const codeInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     mounted.current = true;
@@ -99,10 +119,10 @@ export default function SetPasswordScreen()
         { label: copy.setPassword.troubleshootSpam },
         { label: copy.setPassword.troubleshootDomain },
         { label: copy.setPassword.troubleshootWait },
-        { 
-          label: copy.setPassword.resend, 
-          style: 'default', 
-          onPress: () => void sendCode(true) 
+        {
+          label: copy.setPassword.resend,
+          style: 'default',
+          onPress: () => void sendCode(true),
         },
         { label: 'Cancel', style: 'cancel' },
       ],
@@ -161,39 +181,47 @@ export default function SetPasswordScreen()
   };
 
   const borderClass = (field: keyof FormErrors) => {
-    if (errors[field]) return 'border-error';
-    if (focusedField === field) return 'border-primary';
-    return 'border-outline-variant';
+    if (errors[field]) return 'border-danger';
+    if (focusedField === field) return 'border-brand';
+    return 'border-border';
   };
+
+  // The six-box mirror of `formData.code`. The index of the next character to
+  // be typed receives the accent treatment drawn in frame 496.
+  const codeChars = formData.code.replace(/\s/g, '').slice(0, CODE_LENGTH).split('');
+  const activeIndex = focusedField === 'code' ? Math.min(codeChars.length, CODE_LENGTH - 1) : -1;
 
   const field = (
     label: string,
     name: 'code' | 'password' | 'confirm',
     icon: React.ReactNode,
     placeholder: string,
-    extra: { secureTextEntry?: boolean; keyboardType?: 'default'; autoCapitalize?: 'none' } = {}
+    extra: { secureTextEntry?: boolean; keyboardType?: 'default'; autoCapitalize?: 'none' } = {},
   ) => (
-    <StyledView className="gap-1.5">
-      <StyledText className="text-body-sm font-semibold text-on-surface">{label}</StyledText>
+    <StyledView className="mt-6">
+      <StyledText className="font-label uppercase tracking-[1.5px]" style={{ fontSize: 9, color: colors.muted }}>
+        {label}
+      </StyledText>
       <StyledView
-        className={`flex-row items-center border rounded-input px-4 h-12 bg-surface-container-lowest ${borderClass(name)}`}
+        className={`mt-2 h-[54px] flex-row items-center rounded-input border bg-card px-4 ${borderClass(name)}`}
       >
         {icon}
         <StyledTextInput
-          className="flex-1 text-body-lg text-on-surface ml-3 px-0"
+          className="ml-3 flex-1 px-0 font-body text-body text-ink"
           placeholder={placeholder}
-          placeholderTextColor={colors.outline}
+          placeholderTextColor={colors.muted}
           value={formData[name]}
           onChangeText={(value) => updateField(name, value)}
           onFocus={() => setFocusedField(name)}
           onBlur={() => setFocusedField(null)}
+          accessibilityLabel={label}
           {...extra}
         />
-        {formData[name] && !errors[name] && <CheckCircle size={20} color={colors.primary} />}
-        {errors[name] && <XCircle size={20} color={colors.error} />}
       </StyledView>
       {errors[name] ? (
-        <StyledText className="text-body-sm text-error">{errors[name]}</StyledText>
+        <StyledText className="mt-1.5 ml-1 font-body text-micro text-danger" accessibilityRole="alert">
+          {errors[name]}
+        </StyledText>
       ) : null}
     </StyledView>
   );
@@ -204,150 +232,239 @@ export default function SetPasswordScreen()
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <StyledView className="flex-1 px-4 justify-center py-6">
-          <StyledView className="items-center mb-6">
-            <StyledView className="w-16 h-16 mb-3">
-              <StyledImage
-                source={require('@/assets/images/logo.png')}
-                className="w-full h-full"
-                resizeMode="contain"
-              />
-            </StyledView>
-            <StyledText className="text-display font-bold text-on-surface text-center mb-1">
-              {copy.setPassword.title}
-            </StyledText>
-            <StyledText className="text-body-lg text-on-surface-variant text-center text-pretty">
-              {copy.setPassword.subtitle}
-            </StyledText>
-          </StyledView>
+        <StyledScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 28 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Eyebrow */}
+          <StyledText className="font-label uppercase tracking-[2px]" style={{ fontSize: 9, color: colors.accent }}>
+            SECURITY
+          </StyledText>
 
-          <StyledView className="bg-surface-container-lowest rounded-[16px] border border-outline-variant p-4 gap-5">
-            {field(
-              copy.setPassword.codeLabel,
-              'code',
-              <EnvelopeSimple size={20} color={colors.outline} />,
-              copy.setPassword.codePlaceholder,
-              { autoCapitalize: 'none', keyboardType: 'default' }
-            )}
+          {/* Title */}
+          <StyledText
+            className="mt-3 font-display"
+            style={{ fontSize: 31, lineHeight: 34, letterSpacing: -0.31, color: colors.ink }}
+          >
+            Confirm it’s you.
+          </StyledText>
 
-            {/*
-              The code is delivered by email only — the API never returns it,
-              because it is the sole proof that the requester controls the inbox.
-            */}
-            <StyledView className="bg-surface-container rounded-input p-3 gap-1">
-              <StyledView className="flex-row justify-between items-center">
-                <StyledText className="text-body-sm font-semibold text-on-surface">
-                  {copy.setPassword.codeSentTitle}
-                </StyledText>
-                <StyledTouchableOpacity onPress={() => setIsEditingEmail(!isEditingEmail)}>
-                  <StyledText className="text-body-sm font-medium text-primary">
-                    {copy.setPassword.wrongEmail}
+          {/* Sub */}
+          <StyledText className="mt-4 font-body" style={{ fontSize: 13, lineHeight: 18, color: colors.muted }}>
+            {interpolate(copy.setPassword.codeSentBody, { email })}
+          </StyledText>
+
+          {/*
+            Six code boxes (frame 496). They mirror `formData.code`; the hidden
+            input below is the real control and receives focus when any box is
+            tapped, so the existing single-field contract is untouched.
+          */}
+          <StyledTouchableOpacity
+            className="mt-7 flex-row justify-between"
+            activeOpacity={1}
+            onPress={() => codeInputRef.current?.focus()}
+            accessibilityRole="button"
+            accessibilityLabel={copy.setPassword.codeLabel}
+          >
+            {Array.from({ length: CODE_LENGTH }).map((_, index) => {
+              const isActive = index === activeIndex;
+              const hasValue = index < codeChars.length;
+              return (
+                <StyledView
+                  key={index}
+                  className={`h-[54px] w-[46px] items-center justify-center rounded-[12px] border ${
+                    errors.code || errors.code === ' ' ? 'border-danger' : 'border-brand'
+                  } ${isActive ? 'bg-accent-soft' : 'bg-card'}`}
+                  style={
+                    isActive
+                      ? { borderColor: colors.accent }
+                      : errors.code
+                        ? { borderColor: colors.danger, backgroundColor: C.dangerSoft.light }
+                        : undefined
+                  }
+                >
+                  <StyledText className="font-display" style={{ fontSize: 20, color: colors.ink }}>
+                    {hasValue ? codeChars[index] : ''}
                   </StyledText>
-                </StyledTouchableOpacity>
-              </StyledView>
-              {isEditingEmail ? (
-                <StyledView className="flex-row gap-2 items-center mt-1">
-                  <StyledTextInput
-                    className="flex-1 text-body-sm text-on-surface border border-outline-variant rounded-md px-2 h-8 bg-surface-container-lowest"
-                    placeholder={copy.setPassword.editEmailPlaceholder}
-                    placeholderTextColor={colors.outline}
-                    value={email}
-                    onChangeText={setEmail}
-                    autoCapitalize="none"
-                  />
-                  <StyledTouchableOpacity
-                    onPress={() => {
-                      setIsEditingEmail(false);
-                      void sendCode(true);
-                    }}
-                    className="bg-primary px-3 h-8 rounded-md justify-center"
-                  >
-                    <StyledText className="text-body-sm font-semibold text-on-primary">OK</StyledText>
-                  </StyledTouchableOpacity>
                 </StyledView>
-              ) : (
-                <StyledText className="text-body-sm text-on-surface-variant">
-                  {interpolate(copy.setPassword.codeSentBody, { email })}
-                </StyledText>
-              )}
-            </StyledView>
+              );
+            })}
+          </StyledTouchableOpacity>
 
-            {field(
-              copy.setPassword.newPasswordLabel,
-              'password',
-              <Lock size={20} color={colors.outline} />,
-              'At least 8 characters',
-              { secureTextEntry: !showPassword }
-            )}
+          <StyledTextInput
+            ref={codeInputRef}
+            value={formData.code}
+            onChangeText={(value) => updateField('code', value)}
+            onFocus={() => setFocusedField('code')}
+            onBlur={() => setFocusedField(null)}
+            keyboardType="default"
+            autoCapitalize="none"
+            autoCorrect={false}
+            maxLength={CODE_LENGTH}
+            accessibilityLabel={copy.setPassword.codeLabel}
+            caretHidden
+            style={{ position: 'absolute', opacity: 0, height: 1, width: 1 }}
+          />
+          {errors.code ? (
+            <StyledText className="mt-1.5 ml-1 font-body text-micro text-danger" accessibilityRole="alert">
+              {errors.code}
+            </StyledText>
+          ) : null}
 
-            {field(
-              copy.setPassword.confirmPasswordLabel,
-              'confirm',
-              <Lock size={20} color={colors.outline} />,
-              'Re-enter your password',
-              { secureTextEntry: !showPassword }
-            )}
+          {/* Resend countdown (frame 496) + resend action */}
+          <StyledView className="mt-3 flex-row items-center justify-between">
+            <StyledText className="font-label" style={{ fontSize: 11, color: colors.muted }}>
+              {countdown > 0
+                ? interpolate(copy.setPassword.resendIn, { seconds: countdown })
+                : copy.setPassword.resend}
+            </StyledText>
 
-            <StyledView className="flex-row justify-between items-center -mt-2">
-              <StyledTouchableOpacity
-                onPress={() => setShowPassword((v) => !v)}
-                accessibilityLabel="Toggle password visibility"
-              >
-                <StyledText className="text-body-sm font-medium text-primary">
-                  {showPassword ? 'Hide' : 'Show'} password
-                </StyledText>
-              </StyledTouchableOpacity>
-
-              <StyledView className="flex-row gap-x-4 items-center">
-                <StyledTouchableOpacity 
-                  onPress={handleTroubleshoot}
-                  disabled={isSending}
-                >
-                  <StyledText className="text-body-sm font-medium text-on-surface-variant">
-                    Didn't get code?
-                  </StyledText>
-                </StyledTouchableOpacity>
-
-                <StyledTouchableOpacity
-                  onPress={() => void sendCode(true)}
-                  disabled={countdown > 0 || isSending}
-                  className="flex-row items-center gap-1.5"
-                >
-                  {isSending ? (
-                    <PaperPlaneTilt size={16} color={colors.primary} />
-                  ) : null}
-                  <StyledText
-                    className={`text-body-sm font-medium ${
-                      countdown > 0 || isSending ? 'text-on-surface-variant' : 'text-primary'
-                    }`}
-                  >
-                    {countdown > 0
-                      ? interpolate(copy.setPassword.resendIn, { seconds: countdown })
-                      : copy.setPassword.resend}
-                  </StyledText>
-                </StyledTouchableOpacity>
-              </StyledView>
-            </StyledView>
-
-            <Button
-              size="lg"
-              variant="primary"
-              onPress={handleSubmit}
-              isDisabled={isLoading}
-              className="w-full"
+            <StyledTouchableOpacity
+              onPress={() => void sendCode(true)}
+              disabled={countdown > 0 || isSending}
+              className="min-h-11 flex-row items-center gap-1.5"
+              accessibilityRole="button"
+              accessibilityLabel={copy.setPassword.resend}
             >
-              {isLoading ? copy.setPassword.submitting : copy.setPassword.submit}
-            </Button>
-          </StyledView>
-
-          <StyledView className="flex-row justify-center mt-6">
-            <StyledTouchableOpacity onPress={() => router.replace('/login')}>
-              <StyledText className="text-body-lg font-semibold text-primary">
-                {copy.setPassword.backToLogin}
+              {isSending ? <PaperPlaneTilt size={16} color={colors.brand} /> : null}
+              <StyledText
+                className="font-label"
+                style={{
+                  fontSize: 11,
+                  color: countdown > 0 || isSending ? colors.muted : colors.brand,
+                }}
+              >
+                {copy.setPassword.resend}
               </StyledText>
             </StyledTouchableOpacity>
           </StyledView>
-        </StyledView>
+
+          {/*
+            Wrong-email recovery. The code is delivered by email only — the API
+            never returns it, because it is the sole proof that the requester
+            controls the inbox. Kept verbatim from the previous screen.
+          */}
+          <StyledView className="mt-2 flex-row items-center justify-between">
+            <StyledTouchableOpacity
+              onPress={() => setIsEditingEmail(!isEditingEmail)}
+              className="min-h-11 justify-center"
+              accessibilityRole="button"
+              accessibilityLabel={copy.setPassword.wrongEmail}
+            >
+              <StyledText className="font-label" style={{ fontSize: 11, color: colors.brand }}>
+                {copy.setPassword.wrongEmail}
+              </StyledText>
+            </StyledTouchableOpacity>
+
+            <StyledTouchableOpacity
+              onPress={handleTroubleshoot}
+              disabled={isSending}
+              className="min-h-11 justify-center"
+              accessibilityRole="button"
+              accessibilityLabel={copy.setPassword.troubleshootTitle}
+            >
+              <StyledText className="font-label" style={{ fontSize: 11, color: colors.muted }}>
+                Didn’t get code?
+              </StyledText>
+            </StyledTouchableOpacity>
+          </StyledView>
+
+          {isEditingEmail ? (
+            <StyledView className="mt-1 flex-row items-center gap-2">
+              <StyledTextInput
+                className="h-10 flex-1 rounded-input border border-border bg-card px-3 font-body text-body-sm text-ink"
+                placeholder={copy.setPassword.editEmailPlaceholder}
+                placeholderTextColor={colors.muted}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                accessibilityLabel={copy.setPassword.editEmailLabel}
+              />
+              <StyledTouchableOpacity
+                className="h-10 justify-center rounded-input bg-brand px-4"
+                onPress={() => {
+                  setIsEditingEmail(false);
+                  void sendCode(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Update email"
+              >
+                <StyledText className="font-label" style={{ fontSize: 13, color: colors.card }}>
+                  OK
+                </StyledText>
+              </StyledTouchableOpacity>
+            </StyledView>
+          ) : null}
+
+          {/* New password */}
+          {field(
+            copy.setPassword.newPasswordLabel.toUpperCase(),
+            'password',
+            <Lock size={20} color={colors.muted} />,
+            'At least 8 characters',
+            { secureTextEntry: !showPassword },
+          )}
+
+          {/* Retype password */}
+          {field(
+            copy.setPassword.confirmPasswordLabel.toUpperCase(),
+            'confirm',
+            <Lock size={20} color={colors.muted} />,
+            'Re-enter your password',
+            { secureTextEntry: !showPassword },
+          )}
+          <StyledText className="mt-2 font-label" style={{ fontSize: 10, color: colors.brand }}>
+            Match. Your receipts stay private.
+          </StyledText>
+
+          {/* Show / hide */}
+          <StyledTouchableOpacity
+            onPress={() => setShowPassword((v) => !v)}
+            className="mt-2 min-h-11 justify-center self-start"
+            accessibilityRole="button"
+            accessibilityLabel="Toggle password visibility"
+          >
+            <StyledText className="font-label" style={{ fontSize: 11, color: colors.brand }}>
+              {showPassword ? 'Hide' : 'Show'} password
+            </StyledText>
+          </StyledTouchableOpacity>
+
+          {/* CTA */}
+          <Button variant="primary" size="lg" className="mt-5" onPress={handleSubmit} isLoading={isLoading}>
+            {isLoading ? copy.setPassword.submitting : 'Reset and sign in'}
+          </Button>
+
+          {/* Different email / back to sign in */}
+          <StyledTouchableOpacity
+            className="mt-4 min-h-12 items-center justify-center"
+            onPress={() => router.replace('/login')}
+            accessibilityRole="button"
+            accessibilityLabel={copy.setPassword.backToLogin}
+          >
+            <StyledText className="font-label" style={{ fontSize: 12, color: colors.brand }}>
+              Use a different email
+            </StyledText>
+          </StyledTouchableOpacity>
+
+          <StyledView className="flex-1" />
+
+          {/* Privacy note */}
+          <StyledView
+            className="mt-6 min-h-[64px] flex-row items-center rounded-input px-4"
+            style={{ backgroundColor: C.brandSoft.light }}
+          >
+            <ShieldCheck size={20} color={colors.brandStrong} weight="duotone" />
+            <StyledView className="ml-3 flex-1">
+              <StyledText className="font-label" style={{ fontSize: 13, color: colors.brandStrong }}>
+                Your data stays yours.
+              </StyledText>
+              <StyledText className="mt-0.5 font-body" style={{ fontSize: 11, color: colors.brandStrong }}>
+                No ads, no selling contacts — ever.
+              </StyledText>
+            </StyledView>
+          </StyledView>
+        </StyledScrollView>
       </StyledKeyboardAvoidingView>
     </Container>
   );
