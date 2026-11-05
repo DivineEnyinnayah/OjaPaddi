@@ -1,43 +1,65 @@
-import { type ViewProps } from "react-native";
+import React from "react";
+import { type PressableProps } from "react-native";
 import { cn } from "../../lib/utils";
-import { StyledView, StyledText } from "./styled";
+import { StyledPressable, StyledText } from "./styled";
 
-export interface ChipProps extends ViewProps {
-  variant?: "success" | "warning" | "error" | "default";
+/**
+ * Chip — FigCraft `03 — Components` (chips: All / Low / Out).
+ *
+ * `default` (All)  card fill, border hairline, muted label
+ * `success`        brandSoft fill, brand label (in stock)
+ * `warning`        accentSoft fill, ink label (low)
+ * `error`          dangerSoft fill, danger label (out)
+ *
+ * Active/selected styling and pressed feedback are not drawn; the selected
+ * treatment (brand fill, card label) follows DESIGN.md §5 and is recorded as
+ * derived in the parity report.
+ */
+
+export type ChipVariant = "default" | "success" | "warning" | "error";
+
+export interface ChipProps extends Omit<PressableProps, "children"> {
+  variant?: ChipVariant;
+  isActive?: boolean;
   children: React.ReactNode;
 }
 
-export function Chip({
-  children,
-  variant = "default",
-  className,
-  ...props
-}: ChipProps) {
-  const variantStyles = {
-    success: "bg-success-container border-primary/30",
-    warning: "bg-secondary-container border-secondary/40",
-    error: "bg-error-container border-error/40",
-    default: "bg-surface-container-low border-outline-variant",
-  };
+const VARIANT: Record<ChipVariant, string> = {
+  default: "bg-card border border-border",
+  success: "bg-brand-soft border border-brand-soft",
+  warning: "bg-accent-soft border border-accent-soft",
+  error: "bg-danger-soft border border-danger-soft",
+};
 
-  const textStyles = {
-    success: "text-on-success-container",
-    warning: "text-secondary",
-    error: "text-on-error-container",
-    default: "text-on-surface-variant",
-  };
+const VARIANT_TEXT: Record<ChipVariant, string> = {
+  default: "text-muted",
+  success: "text-brand",
+  warning: "text-ink",
+  error: "text-danger",
+};
+
+export function Chip({ children, variant = "default", isActive = false, className, ...props }: ChipProps) {
+  const pressable = typeof props.onPress === "function";
+
   return (
-    <StyledView
+    <StyledPressable
+      accessibilityRole={pressable ? "button" : undefined}
+      accessibilityState={pressable ? { selected: isActive } : undefined}
       className={cn(
-        "rounded-full px-3 py-1.5 border self-start items-center justify-center min-h-[32px]",
-        variantStyles[variant],
-        className
+        "min-h-[32px] flex-row items-center justify-center self-start rounded-pill border px-3 py-2",
+        isActive ? "border-brand bg-brand" : VARIANT[variant],
+        className,
       )}
       {...props}
     >
-      <StyledText className={cn("text-label-caps", textStyles[variant])}>
+      <StyledText
+        className={cn(
+          "font-label text-label",
+          isActive ? "text-card" : VARIANT_TEXT[variant],
+        )}
+      >
         {children}
       </StyledText>
-    </StyledView>
+    </StyledPressable>
   );
 }

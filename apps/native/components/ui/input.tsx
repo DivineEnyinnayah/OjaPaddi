@@ -4,6 +4,14 @@ import { cn } from "../../lib/utils";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { StyledView, StyledText, StyledTextInput } from "./styled";
 
+/**
+ * Input — FigCraft `03 — Components` (fields) and the sign-in frame
+ * (`02` EMAIL box): card fill, 1px border, radius 14, 54px tall.
+ * Focus/error states are not drawn; derived values are documented in the
+ * parity report. Error uses `dangerSoft` fill + `danger` stroke per the
+ * sign-in error banner treatment.
+ */
+
 export interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
@@ -19,10 +27,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(
       containerClassName,
       inputClassName,
       className,
-      // Pulled out of `...props` so a caller-supplied value wins over the
-      // derived default without being clobbered by the spread below.
       accessibilityLabel,
-      accessibilityState,
       ...props
     },
     ref,
@@ -30,47 +35,47 @@ export const Input = React.forwardRef<TextInput, InputProps>(
     const colors = useThemeColor();
 
     return (
-      <StyledView className={cn("w-full mb-4", containerClassName)}>
-        {label && (
+      <StyledView className={cn("w-full", containerClassName)}>
+        {label ? (
           <StyledText
-            className="text-body-sm text-on-surface font-label mb-2 ml-1"
-            // Visually paired with the input, but not programmatically
-            // associated with it — the input carries its own label instead.
+            className="mb-2 font-label text-micro uppercase tracking-wide text-muted"
             accessibilityElementsHidden
             importantForAccessibility="no"
           >
             {label}
           </StyledText>
-        )}
+        ) : null}
         <StyledView
           className={cn(
-            "w-full rounded-input border bg-surface-container-lowest px-4 min-h-14 justify-center",
-            error ? "border-error" : "border-outline-variant",
-            className
+            "w-full min-h-[54px] justify-center rounded-input border px-4",
+            error
+              ? "border-danger bg-danger-soft"
+              : "border-border bg-card",
+            className,
           )}
         >
           <StyledTextInput
             ref={ref}
-            className={cn("flex-1 text-body-lg text-on-surface", inputClassName)}
-            placeholderTextColor={colors.outline}
+            className={cn("flex-1 py-3 font-body text-body text-ink", inputClassName)}
+            placeholderTextColor={colors.muted}
             accessibilityLabel={accessibilityLabel ?? label ?? props.placeholder}
-            accessibilityState={accessibilityState}
+            accessibilityState={{ invalid: !!error }}
             aria-invalid={!!error}
             {...props}
           />
         </StyledView>
-        {error && (
+        {error ? (
           <StyledText
-            className="text-body-sm text-error mt-1 ml-1"
+            className="mt-2 ml-1 font-body text-body-sm text-danger"
             accessibilityRole="alert"
             accessibilityLiveRegion="polite"
           >
             {error}
           </StyledText>
-        )}
+        ) : null}
       </StyledView>
     );
-  }
+  },
 );
 
 Input.displayName = "Input";

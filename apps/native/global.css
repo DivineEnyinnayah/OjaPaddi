@@ -1,32 +1,77 @@
 @import "tailwindcss";
 @import "uniwind";
 
+/*
+ * OjaPaddi design tokens — generated to mirror the FigCraft file
+ * `ojapaddi-design.figcraft` → page `01 Redesign — Design System`.
+ *
+ * Boards consumed:
+ *   01 — Color Tokens      (12 colours, light + dark modes, sRGB)
+ *   02 — Type & Space      (family roles + type scale)
+ *   04 — Logo & App Icon   (asset usage only, no tokens)
+ *
+ * Do not add values that are not in the FigCraft file. Derived interaction
+ * states (pressed/disabled/focus) are documented in the parity report.
+ */
+
 @theme {
-  --font-family-headline: "LeagueSpartan_800ExtraBold", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* ---- Type families (FigCraft: League Spartan / Hanken Grotesk / IBM Plex Mono) ---- */
+  --font-family-display: "LeagueSpartan_800ExtraBold", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-title: "LeagueSpartan_700Bold", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-family-body: "HankenGrotesk_400Regular", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-family-label: "HankenGrotesk_600SemiBold", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-family-display: "LeagueSpartan_800ExtraBold", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-family-ledger: "IBMPlexMono_400Regular", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --radius-none: 0;
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.875rem;
-  --radius-xl: 1rem;
-  --radius-full: 9999px;
+  /* ---- Type scale (FigCraft: 02 — Type & Space) ---- */
+  --text-display: 48px;
+  --text-display--line-height: 44px;
+  --text-hero: 34px;
+  --text-hero--line-height: 36px;
+  --text-title: 26px;
+  --text-title--line-height: 30px;
+  --text-section: 22px;
+  --text-section--line-height: 28px;
+  --text-card-title: 18px;
+  --text-card-title--line-height: 24px;
+  --text-body: 16px;
+  --text-body--line-height: 24px;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 21px;
+  --text-label: 12px;
+  --text-label--line-height: 16px;
+  --text-micro: 11px;
+  --text-micro--line-height: 16px;
+  --text-ledger: 14px;
+  --text-ledger--line-height: 18px;
+
+  /* ---- Radii (FigCraft: 02 — Type & Space) ---- */
   --radius-card: 18px;
   --radius-button: 14px;
   --radius-input: 14px;
+  --radius-app-icon: 26px;
+  --radius-pill: 999px;
 
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
+  /* ---- Spacing: 4px grid, 24 page gutter (FigCraft: 02 — Type & Space) ---- */
+  --spacing-0: 0px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
   --spacing-gutter: 24px;
-  --spacing-margin: 24px;
+}
 
-  --color-paper: #FAFAF7;
+/*
+ * Colour tokens — FigCraft `01 — Color Tokens`, collection
+ * "OjaPaddi Redesign", modes Light / Dark, sRGB.
+ * Light is the default (first) paint; dark overrides in @variant dark.
+ */
+@theme {
+  --color-background: #FAFAF7;
   --color-card: #FFFFFF;
   --color-ink: #14201C;
   --color-muted: #5C6B66;
@@ -39,64 +84,10 @@
   --color-danger: #B42318;
   --color-danger-soft: #FDE8E4;
   --color-border: #E4E2DA;
-
-  --color-background: var(--color-paper);
-  --color-on-background: var(--color-ink);
-  --color-surface: var(--color-paper);
-  --color-surface-dim: #E4E2DA;
-  --color-surface-bright: var(--color-paper);
-  --color-surface-container-lowest: var(--color-card);
-  --color-surface-container-low: var(--color-brand-soft);
-  --color-surface-container: var(--color-brand-soft);
-  --color-surface-container-high: #DCEBE4;
-  --color-surface-container-highest: #CDE0D4;
-  --color-on-surface: var(--color-ink);
-  --color-on-surface-variant: var(--color-muted);
-  --color-surface-variant: var(--color-border);
-  --color-inverse-surface: var(--color-brand-strong);
-  --color-inverse-on-surface: var(--color-card);
-  --color-outline: var(--color-muted);
-  --color-outline-variant: var(--color-border);
-  --color-surface-tint: var(--color-brand);
-  --color-primary: var(--color-brand);
-  --color-on-primary: var(--color-card);
-  --color-primary-container: var(--color-brand-soft);
-  --color-on-primary-container: var(--color-brand-strong);
-  --color-inverse-primary: var(--color-mint);
-  --color-secondary: var(--color-accent);
-  --color-on-secondary: var(--color-card);
-  --color-secondary-container: var(--color-accent-soft);
-  --color-on-secondary-container: #6B4500;
-  --color-tertiary: var(--color-brand-strong);
-  --color-on-tertiary: var(--color-card);
-  --color-tertiary-container: var(--color-brand-soft);
-  --color-on-tertiary-container: var(--color-brand-strong);
-  --color-error: var(--color-danger);
-  --color-on-error: var(--color-card);
-  --color-error-container: var(--color-danger-soft);
-  --color-on-error-container: var(--color-danger);
-  --color-success: var(--color-brand);
-  --color-on-success: var(--color-card);
-  --color-success-container: var(--color-brand-soft);
-  --color-on-success-container: var(--color-brand-strong);
-
-  --z-header: 30;
-  --z-fab: 40;
-  --z-modal: 50;
-  --z-toast: 60;
-}
-
-@keyframes skeleton-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-.animate-skeleton-pulse {
-  animation: skeleton-pulse 1.6s ease-in-out infinite;
 }
 
 @variant dark {
-  --color-paper: #0F130F;
+  --color-background: #0F130F;
   --color-card: #1D241F;
   --color-ink: #EAF0EC;
   --color-muted: #9AA6A0;
@@ -109,71 +100,14 @@
   --color-danger: #FF8A7A;
   --color-danger-soft: #331B19;
   --color-border: #262D29;
-
-  --color-background: var(--color-paper);
-  --color-on-background: var(--color-ink);
-  --color-surface: var(--color-paper);
-  --color-surface-dim: var(--color-border);
-  --color-surface-bright: var(--color-paper);
-  --color-surface-container-lowest: var(--color-card);
-  --color-surface-container-low: var(--color-brand-soft);
-  --color-surface-container: var(--color-brand-soft);
-  --color-surface-container-high: #1F2A23;
-  --color-surface-container-highest: #26352D;
-  --color-on-surface: var(--color-ink);
-  --color-on-surface-variant: var(--color-muted);
-  --color-surface-variant: var(--color-border);
-  --color-inverse-surface: var(--color-card);
-  --color-inverse-on-surface: var(--color-ink);
-  --color-outline: var(--color-muted);
-  --color-outline-variant: var(--color-border);
-  --color-surface-tint: var(--color-brand);
-  --color-primary: var(--color-brand);
-  --color-on-primary: var(--color-paper);
-  --color-primary-container: var(--color-brand-soft);
-  --color-on-primary-container: var(--color-brand-strong);
-  --color-inverse-primary: var(--color-brand-strong);
-  --color-secondary: var(--color-accent);
-  --color-on-secondary: var(--color-paper);
-  --color-secondary-container: var(--color-accent-soft);
-  --color-on-secondary-container: var(--color-accent);
-  --color-tertiary: var(--color-brand-strong);
-  --color-on-tertiary: var(--color-paper);
-  --color-tertiary-container: var(--color-brand-soft);
-  --color-on-tertiary-container: var(--color-brand-strong);
-  --color-error: var(--color-danger);
-  --color-on-error: var(--color-paper);
-  --color-error-container: var(--color-danger-soft);
-  --color-on-error-container: var(--color-danger);
-  --color-success: var(--color-brand);
-  --color-on-success: var(--color-paper);
-  --color-success-container: var(--color-brand-soft);
-  --color-on-success-container: var(--color-brand-strong);
 }
 
-/* === Font Weight Utilities (Option A) === */
-@utility font-normal {
-  font-family: "HankenGrotesk_400Regular";
-}
-@utility font-medium {
-  font-family: "HankenGrotesk_500Medium";
-}
-@utility font-semibold {
-  font-family: "HankenGrotesk_600SemiBold";
-}
-@utility font-bold {
-  font-family: "HankenGrotesk_700Bold";
-}
-@utility font-extrabold {
+/* ---- Font-role utilities (family only; size comes from --text-*) ---- */
+@utility font-display {
   font-family: "LeagueSpartan_800ExtraBold";
 }
-@utility font-black {
-  font-family: "LeagueSpartan_900Black";
-}
-
-/* === Semantic Font Family Utilities === */
-@utility font-headline {
-  font-family: "LeagueSpartan_800ExtraBold";
+@utility font-title {
+  font-family: "LeagueSpartan_700Bold";
 }
 @utility font-body {
   font-family: "HankenGrotesk_400Regular";
@@ -181,78 +115,7 @@
 @utility font-label {
   font-family: "HankenGrotesk_600SemiBold";
 }
-@utility font-display {
-  font-family: "LeagueSpartan_800ExtraBold";
-  font-size: 2rem;
-  line-height: 2.25rem;
-}
-@utility font-title {
-  font-family: "LeagueSpartan_700Bold";
-  font-size: 1.375rem;
-  line-height: 1.65rem;
-}
 @utility font-ledger {
   font-family: "IBMPlexMono_400Regular";
   font-variant-numeric: tabular-nums;
-}
-
-/* === Backward-compatible scale === */
-@utility font-h1 {
-  font-family: "LeagueSpartan_800ExtraBold";
-  font-size: 1.5rem;
-  line-height: 1.7rem;
-}
-@utility font-h2 {
-  font-family: "LeagueSpartan_700Bold";
-  font-size: 1.125rem;
-  line-height: 1.375rem;
-}
-@utility font-h3 {
-  font-family: "LeagueSpartan_700Bold";
-  font-size: 0.9375rem;
-  line-height: 1.25rem;
-}
-@utility font-body-lg {
-  font-family: "HankenGrotesk_400Regular";
-  font-size: 1rem;
-  line-height: 1.5rem;
-}
-@utility font-body-sm {
-  font-family: "HankenGrotesk_400Regular";
-  font-size: 0.875rem;
-  line-height: 1.375rem;
-}
-@utility font-label-bold {
-  font-family: "HankenGrotesk_600SemiBold";
-  font-size: 0.75rem;
-  line-height: 0.94rem;
-  letter-spacing: 0.02em;
-}
-@utility font-label-caps {
-  font-family: "LeagueSpartan_700Bold";
-  font-size: 0.6875rem;
-  line-height: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-@utility text-display { font-size: 2rem; line-height: 2.25rem; }
-@utility text-h1       { font-size: 1.5rem; line-height: 1.7rem; }
-@utility text-h2       { font-size: 1.125rem; line-height: 1.375rem; }
-@utility text-h3       { font-size: 0.9375rem; line-height: 1.25rem; }
-@utility text-body     { font-size: 0.9375rem; line-height: 1.375rem; }
-@utility text-body-md  { font-size: 0.9375rem; line-height: 1.375rem; }
-@utility text-body-lg  { font-size: 1rem; line-height: 1.5rem; }
-@utility text-body-sm  { font-size: 0.875rem; line-height: 1.375rem; }
-@utility text-label    { font-size: 0.75rem; line-height: 0.94rem; }
-@utility text-label-sm { font-size: 0.6875rem; line-height: 1rem; }
-@utility text-label-bold {
-  font-size: 0.75rem;
-  line-height: 0.94rem;
-  letter-spacing: 0.02em;
-}
-@utility text-label-caps {
-  font-size: 0.6875rem;
-  line-height: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }

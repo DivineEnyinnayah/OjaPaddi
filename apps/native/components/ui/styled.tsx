@@ -10,6 +10,13 @@ import {
 } from "react-native";
 import { withUniwind } from "uniwind";
 
+/**
+ * Primitive layer: uniwind-wrapped React Native hosts.
+ *
+ * These are bindings, not design-system components — they carry no token
+ * values themselves. Composed components (Button, Input, Chip, …) build on
+ * top of them and own every visual value.
+ */
 export const StyledText = withUniwind(Text);
 export const StyledView = withUniwind(View);
 export const StyledTouchableOpacity = withUniwind(TouchableOpacity);
