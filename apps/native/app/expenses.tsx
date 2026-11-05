@@ -61,7 +61,7 @@ const PERIODS = [
   { label: 'This Month', key: 'month' },
 ];
 
-const RECURRING_FREQUENCIES: Array<'weekly' | 'monthly' | 'yearly'> = ['weekly', 'monthly', 'yearly'];
+const RECURRING_FREQUENCIES: ('weekly' | 'monthly' | 'yearly')[] = ['weekly', 'monthly', 'yearly'];
 
 export default function ExpensesScreen() {
   const router = useRouter();

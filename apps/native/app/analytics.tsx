@@ -15,7 +15,7 @@ import {
   Storefront,
 } from "phosphor-react-native";
 import { useCustomers } from "@/hooks/useCustomers";
-import { type ProductAnalytics, type SupermarketAnalytics } from "@/hooks/useAnalytics";
+import { type ProductAnalytics, type SupermarketAnalytics , useAnalytics, type RevenueChartPoint } from "@/hooks/useAnalytics";
 import Svg, {
   Rect,
   LinearGradient,
@@ -27,7 +27,6 @@ import Svg, {
   Text as SvgText,
 } from "react-native-svg";
 import { withUniwind } from "uniwind";
-import { useAnalytics, type RevenueChartPoint } from "@/hooks/useAnalytics";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useToast } from "@/components/ui/toast";
 import { Container } from "@/components/container";
