@@ -6,6 +6,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { cn } from "../../lib/utils";
+import { useThemeColor } from "@/hooks/useThemeColor";
 import { StyledPressable, StyledText } from "./styled";
 
 /**
@@ -61,6 +62,7 @@ export function Button({
   className,
   ...props
 }: ButtonProps) {
+  const colors = useThemeColor();
   const disabled = isDisabled || isLoading;
 
   return (
@@ -84,7 +86,7 @@ export function Button({
       {isLoading ? (
         <ActivityIndicator
           accessibilityLabel="Loading"
-          color={variant === "primary" ? "#14201C" : "#1F6F5C"}
+          color={variant === "primary" ? colors.ink : colors.brand}
         />
       ) : typeof children === "string" || typeof children === "number" ? (
         <StyledText className={cn("text-center font-label", LABEL_SIZE[size], VARIANT[variant].label)}>

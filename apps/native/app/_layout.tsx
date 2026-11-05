@@ -101,8 +101,8 @@ function RootLayoutInner() {
   if (!isInitialized || !fontsLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <View className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center">
-          <View className="w-10 h-10 rounded-full bg-primary/20 animate-pulse" />
+        <View className="h-16 w-16 items-center justify-center rounded-pill bg-brand-soft">
+          <View className="h-10 w-10 rounded-pill bg-brand opacity-40" />
         </View>
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </View>

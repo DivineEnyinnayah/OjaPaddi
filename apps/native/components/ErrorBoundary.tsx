@@ -1,6 +1,17 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { withUniwind } from "uniwind";
+import { colorTokens } from "@/constants/tokens";
+
+const StyledView = withUniwind(View);
+const StyledText = withUniwind(Text);
+const StyledTouchableOpacity = withUniwind(TouchableOpacity);
+
+// This boundary renders above the theme provider, so it resolves the light
+// token values directly rather than through a hook.
+const DANGER = colorTokens.danger.light;
+const CARD = colorTokens.card.light;
 
 interface Props {
   children: ReactNode;
@@ -14,6 +25,9 @@ interface State {
 /**
  * React Error Boundary that catches JavaScript errors in the component tree,
  * renders a fallback UI with a retry button, and prevents the app from crashing.
+ *
+ * This sits *above* the theme provider, so it must not depend on it: it is
+ * styled with FigCraft token classes only (no hook, no hardcoded palette).
  *
  * Usage:
  *   <ErrorBoundary>
@@ -31,9 +45,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // In production you'd log this to a crash reporting service
-    console.error('[ErrorBoundary] Caught error:', error);
-    console.error('[ErrorBoundary] Component stack:', errorInfo.componentStack);
+    console.error("[ErrorBoundary] Caught error:", error);
+    console.error("[ErrorBoundary] Component stack:", errorInfo.componentStack);
   }
 
   handleRetry = () => {
@@ -43,104 +56,44 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <View style={styles.container}>
-          <View style={styles.card}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="warning-outline" size={48} color="#BA1A1A" />
-            </View>
+        <StyledView className="flex-1 items-center justify-center bg-background p-6">
+          <StyledView className="w-full max-w-[360px] items-center rounded-card bg-card p-8">
+            <StyledView className="mb-5 h-20 w-20 items-center justify-center rounded-pill bg-danger-soft">
+              <Ionicons name="warning-outline" size={48} color={DANGER} />
+            </StyledView>
 
-            <Text style={styles.title}>Something went wrong</Text>
+            <StyledText className="mb-3 text-center font-title text-card-title text-ink">
+              Something went wrong
+            </StyledText>
 
-            <Text style={styles.message}>
-              The app encountered an unexpected error.{'\n'}
+            <StyledText className="mb-6 text-center font-body text-body-sm text-muted">
+              The app encountered an unexpected error.{"\n"}
               Tap the button below to try again.
-            </Text>
+            </StyledText>
 
-            {__DEV__ && this.state.error && (
-              <Text style={styles.debugInfo} numberOfLines={6}>
+            {__DEV__ && this.state.error ? (
+              <StyledText
+                className="mb-5 w-full rounded-input bg-danger-soft p-3 font-ledger text-micro text-danger"
+                numberOfLines={6}
+              >
                 {this.state.error.message}
-              </Text>
-            )}
+              </StyledText>
+            ) : null}
 
-            <TouchableOpacity style={styles.retryButton} onPress={this.handleRetry}>
-              <Ionicons name="refresh-outline" size={20} color="#FFFFFF" />
-              <Text style={styles.retryText}>Try Again</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+            <StyledTouchableOpacity
+              onPress={this.handleRetry}
+              accessibilityRole="button"
+              accessibilityLabel="Try again"
+              className="min-h-14 flex-row items-center gap-2 rounded-button bg-brand px-7"
+            >
+              <Ionicons name="refresh-outline" size={20} color={CARD} />
+              <StyledText className="font-label text-body text-card">Try Again</StyledText>
+            </StyledTouchableOpacity>
+          </StyledView>
+        </StyledView>
       );
     }
 
     return this.props.children;
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f7faf3',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-    maxWidth: 360,
-    width: '100%',
-  },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#FFF0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#181d19',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  message: {
-    fontSize: 15,
-    color: '#404940',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  debugInfo: {
-    fontSize: 11,
-    color: '#BA1A1A',
-    backgroundColor: '#FFF5F5',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 20,
-    width: '100%',
-    fontFamily: 'monospace',
-  },
-  retryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1A6B3C',
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 16,
-    gap: 8,
-  },
-  retryText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

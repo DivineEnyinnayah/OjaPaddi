@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { withUniwind } from 'uniwind';
-import { useProducts } from '../hooks/useProducts';
-import { useThemeColor } from '../hooks/useThemeColor';
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { withUniwind } from "uniwind";
+import { useProducts } from "../hooks/useProducts";
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -14,14 +13,14 @@ interface CategoryPickerProps {
   onChange: (value: string) => void;
 }
 
+/** Category chips — FigCraft `03 — Components` (chips), reusing the Chip treatment. */
 export function CategoryPicker({ value, onChange }: CategoryPickerProps) {
   const { products, fetchProducts } = useProducts();
-  const colors = useThemeColor();
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    void fetchProducts();
+  }, [fetchProducts]);
 
   useEffect(() => {
     const cats = new Set<string>();
@@ -33,34 +32,36 @@ export function CategoryPicker({ value, onChange }: CategoryPickerProps) {
 
   return (
     <StyledView className="mb-4">
-      <StyledText className="text-body-sm text-on-surface font-semibold mb-2 ml-1">
+      <StyledText className="mb-2 ml-1 font-label text-micro uppercase tracking-wide text-muted">
         Category
       </StyledText>
-      {categories.length > 0 && (
-        <StyledScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
+      {categories.length > 0 ? (
+        <StyledScrollView horizontal showsHorizontalScrollIndicator={false}>
           <StyledView className="flex-row gap-2 py-1">
-            {categories.map((cat) => (
-              <StyledTouchableOpacity
-                key={cat}
-                onPress={() => onChange(cat)}
-                className={`px-3 py-1.5 rounded-full border ${
-                  value === cat
-                    ? 'bg-primary border-primary'
-                    : 'bg-surface-container-lowest border-outline-variant'
-                }`}
-              >
-                <StyledText
-                  className={`text-label-bold font-semibold ${
-                    value === cat ? 'text-on-primary' : 'text-on-surface-variant'
+            {categories.map((cat) => {
+              const isActive = value === cat;
+              return (
+                <StyledTouchableOpacity
+                  key={cat}
+                  onPress={() => onChange(cat)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isActive }}
+                  accessibilityLabel={cat}
+                  className={`min-h-[32px] justify-center rounded-pill border px-3 py-2 ${
+                    isActive ? "border-brand bg-brand" : "border-border bg-card"
                   }`}
                 >
-                  {cat}
-                </StyledText>
-              </StyledTouchableOpacity>
-            ))}
+                  <StyledText
+                    className={`font-label text-label ${isActive ? "text-card" : "text-muted"}`}
+                  >
+                    {cat}
+                  </StyledText>
+                </StyledTouchableOpacity>
+              );
+            })}
           </StyledView>
         </StyledScrollView>
-      )}
+      ) : null}
     </StyledView>
   );
 }

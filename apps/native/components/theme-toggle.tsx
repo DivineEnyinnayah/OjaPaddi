@@ -25,11 +25,11 @@ export function ThemeToggle() {
     >
       {isLight ? (
         <View key="moon">
-          <StyledIonicons name="moon" size={20} className="text-on-surface" />
+          <StyledIonicons name="moon" size={20} className="text-ink" />
         </View>
       ) : (
         <View key="sun">
-          <StyledIonicons name="sunny" size={20} className="text-on-surface" />
+          <StyledIonicons name="sunny" size={20} className="text-ink" />
         </View>
       )}
     </Pressable>

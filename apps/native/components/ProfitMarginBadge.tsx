@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { withUniwind } from 'uniwind';
+import React from "react";
+import { View, Text } from "react-native";
+import { withUniwind } from "uniwind";
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -10,6 +10,7 @@ interface ProfitMarginBadgeProps {
   costPrice: string;
 }
 
+/** Profit margin chip — FigCraft `03 — Components` (chips: good / fair / low). */
 export function ProfitMarginBadge({ sellingPrice, costPrice }: ProfitMarginBadgeProps) {
   const sell = parseFloat(sellingPrice);
   const cost = parseFloat(costPrice);
@@ -21,28 +22,28 @@ export function ProfitMarginBadge({ sellingPrice, costPrice }: ProfitMarginBadge
   const profit = sell - cost;
   const marginPercentage = (profit / sell) * 100;
 
-  let badgeColor = 'bg-success/15 border-success/30';
-  let textColor = 'text-success';
-  let marginText = 'Good Margin';
+  let badge = "border-brand-soft bg-brand-soft";
+  let label = "text-brand";
+  let marginText = "Good margin";
 
   if (marginPercentage < 10) {
-    badgeColor = 'bg-error/15 border-error/30';
-    textColor = 'text-error';
-    marginText = 'Low Margin';
+    badge = "border-danger-soft bg-danger-soft";
+    label = "text-danger";
+    marginText = "Low margin";
   } else if (marginPercentage < 30) {
-    badgeColor = 'bg-secondary-container border-secondary';
-    textColor = 'text-on-secondary-container';
-    marginText = 'Fair Margin';
+    badge = "border-accent-soft bg-accent-soft";
+    label = "text-ink";
+    marginText = "Fair margin";
   }
 
   return (
-    <StyledView className={`flex-row items-center justify-between p-2 rounded-lg border ${badgeColor} mb-2`}>
-      <StyledText className={`text-label-bold font-semibold ${textColor} tabular-nums`}>
+    <StyledView
+      className={`mb-2 flex-row items-center justify-between rounded-input border p-2 ${badge}`}
+    >
+      <StyledText className={`font-label text-label tabular-nums ${label}`}>
         Profit: ₦{profit.toFixed(2)} ({marginPercentage.toFixed(1)}%)
       </StyledText>
-      <StyledText className={`text-label-sm font-bold uppercase ${textColor}`}>
-        {marginText}
-      </StyledText>
+      <StyledText className={`font-label text-micro uppercase ${label}`}>{marginText}</StyledText>
     </StyledView>
   );
 }
