@@ -40,10 +40,10 @@ interface FormErrors {
 
 function FormSection({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <StyledView className="rounded-xl border border-outline-variant/40 bg-surface">
+    <StyledView className="rounded-xl border border-border/40 bg-card">
       {title && (
         <StyledView className="px-4 pt-3 pb-1">
-          <StyledText className="text-label-bold font-semibold text-primary uppercase">{title}</StyledText>
+          <StyledText className="text-label-bold font-semibold text-brand uppercase">{title}</StyledText>
         </StyledView>
       )}
       <StyledView className="px-4 pb-2">
@@ -98,10 +98,10 @@ export default function AddProductScreen() {
   if (isEditMode && isLoadingProduct) {
     return (
       <StyledView className="flex-1 bg-background items-center justify-center gap-3">
-        <StyledView className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center">
-          <StyledView className="w-10 h-10 rounded-full bg-primary/20 animate-pulse" />
+        <StyledView className="w-16 h-16 rounded-full bg-brand/10 items-center justify-center">
+          <StyledView className="w-10 h-10 rounded-full bg-brand/20 animate-pulse" />
         </StyledView>
-        <StyledText className="text-body-sm text-on-surface-variant font-medium">Loading product...</StyledText>
+        <StyledText className="text-body-sm text-muted font-medium">Loading product...</StyledText>
       </StyledView>
     );
   }
@@ -180,11 +180,11 @@ export default function AddProductScreen() {
 
   const renderWelcomeStep = () => (
     <StyledView className="flex-1 items-center justify-center px-8">
-      <ShoppingBag size={80} color={colors.primary} />
-      <StyledText className="text-2xl font-bold text-on-surface mt-6 text-center">
+      <ShoppingBag size={80} color={colors.brand} />
+      <StyledText className="text-2xl font-bold text-ink mt-6 text-center">
         {copy.productOnboarding.welcome.title}
       </StyledText>
-      <StyledText className="text-on-surface-variant text-center mt-3 text-body-lg">
+      <StyledText className="text-muted text-center mt-3 text-body-lg">
         {copy.productOnboarding.welcome.subtitle}
       </StyledText>
       <Button
@@ -201,17 +201,19 @@ export default function AddProductScreen() {
   const renderPhotoStep = () => (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="flex-1 px-6">
       <StyledView className="flex-1 items-center justify-center">
-        <StyledText className="text-h2 font-bold text-on-surface mb-2">
+        <StyledText
+          className="font-display text-ink mb-2"
+          style={{ fontSize: 27, lineHeight: 35, letterSpacing: -0.27 }}
+        >
           {copy.productOnboarding.photo.title}
         </StyledText>
-        <StyledText className="text-on-surface-variant text-center mb-8">
+        <StyledText className="text-muted text-center mb-8">
           {copy.productOnboarding.photo.subtitle}
         </StyledText>
         
         <StyledTouchableOpacity
           onPress={handleImagePress}
-          className="w-48 h-48 rounded-2xl border-2 border-dashed items-center justify-center overflow-hidden active:opacity-80 mb-8"
-          style={{ borderColor: colors.outlineVariant }}
+          className="w-full h-[170px] rounded-card border border-brand items-center justify-center overflow-hidden active:opacity-80 mb-6 bg-card"
           accessibilityRole="button"
           accessibilityLabel="Add product photo"
         >
@@ -224,12 +226,15 @@ export default function AddProductScreen() {
               accessibilityLabel={formData.name || "Product photo"}
             />
           ) : (
-            <StyledView className="items-center">
-              <StyledView className="w-16 h-16 rounded-full bg-surface-container items-center justify-center mb-4">
-                <CameraPlus size={32} color={colors.primary} />
+            <StyledView className="items-center gap-3">
+              <StyledView className="w-16 h-16 rounded-card bg-brand-soft items-center justify-center">
+                <CameraPlus size={32} color={colors.brand} />
               </StyledView>
-              <StyledText className="text-on-surface font-medium">
+              <StyledText className="font-label text-brand" style={{ fontSize: 13 }}>
                 {copy.productOnboarding.photo.addPhoto}
+              </StyledText>
+              <StyledText className="font-body text-muted" style={{ fontSize: 11 }}>
+                One well-lit square image. Skip if needed.
               </StyledText>
             </StyledView>
           )}
@@ -241,10 +246,13 @@ export default function AddProductScreen() {
   const renderDetailsStep = () => (
     <ScrollView contentContainerStyle={{ padding: 24 }} showsVerticalScrollIndicator={false}>
       <StyledView>
-        <StyledText className="text-h2 font-bold text-on-surface mb-2">
+        <StyledText
+          className="font-display text-ink mb-2"
+          style={{ fontSize: 27, lineHeight: 35, letterSpacing: -0.27 }}
+        >
           {copy.productOnboarding.details.title}
         </StyledText>
-        <StyledText className="text-on-surface-variant mb-6">
+        <StyledText className="text-muted mb-6">
           {copy.productOnboarding.details.subtitle}
         </StyledText>
         
@@ -278,10 +286,13 @@ export default function AddProductScreen() {
   const renderPricingStep = () => (
     <ScrollView contentContainerStyle={{ padding: 24 }} showsVerticalScrollIndicator={false}>
       <StyledView>
-        <StyledText className="text-h2 font-bold text-on-surface mb-2">
+        <StyledText
+          className="font-display text-ink mb-2"
+          style={{ fontSize: 27, lineHeight: 35, letterSpacing: -0.27 }}
+        >
           {copy.productOnboarding.pricing.title}
         </StyledText>
-        <StyledText className="text-on-surface-variant mb-6">
+        <StyledText className="text-muted mb-6">
           {copy.productOnboarding.pricing.subtitle}
         </StyledText>
         
@@ -321,26 +332,26 @@ export default function AddProductScreen() {
   const renderReviewStep = () => (
     <ScrollView contentContainerStyle={{ padding: 24, flexGrow: 1 }} className="flex-1">
       <StyledView className="flex-1 items-center justify-center">
-        <CheckCircle size={80} color={colors.primary} />
-        <StyledText className="text-2xl font-bold text-on-surface mt-6 text-center">
+        <CheckCircle size={80} color={colors.brand} />
+        <StyledText className="text-2xl font-bold text-ink mt-6 text-center">
           {copy.productOnboarding.review.title}
         </StyledText>
-        <StyledText className="text-on-surface-variant text-center mt-3 text-body-lg">
+        <StyledText className="text-muted text-center mt-3 text-body-lg">
           {copy.productOnboarding.review.subtitle}
         </StyledText>
         
-        <StyledView className="w-full mt-8 bg-surface-container rounded-xl p-4">
-          <StyledView className="flex-row justify-between py-2 border-b border-outline-variant/30">
-            <StyledText className="text-on-surface-variant">Name</StyledText>
-            <StyledText className="text-on-surface font-medium">{formData.name || 'Not set'}</StyledText>
+        <StyledView className="w-full mt-8 bg-brand-soft rounded-xl p-4">
+          <StyledView className="flex-row justify-between py-2 border-b border-border/30">
+            <StyledText className="text-muted">Name</StyledText>
+            <StyledText className="text-ink font-medium">{formData.name || 'Not set'}</StyledText>
           </StyledView>
-          <StyledView className="flex-row justify-between py-2 border-b border-outline-variant/30">
-            <StyledText className="text-on-surface-variant">Price</StyledText>
-            <StyledText className="text-on-surface font-medium">₦{formData.price || '0.00'}</StyledText>
+          <StyledView className="flex-row justify-between py-2 border-b border-border/30">
+            <StyledText className="text-muted">Price</StyledText>
+            <StyledText className="text-ink font-medium">₦{formData.price || '0.00'}</StyledText>
           </StyledView>
           <StyledView className="flex-row justify-between py-2">
-            <StyledText className="text-on-surface-variant">Quantity</StyledText>
-            <StyledText className="text-on-surface font-medium">{formData.quantity || '0'}</StyledText>
+            <StyledText className="text-muted">Quantity</StyledText>
+            <StyledText className="text-ink font-medium">{formData.quantity || '0'}</StyledText>
           </StyledView>
         </StyledView>
       </StyledView>
@@ -377,13 +388,16 @@ export default function AddProductScreen() {
           >
             <StyledTouchableOpacity
               onPress={() => router.back()}
-              className="w-10 h-10 items-center justify-center rounded-full bg-surface-container active:scale-95"
+              className="w-10 h-10 items-center justify-center rounded-full bg-brand-soft active:scale-95"
               accessibilityRole="button"
               accessibilityLabel="Go back"
             >
-              <ArrowLeft size={22} color={colors.onSurface} />
+              <ArrowLeft size={22} color={colors.ink} />
             </StyledTouchableOpacity>
-            <StyledText className="flex-1 text-h2 font-bold text-on-surface ml-2">
+            <StyledText
+              className="flex-1 font-display text-ink ml-2"
+              style={{ fontSize: 27, lineHeight: 35, letterSpacing: -0.27 }}
+            >
               {isEditMode ? 'Edit Product' : copy.addProduct.title}
             </StyledText>
           </StyledView>
@@ -398,7 +412,7 @@ export default function AddProductScreen() {
                 onPress={handleImagePress}
                 className="w-full h-48 rounded-xl border-2 border-dashed items-center justify-center overflow-hidden active:opacity-80"
                 style={{
-                  borderColor: errors.image ? colors.error : colors.outlineVariant,
+                  borderColor: errors.image ? colors.danger : colors.border,
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Change product photo"
@@ -413,8 +427,8 @@ export default function AddProductScreen() {
                   />
                 ) : (
                   <StyledView className="items-center gap-2">
-                    <CameraPlus size={28} color={colors.primary} />
-                    <StyledText className="text-body-sm text-on-surface-variant font-medium">
+                    <CameraPlus size={28} color={colors.brand} />
+                    <StyledText className="text-body-sm text-muted font-medium">
                       {copy.addProduct.imagePlaceholder}
                     </StyledText>
                   </StyledView>
@@ -506,14 +520,14 @@ export default function AddProductScreen() {
           </ScrollView>
 
           <StyledView
-            className="px-4 pt-3 border-t border-outline-variant/30"
+            className="px-4 pt-3 border-t border-border/30"
             style={{
               position: 'absolute',
               bottom: insets.bottom + TAB_BAR_OFFSET,
               left: 0,
               right: 0,
               paddingBottom: 8,
-              backgroundColor: colors.surface,
+              backgroundColor: colors.card,
             }}
           >
             <Button
@@ -538,13 +552,16 @@ export default function AddProductScreen() {
       >
         <StyledTouchableOpacity
           onPress={handleBack}
-          className="w-10 h-10 items-center justify-center rounded-full bg-surface-container active:scale-95"
+          className="w-10 h-10 items-center justify-center rounded-full bg-brand-soft active:scale-95"
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <ArrowLeft size={22} color={colors.onSurface} />
+          <ArrowLeft size={22} color={colors.ink} />
         </StyledTouchableOpacity>
-        <StyledText className="flex-1 text-h2 font-bold text-on-surface ml-2">
+        <StyledText
+          className="flex-1 font-display text-ink ml-2"
+          style={{ fontSize: 27, lineHeight: 35, letterSpacing: -0.27 }}
+        >
           {currentStep !== 'welcome' && currentStep !== 'review' ? getStepTitle() : ''}
         </StyledText>
       </StyledView>
@@ -557,13 +574,13 @@ export default function AddProductScreen() {
 
       {currentStep !== 'welcome' && (
         <StyledView
-          className="px-4 py-3 shadow-lg z-10 border-t border-outline-variant/30"
+          className="px-4 py-3 shadow-lg z-10 border-t border-border/30"
           style={{
             position: 'absolute',
             bottom: TAB_BAR_OFFSET,
             left: 0,
             right: 0,
-            backgroundColor: colors.surface,
+            backgroundColor: colors.card,
           }}
         >
           <Button

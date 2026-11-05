@@ -292,23 +292,23 @@ export default function ExpensesScreen() {
   return (
     <Container isScrollable={false} withTabBar={false} className="bg-background flex-1">
       {/* Header */}
-      <StyledView className="bg-surface border-b border-outline-variant/30 h-14 px-margin flex-row justify-between items-center z-10">
+      <StyledView className="bg-card border-b border-border/30 h-14 px-margin flex-row justify-between items-center z-10">
         <StyledView className="flex-row items-center gap-3">
           <StyledTouchableOpacity
             onPress={() => router.back()}
-            className="size-10 rounded-full bg-surface-container justify-center items-center active:scale-95"
+            className="size-10 rounded-full bg-card justify-center items-center active:scale-95"
             accessibilityLabel="Go back"
           >
-            <ArrowLeft size={20} color={colors.onSurface} />
+            <ArrowLeft size={20} color={colors.ink} />
           </StyledTouchableOpacity>
-          <StyledText className="text-h2 font-bold text-on-surface">Expenses</StyledText>
+          <StyledText className="text-h2 font-bold text-ink">Expenses</StyledText>
         </StyledView>
         <StyledTouchableOpacity
           onPress={openCreateModal}
-          className="flex-row items-center gap-1.5 bg-primary px-3.5 py-2 rounded-full active:scale-95"
+          className="flex-row items-center gap-1.5 bg-brand px-3.5 py-2 rounded-full active:scale-95"
         >
-          <Plus size={18} color={colors.onPrimary} />
-          <StyledText className="text-body-sm font-bold text-on-primary">Add Expense</StyledText>
+          <Plus size={18} color={colors.card} />
+          <StyledText className="text-body-sm font-bold text-card">Add Expense</StyledText>
         </StyledTouchableOpacity>
       </StyledView>
 
@@ -316,16 +316,16 @@ export default function ExpensesScreen() {
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={loadData} colors={[colors.primary]} />
+          <RefreshControl refreshing={isLoading} onRefresh={loadData} colors={[colors.brand]} />
         }
       >
         {/* Payment Reminders Alert Banner if expenses are due soon */}
         {dueSoonExpenses.length > 0 && (
           <StyledView className="px-5 pt-3">
-            <Surface variant="primary" className="p-4 rounded-2xl bg-secondary/10 border border-secondary/30 gap-2">
+            <Surface variant="primary" className="p-4 rounded-2xl bg-accent-soft border border-accent/30 gap-2">
               <StyledView className="flex-row items-center gap-2">
-                <Bell size={20} color={colors.secondary} weight="fill" />
-                <StyledText className="text-body-sm font-bold text-secondary flex-1">
+                <Bell size={20} color={colors.accent} weight="fill" />
+                <StyledText className="text-body-sm font-bold text-accent flex-1">
                   {dueSoonExpenses.length} Payment Reminder{dueSoonExpenses.length > 1 ? 's' : ''} Due Soon!
                 </StyledText>
               </StyledView>
@@ -334,21 +334,21 @@ export default function ExpensesScreen() {
                 return (
                   <StyledView
                     key={exp.id}
-                    className="flex-row justify-between items-center bg-surface p-3 rounded-xl border border-secondary/20 mt-1"
+                    className="flex-row justify-between items-center bg-card p-3 rounded-xl border border-accent/20 mt-1"
                   >
                     <StyledView className="flex-1 mr-2">
-                      <StyledText className="text-label-bold font-bold text-on-surface">
+                      <StyledText className="text-label-bold font-bold text-ink">
                         {exp.description} ({formatCurrency(parseFloat(exp.amount))})
                       </StyledText>
-                      <StyledText className="text-label-bold font-semibold text-secondary">
+                      <StyledText className="text-label-bold font-semibold text-accent">
                         {dueStatus?.text}
                       </StyledText>
                     </StyledView>
                     <StyledTouchableOpacity
                       onPress={() => handleTogglePaid(exp)}
-                      className="bg-primary px-3 py-1.5 rounded-lg"
+                      className="bg-brand px-3 py-1.5 rounded-lg"
                     >
-                      <StyledText className="text-label-bold font-bold text-on-primary">Mark Paid</StyledText>
+                      <StyledText className="text-label-bold font-bold text-card">Mark Paid</StyledText>
                     </StyledTouchableOpacity>
                   </StyledView>
                 );
@@ -359,40 +359,40 @@ export default function ExpensesScreen() {
 
         {/* Financial Summary & Profit Deduction Calculation Cards */}
         <StyledView className="px-5 pt-4 pb-2 gap-3">
-          <Surface variant="primary" className="p-5 rounded-2xl bg-surface-container-high border border-outline-variant/40">
+          <Surface variant="primary" className="p-5 rounded-2xl bg-card border border-border/40">
             <StyledView className="flex-row justify-between items-start mb-2">
               <StyledView className="flex-row items-center gap-2">
-                <StyledView className="size-10 rounded-xl bg-error/15 items-center justify-center">
-                  <TrendDown size={22} color={colors.error} />
+                <StyledView className="size-10 rounded-xl bg-danger/15 items-center justify-center">
+                  <TrendDown size={22} color={colors.danger} />
                 </StyledView>
                 <StyledView>
-                  <StyledText className="text-label-bold font-semibold text-on-surface-variant uppercase tracking-wider">
+                  <StyledText className="text-label-bold font-semibold text-muted uppercase tracking-wider">
                     Total Expenses
                   </StyledText>
-                  <StyledText className="text-2xl font-extrabold text-error tabular-nums mt-0.5">
+                  <StyledText className="text-2xl font-extrabold text-danger tabular-nums mt-0.5">
                     -{formatCurrency(totalExpenseAmount)}
                   </StyledText>
                 </StyledView>
               </StyledView>
-              <StyledView className="bg-surface-container px-2.5 py-1 rounded-md">
-                <StyledText className="text-label-bold font-bold text-on-surface-variant">
+              <StyledView className="bg-card px-2.5 py-1 rounded-md">
+                <StyledText className="text-label-bold font-bold text-muted">
                   {filteredExpenses.length} record{filteredExpenses.length !== 1 ? 's' : ''}
                 </StyledText>
               </StyledView>
             </StyledView>
 
             {/* Financial Calculation Breakdown */}
-            <StyledView className="mt-3 pt-3 border-t border-outline-variant/30 flex-row justify-between items-center">
+            <StyledView className="mt-3 pt-3 border-t border-border/30 flex-row justify-between items-center">
               <StyledView className="flex-1">
-                <StyledText className="text-label-bold font-medium text-on-surface-variant">Gross Revenue</StyledText>
-                <StyledText className="text-body-sm font-bold text-primary tabular-nums">
+                <StyledText className="text-label-bold font-medium text-muted">Gross Revenue</StyledText>
+                <StyledText className="text-body-sm font-bold text-brand tabular-nums">
                   {formatCurrency(totalRevenue)}
                 </StyledText>
               </StyledView>
-              <StyledView className="w-px h-8 bg-outline-variant/40 mx-3" />
+              <StyledView className="w-px h-8 bg-border/40 mx-3" />
               <StyledView className="flex-1">
-                <StyledText className="text-label-bold font-medium text-on-surface-variant">Net Profit (after Expenses)</StyledText>
-                <StyledText className="text-body-sm font-bold text-secondary tabular-nums">
+                <StyledText className="text-label-bold font-medium text-muted">Net Profit (after Expenses)</StyledText>
+                <StyledText className="text-body-sm font-bold text-accent tabular-nums">
                   {formatCurrency(netProfit)}
                 </StyledText>
               </StyledView>
@@ -409,13 +409,13 @@ export default function ExpensesScreen() {
                   onPress={() => setSelectedPeriod(period.key)}
                   className={`flex-1 py-2 rounded-lg items-center ${
                     isActive
-                      ? 'bg-primary'
-                      : 'bg-surface-container-low border border-outline-variant/40'
+                      ? 'bg-brand'
+                      : 'bg-card border border-border/40'
                   }`}
                 >
                   <StyledText
                     className={`text-label-bold font-bold ${
-                      isActive ? 'text-on-primary' : 'text-on-surface-variant'
+                      isActive ? 'text-card' : 'text-muted'
                     }`}
                   >
                     {period.label}
@@ -426,12 +426,12 @@ export default function ExpensesScreen() {
           </StyledView>
 
           {/* Search Bar */}
-          <StyledView className="flex-row items-center bg-surface-container-low rounded-xl border border-outline-variant px-4 h-11 mt-1">
-            <MagnifyingGlass size={18} color={colors.outline} />
+          <StyledView className="flex-row items-center bg-card rounded-xl border border-border px-4 h-11 mt-1">
+            <MagnifyingGlass size={18} color={colors.muted} />
             <StyledTextInput
-              className="flex-1 text-body-sm text-on-surface ml-2"
+              className="flex-1 text-body-sm text-ink ml-2"
               placeholder="Search expenses by description..."
-              placeholderTextColor={colors.outline}
+              placeholderTextColor={colors.muted}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -448,13 +448,13 @@ export default function ExpensesScreen() {
                     onPress={() => setSelectedCategory(cat)}
                     className={`px-3.5 py-1.5 rounded-full border ${
                       isActive
-                        ? 'bg-primary border-primary'
-                        : 'bg-surface-container border-outline-variant/40'
+                        ? 'bg-brand border-brand'
+                        : 'bg-card border-border/40'
                     }`}
                   >
                     <StyledText
                       className={`text-label-bold font-semibold ${
-                        isActive ? 'text-on-primary' : 'text-on-surface-variant'
+                        isActive ? 'text-card' : 'text-muted'
                       }`}
                     >
                       {cat}
@@ -471,7 +471,7 @@ export default function ExpensesScreen() {
           {isLoading && expenses.length === 0 ? (
             <StyledView className="gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Surface key={i} variant="outline" className="p-4 rounded-xl">
+                <Surface key={i} variant="primary" className="p-4 rounded-xl">
                   <Skeleton className="h-5 w-3/4 mb-2" />
                   <Skeleton className="h-4 w-1/2" />
                 </Surface>
@@ -479,13 +479,13 @@ export default function ExpensesScreen() {
             </StyledView>
           ) : filteredExpenses.length === 0 ? (
             <StyledView className="py-12 items-center justify-center text-center">
-              <StyledView className="size-16 rounded-full bg-surface-container-high items-center justify-center mb-3">
-                <Receipt size={32} color={colors.outline} />
+              <StyledView className="size-16 rounded-full bg-card items-center justify-center mb-3">
+                <Receipt size={32} color={colors.muted} />
               </StyledView>
-              <StyledText className="text-base font-bold text-on-surface mb-1">
+              <StyledText className="text-base font-bold text-ink mb-1">
                 No Expenses Recorded
               </StyledText>
-              <StyledText className="text-label-bold text-on-surface-variant text-center px-8 mb-4">
+              <StyledText className="text-label-bold text-muted text-center px-8 mb-4">
                 Record services, wages, fuel, supplies, or shop bills to keep track of profit deductions.
               </StyledText>
               <Button size="md" onPress={openCreateModal}>
@@ -500,61 +500,61 @@ export default function ExpensesScreen() {
                 return (
                   <Surface
                     key={expense.id}
-                    variant="outline"
-                    className="p-4 rounded-xl border border-outline-variant/30 bg-surface-container-lowest"
+                    variant="primary"
+                    className="p-4 rounded-xl border border-border/30 bg-cardest"
                   >
                     <StyledView className="flex-row justify-between items-start mb-2">
                       <StyledView className="flex-1 mr-3">
                         <StyledView className="flex-row flex-wrap items-center gap-1.5 mb-1">
-                          <StyledView className="bg-error/10 px-2 py-0.5 rounded-md">
-                            <StyledText className="text-label-bold font-bold text-error">
+                          <StyledView className="bg-danger-soft px-2 py-0.5 rounded-md">
+                            <StyledText className="text-label-bold font-bold text-danger">
                               {expense.category || 'General'}
                             </StyledText>
                           </StyledView>
                           {expense.isRecurring && (
-                            <StyledView className="bg-primary/10 px-2 py-0.5 rounded-md flex-row items-center gap-1">
-                              <Repeat size={12} color={colors.primary} />
-                              <StyledText className="text-label-bold font-bold text-primary capitalize">
+                            <StyledView className="bg-brand-soft px-2 py-0.5 rounded-md flex-row items-center gap-1">
+                              <Repeat size={12} color={colors.brand} />
+                              <StyledText className="text-label-bold font-bold text-brand capitalize">
                                 {expense.recurringFrequency || 'Recurring'}
                               </StyledText>
                             </StyledView>
                           )}
-                          <StyledText className="text-label-bold text-on-surface-variant font-medium">
+                          <StyledText className="text-label-bold text-muted font-medium">
                             {formatDate(expense.incurredAt)}
                           </StyledText>
                         </StyledView>
-                        <StyledText className="text-base font-bold text-on-surface leading-snug">
+                        <StyledText className="text-base font-bold text-ink leading-snug">
                           {expense.description}
                         </StyledText>
 
                         {/* Payment Due Reminder Badge */}
                         {dueStatus && !expense.isPaid && (
-                          <StyledView className="flex-row items-center gap-1 mt-1 bg-secondary/10 px-2 py-0.5 rounded-md self-start">
-                            <Clock size={12} color={colors.secondary} />
-                            <StyledText className="text-label-bold font-bold text-secondary">
+                          <StyledView className="flex-row items-center gap-1 mt-1 bg-accent-soft px-2 py-0.5 rounded-md self-start">
+                            <Clock size={12} color={colors.accent} />
+                            <StyledText className="text-label-bold font-bold text-accent">
                               {dueStatus.text}
                             </StyledText>
                           </StyledView>
                         )}
                       </StyledView>
                       <StyledView className="items-end">
-                        <StyledText className="text-base font-extrabold text-error tabular-nums">
+                        <StyledText className="text-base font-extrabold text-danger tabular-nums">
                           -{formatCurrency(amt)}
                         </StyledText>
                         <StyledTouchableOpacity
                           onPress={() => handleTogglePaid(expense)}
                           className={`flex-row items-center gap-1 px-2 py-0.5 rounded-md mt-1 ${
-                            expense.isPaid ? 'bg-success-container' : 'bg-secondary-container'
+                            expense.isPaid ? 'bg-brand-soft' : 'bg-accent-soft'
                           }`}
                         >
                           <CheckCircle
                             size={12}
-                            color={expense.isPaid ? colors.success : colors.onSecondaryContainer}
+                            color={expense.isPaid ? colors.brand : colors.muted}
                             weight={expense.isPaid ? 'fill' : 'regular'}
                           />
                           <StyledText
                             className={`text-label-bold ${
-                              expense.isPaid ? 'text-on-success-container' : 'text-on-secondary-container'
+                              expense.isPaid ? 'text-ink' : 'text-ink'
                             }`}
                           >
                             {expense.isPaid ? 'Paid' : 'Pending'}
@@ -564,20 +564,20 @@ export default function ExpensesScreen() {
                     </StyledView>
 
                     {/* Action buttons */}
-                    <StyledView className="flex-row justify-end items-center gap-2 mt-3 pt-2 border-t border-outline-variant/20">
+                    <StyledView className="flex-row justify-end items-center gap-2 mt-3 pt-2 border-t border-border/20">
                       <StyledTouchableOpacity
                         onPress={() => openEditModal(expense)}
-                        className="flex-row items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-container active:opacity-80"
+                        className="flex-row items-center gap-1 px-3 py-1.5 rounded-lg bg-card active:opacity-80"
                       >
-                        <PencilSimple size={15} color={colors.onSurface} />
-                        <StyledText className="text-label-bold font-semibold text-on-surface">Edit</StyledText>
+                        <PencilSimple size={15} color={colors.ink} />
+                        <StyledText className="text-label-bold font-semibold text-ink">Edit</StyledText>
                       </StyledTouchableOpacity>
                       <StyledTouchableOpacity
                         onPress={() => confirmDeleteExpense(expense.id)}
-                        className="flex-row items-center gap-1 px-3 py-1.5 rounded-lg bg-error/10 active:opacity-80"
+                        className="flex-row items-center gap-1 px-3 py-1.5 rounded-lg bg-danger-soft active:opacity-80"
                       >
-                        <Trash size={15} color={colors.error} />
-                        <StyledText className="text-label-bold font-semibold text-error">Delete</StyledText>
+                        <Trash size={15} color={colors.danger} />
+                        <StyledText className="text-label-bold font-semibold text-danger">Delete</StyledText>
                       </StyledTouchableOpacity>
                     </StyledView>
                   </Surface>
@@ -594,7 +594,7 @@ export default function ExpensesScreen() {
         onClose={() => setIsModalOpen(false)}
         title={editingExpense ? 'Edit Expense' : 'Record Expense'}
         subtitle={editingExpense ? 'Update this expense record.' : 'Log a cost so your profit stays honest.'}
-        icon={<Receipt size={20} color={colors.onPrimaryContainer} />}
+        icon={<Receipt size={20} color={colors.ink} />}
         maxHeightRatio={0.9}
         contentClassName="pt-4"
         footer={
@@ -610,15 +610,15 @@ export default function ExpensesScreen() {
         <StyledView className="gap-4 pb-4">
           {/* Amount */}
           <StyledView>
-            <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-1.5">
+            <StyledText className="text-label-bold font-semibold text-muted mb-1.5">
               Amount (₦) *
             </StyledText>
-            <StyledView className="flex-row items-center bg-surface-container-low border border-outline-variant rounded-xl px-4 h-12">
-              <StyledText className="text-lg font-bold text-primary mr-2">₦</StyledText>
+            <StyledView className="flex-row items-center bg-card border border-border rounded-xl px-4 h-12">
+              <StyledText className="text-lg font-bold text-brand mr-2">₦</StyledText>
               <StyledTextInput
-                className="flex-1 text-base font-bold text-on-surface"
+                className="flex-1 text-base font-bold text-ink"
                 placeholder="0.00"
-                placeholderTextColor={colors.outline}
+                placeholderTextColor={colors.muted}
                 keyboardType="decimal-pad"
                 value={amountInput}
                 onChangeText={setAmountInput}
@@ -628,13 +628,13 @@ export default function ExpensesScreen() {
 
           {/* Description */}
           <StyledView>
-            <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-1.5">
+            <StyledText className="text-label-bold font-semibold text-muted mb-1.5">
               Description *
             </StyledText>
             <StyledTextInput
-              className="bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-body-sm text-on-surface"
+              className="bg-card border border-border rounded-xl px-4 py-3 text-body-sm text-ink"
               placeholder="e.g. NEPA light bill, Transport to market, Staff wages"
-              placeholderTextColor={colors.outline}
+              placeholderTextColor={colors.muted}
               value={descriptionInput}
               onChangeText={setDescriptionInput}
             />
@@ -642,7 +642,7 @@ export default function ExpensesScreen() {
 
           {/* Category Selection */}
           <StyledView>
-            <StyledText className="text-label-bold font-semibold text-on-surface-variant mb-1.5">
+            <StyledText className="text-label-bold font-semibold text-muted mb-1.5">
               Expense Category
             </StyledText>
             <StyledView className="flex-row flex-wrap gap-2">
@@ -654,13 +654,13 @@ export default function ExpensesScreen() {
                     onPress={() => setCategoryInput(cat)}
                     className={`px-3 py-2 rounded-xl border ${
                       isSelected
-                        ? 'bg-primary border-primary'
-                        : 'bg-surface-container-low border-outline-variant/40'
+                        ? 'bg-brand border-brand'
+                        : 'bg-card border-border/40'
                     }`}
                   >
                     <StyledText
                       className={`text-label-bold font-bold ${
-                        isSelected ? 'text-on-primary' : 'text-on-surface-variant'
+                        isSelected ? 'text-card' : 'text-muted'
                       }`}
                     >
                       {cat}
@@ -672,12 +672,12 @@ export default function ExpensesScreen() {
           </StyledView>
 
           {/* Recurring Expense Checkbox */}
-          <StyledView className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/40 gap-3">
+          <StyledView className="bg-card p-4 rounded-xl border border-border/40 gap-3">
             <StyledView className="flex-row justify-between items-center">
               <StyledView className="flex-row items-center gap-2.5 flex-1 pr-2">
-                <Repeat size={20} color={colors.primary} />
+                <Repeat size={20} color={colors.brand} />
                 <StyledView className="flex-1">
-                  <StyledText className="text-body-sm font-bold text-on-surface">
+                  <StyledText className="text-body-sm font-bold text-ink">
                     Recurring Expense
                   </StyledText>
                 </StyledView>
@@ -685,13 +685,13 @@ export default function ExpensesScreen() {
               <Switch
                 value={isRecurringInput}
                 onValueChange={setIsRecurringInput}
-                trackColor={{ false: colors.surfaceContainer, true: colors.primary }}
+                trackColor={{ false: colors.border, true: colors.brand }}
               />
             </StyledView>
 
             {isRecurringInput && (
-              <StyledView className="pt-2 border-t border-outline-variant/30 gap-3">
-                <StyledText className="text-label-bold font-semibold text-on-surface-variant">
+              <StyledView className="pt-2 border-t border-border/30 gap-3">
+                <StyledText className="text-label-bold font-semibold text-muted">
                   Recurring Frequency
                 </StyledText>
                 <StyledView className="flex-row gap-2">
@@ -703,13 +703,13 @@ export default function ExpensesScreen() {
                         onPress={() => setFrequencyInput(freq)}
                         className={`flex-1 py-2 rounded-xl border items-center ${
                           isSelected
-                            ? 'bg-primary border-primary'
-                            : 'bg-surface-container border-outline-variant/40'
+                            ? 'bg-brand border-brand'
+                            : 'bg-card border-border/40'
                         }`}
                       >
                         <StyledText
                           className={`text-label-bold font-bold capitalize ${
-                            isSelected ? 'text-on-primary' : 'text-on-surface-variant'
+                            isSelected ? 'text-card' : 'text-muted'
                           }`}
                         >
                           {freq}
@@ -723,11 +723,11 @@ export default function ExpensesScreen() {
           </StyledView>
 
           {/* Payment Status & Reminder Lead Time */}
-          <StyledView className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/40 gap-3">
+          <StyledView className="bg-card p-4 rounded-xl border border-border/40 gap-3">
             <StyledView className="flex-row justify-between items-center">
               <StyledView className="flex-row items-center gap-2">
-                <CheckCircle size={20} color={isPaidInput ? colors.success : colors.onSecondaryContainer} />
-                <StyledText className="text-body-sm font-bold text-on-surface">
+                <CheckCircle size={20} color={isPaidInput ? colors.brand : colors.muted} />
+                <StyledText className="text-body-sm font-bold text-ink">
                   Payment Status
                 </StyledText>
               </StyledView>
@@ -737,13 +737,13 @@ export default function ExpensesScreen() {
                 accessibilityState={{ selected: isPaidInput }}
                 className={`px-3 py-1.5 rounded-lg border ${
                   isPaidInput
-                    ? 'bg-success-container border-success'
-                    : 'bg-secondary-container border-secondary'
+                    ? 'bg-brand-soft border-brand'
+                    : 'bg-accent-soft border-accent'
                 }`}
               >
                 <StyledText
                   className={`text-label-bold ${
-                    isPaidInput ? 'text-on-success-container' : 'text-on-secondary-container'
+                    isPaidInput ? 'text-ink' : 'text-ink'
                   }`}
                 >
                   {isPaidInput ? 'Paid' : 'Pending / Due'}
@@ -752,8 +752,8 @@ export default function ExpensesScreen() {
             </StyledView>
 
             {!isPaidInput && (
-              <StyledView className="pt-2 border-t border-outline-variant/30 gap-2">
-                <StyledText className="text-label-bold font-semibold text-on-surface-variant">
+              <StyledView className="pt-2 border-t border-border/30 gap-2">
+                <StyledText className="text-label-bold font-semibold text-muted">
                   Reminder Lead Time
                 </StyledText>
                 <StyledView className="flex-row gap-2">
@@ -765,13 +765,13 @@ export default function ExpensesScreen() {
                         onPress={() => setReminderDaysInput(days)}
                         className={`flex-1 py-1.5 rounded-lg border items-center ${
                           isSelected
-                            ? 'bg-primary border-primary'
-                            : 'bg-surface-container border-outline-variant/40'
+                            ? 'bg-brand border-brand'
+                            : 'bg-card border-border/40'
                         }`}
                       >
                         <StyledText
                           className={`text-label-bold font-bold ${
-                            isSelected ? 'text-on-primary' : 'text-on-surface-variant'
+                            isSelected ? 'text-card' : 'text-muted'
                           }`}
                         >
                           {days} Days Before

@@ -53,28 +53,28 @@ export default function MoreScreen() {
   return (
     <Container isScrollable={true} withTabBar className="bg-background">
       <StyledView className="flex-row justify-between items-center px-6 py-4 mt-2 mb-4">
-        <StyledText className="text-h2 font-black text-on-surface text-balance">More</StyledText>
+        <StyledText className="text-h2 font-black text-ink text-balance">More</StyledText>
         <ThemeToggle />
       </StyledView>
 
       <StyledView className="px-6 pb-6" style={{ gap: 6 }}>
         <Surface variant="primary" className="flex-row items-center px-5 py-5">
-          <StyledView className="size-16 rounded-full bg-primary justify-center items-center mr-4">
-            <StyledText className="text-on-primary font-bold text-xl">
+          <StyledView className="size-16 rounded-full bg-brand justify-center items-center mr-4">
+            <StyledText className="text-card font-bold text-xl">
               {getInitials(user?.fullName || '', user?.email || '')}
             </StyledText>
           </StyledView>
           <StyledView className="flex-1">
-            <StyledText className="text-h2 font-bold text-on-surface mb-1 text-balance">
+            <StyledText className="text-h2 font-bold text-ink mb-1 text-balance">
               {user?.fullName || 'Seller'}
             </StyledText>
-            <StyledText className="text-body-sm text-on-surface-variant mb-2 text-pretty">
+            <StyledText className="text-body-sm text-muted mb-2 text-pretty">
               {user?.email || ''}
             </StyledText>
             {user?.businessName && (
               <StyledView className="flex-row items-center">
-                <Storefront size={16} color={colors.primary} />
-                <StyledText className="text-label-caps font-semibold text-primary ml-1.5">
+                <Storefront size={16} color={colors.brand} />
+                <StyledText className="text-label-caps font-semibold text-brand ml-1.5">
                   {user.businessName}
                 </StyledText>
               </StyledView>
@@ -82,66 +82,66 @@ export default function MoreScreen() {
           </StyledView>
         </Surface>
 
-        <StyledText className="font-h3 text-on-surface mt-5 mb-1">Business</StyledText>
+        <StyledText className="font-h3 text-ink mt-5 mb-1">Business</StyledText>
         <Surface variant="primary" className="p-0 overflow-hidden">
           <StyledTouchableOpacity
-            className="flex-row items-center px-5 py-4 border-b border-outline-variant/50"
+            className="flex-row items-center px-5 py-4 border-b border-border/50"
             onPress={() => router.push('/business-profile')}
           >
-            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4">
-              <Briefcase size={20} color={colors.primary} />
+            <StyledView className="size-10 rounded-full bg-brand-soft/15 justify-center items-center mr-4">
+              <Briefcase size={20} color={colors.brand} />
             </StyledView>
-            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface text-balance">{copy.more.businessProfile}</StyledText>
-            <CaretRight size={22} color={colors.outline} />
+            <StyledText className="flex-1 text-body-lg font-semibold text-ink text-balance">{copy.more.businessProfile}</StyledText>
+            <CaretRight size={22} color={colors.border} />
           </StyledTouchableOpacity>
 
           <StyledTouchableOpacity
-            className="flex-row items-center px-5 py-4 border-b border-outline-variant/50"
+            className="flex-row items-center px-5 py-4 border-b border-border/50"
             onPress={() => router.push('/analytics')}
           >
-            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4">
-              <ChartBar size={20} color={colors.primary} />
+            <StyledView className="size-10 rounded-full bg-brand-soft/15 justify-center items-center mr-4">
+              <ChartBar size={20} color={colors.brand} />
             </StyledView>
-            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface text-balance">Analytics</StyledText>
-            <CaretRight size={22} color={colors.outline} />
+            <StyledText className="flex-1 text-body-lg font-semibold text-ink text-balance">Analytics</StyledText>
+            <CaretRight size={22} color={colors.border} />
           </StyledTouchableOpacity>
 
           <StyledTouchableOpacity
-            className="flex-row items-center px-5 py-4 border-b border-outline-variant/50"
+            className="flex-row items-center px-5 py-4 border-b border-border/50"
             onPress={() => router.push('/expenses')}
           >
-            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4">
-              <Receipt size={20} color={colors.primary} />
+            <StyledView className="size-10 rounded-full bg-brand-soft/15 justify-center items-center mr-4">
+              <Receipt size={20} color={colors.brand} />
             </StyledView>
-            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface text-balance">Expenses</StyledText>
-            <CaretRight size={22} color={colors.outline} />
+            <StyledText className="flex-1 text-body-lg font-semibold text-ink text-balance">Expenses</StyledText>
+            <CaretRight size={22} color={colors.border} />
           </StyledTouchableOpacity>
 
           <StyledTouchableOpacity
-            className="flex-row items-center px-5 py-4 border-b border-outline-variant/50"
+            className="flex-row items-center px-5 py-4 border-b border-border/50"
             onPress={() => router.push('/mba')}
           >
-            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4">
-              <Sparkle size={20} color={colors.primary} />
+            <StyledView className="size-10 rounded-full bg-brand-soft/15 justify-center items-center mr-4">
+              <Sparkle size={20} color={colors.brand} />
             </StyledView>
-            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface text-balance">Smart Recommendations</StyledText>
-            <CaretRight size={22} color={colors.outline} />
+            <StyledText className="flex-1 text-body-lg font-semibold text-ink text-balance">Smart Recommendations</StyledText>
+            <CaretRight size={22} color={colors.border} />
           </StyledTouchableOpacity>
 
           <StyledTouchableOpacity
-            className="flex-row items-center px-5 py-4 border-b border-outline-variant/50"
+            className="flex-row items-center px-5 py-4 border-b border-border/50"
             onPress={() => router.push('/upgrade')}
           >
-            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4">
-              <Star size={20} color={colors.primary} />
+            <StyledView className="size-10 rounded-full bg-brand-soft/15 justify-center items-center mr-4">
+              <Star size={20} color={colors.brand} />
             </StyledView>
-            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface text-balance">Subscription Plan</StyledText>
-            <StyledView className="bg-secondary-container px-2.5 py-0.5 rounded-md mr-1">
-              <StyledText className="text-label-caps font-bold text-on-surface uppercase">
+            <StyledText className="flex-1 text-body-lg font-semibold text-ink text-balance">Subscription Plan</StyledText>
+            <StyledView className="bg-accent-soft px-2.5 py-0.5 rounded-md mr-1">
+              <StyledText className="text-label-caps font-bold text-ink uppercase">
                 {user?.plan || 'Free'}
               </StyledText>
             </StyledView>
-            <CaretRight size={22} color={colors.outline} />
+            <CaretRight size={22} color={colors.border} />
           </StyledTouchableOpacity>
 
           <StyledTouchableOpacity
@@ -150,31 +150,31 @@ export default function MoreScreen() {
             accessibilityState={{ disabled: true }}
             accessibilityLabel="Staff Accounts — coming soon"
           >
-            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4 opacity-50">
-              <Users size={20} color={colors.primary} />
+            <StyledView className="size-10 rounded-full bg-brand-soft/15 justify-center items-center mr-4 opacity-50">
+              <Users size={20} color={colors.brand} />
             </StyledView>
-            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface opacity-50 text-balance">Staff Accounts</StyledText>
+            <StyledText className="flex-1 text-body-lg font-semibold text-ink opacity-50 text-balance">Staff Accounts</StyledText>
             <StyledText className="text-label-sm font-medium opacity-50">Coming Soon</StyledText>
-            <StyledView className="border border-outline-variant rounded-md px-2 py-0.5 mr-1">
-              <StyledText className="text-label-caps font-medium text-on-surface-variant">Free</StyledText>
+            <StyledView className="border border-border rounded-md px-2 py-0.5 mr-1">
+              <StyledText className="text-label-caps font-medium text-muted">Free</StyledText>
             </StyledView>
-            <CaretRight size={22} color={colors.outline} />
+            <CaretRight size={22} color={colors.border} />
           </StyledTouchableOpacity>
         </Surface>
 
-        <StyledText className="font-h3 text-on-surface mt-5 mb-1">Support</StyledText>
+        <StyledText className="font-h3 text-ink mt-5 mb-1">Support</StyledText>
         <Surface variant="primary" className="p-0 overflow-hidden">
           <StyledTouchableOpacity
-            className="flex-row items-center px-5 py-4 border-b border-outline-variant/50 opacity-50"
+            className="flex-row items-center px-5 py-4 border-b border-border/50 opacity-50"
             accessibilityRole="button"
             accessibilityState={{ disabled: true }}
             accessibilityLabel="Help & Support — coming soon"
           >
-            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4 opacity-50">
-              <Question size={20} color={colors.primary} />
+            <StyledView className="size-10 rounded-full bg-brand-soft/15 justify-center items-center mr-4 opacity-50">
+              <Question size={20} color={colors.brand} />
             </StyledView>
-            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface text-balance">Help & Support</StyledText>
-            <CaretRight size={22} color={colors.outline} />
+            <StyledText className="flex-1 text-body-lg font-semibold text-ink text-balance">Help & Support</StyledText>
+            <CaretRight size={22} color={colors.border} />
           </StyledTouchableOpacity>
 
           <StyledTouchableOpacity
@@ -183,24 +183,24 @@ export default function MoreScreen() {
             accessibilityState={{ disabled: true }}
             accessibilityLabel="Privacy Policy — coming soon"
           >
-            <StyledView className="size-10 rounded-full bg-primary-container/15 justify-center items-center mr-4 opacity-50">
-              <FileText size={20} color={colors.primary} />
+            <StyledView className="size-10 rounded-full bg-brand-soft/15 justify-center items-center mr-4 opacity-50">
+              <FileText size={20} color={colors.brand} />
             </StyledView>
-            <StyledText className="flex-1 text-body-lg font-semibold text-on-surface text-balance">Privacy Policy</StyledText>
-            <CaretRight size={22} color={colors.outline} />
+            <StyledText className="flex-1 text-body-lg font-semibold text-ink text-balance">Privacy Policy</StyledText>
+            <CaretRight size={22} color={colors.border} />
           </StyledTouchableOpacity>
         </Surface>
 
-        <StyledText className="font-h3 text-on-surface mt-5 mb-1">Account</StyledText>
+        <StyledText className="font-h3 text-ink mt-5 mb-1">Account</StyledText>
         <Surface variant="primary" className="p-0 overflow-hidden">
           <StyledTouchableOpacity
             className="flex-row items-center px-5 py-4"
             onPress={handleLogout}
           >
-            <StyledView className="size-10 rounded-full bg-error/10 justify-center items-center mr-4">
-              <SignOut size={20} color={colors.error} />
+            <StyledView className="size-10 rounded-full bg-danger/10 justify-center items-center mr-4">
+              <SignOut size={20} color={colors.danger} />
             </StyledView>
-            <StyledText className="flex-1 text-body-lg font-semibold text-error text-balance">Logout</StyledText>
+            <StyledText className="flex-1 text-body-lg font-semibold text-danger text-balance">Logout</StyledText>
           </StyledTouchableOpacity>
         </Surface>
       </StyledView>

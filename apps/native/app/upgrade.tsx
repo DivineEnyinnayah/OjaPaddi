@@ -77,40 +77,40 @@ export default function UpgradeScreen() {
       <StyledView className="flex-row items-center px-6 py-4 mb-6">
         <StyledTouchableOpacity 
           onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-primary-container/20 justify-center items-center mr-4"
+          className="w-10 h-10 rounded-full bg-brand-soft/20 justify-center items-center mr-4"
         >
-          <ArrowLeft size={20} color={colors.primary} />
+          <ArrowLeft size={20} color={colors.brand} />
         </StyledTouchableOpacity>
-        <StyledText className="text-h2 font-black text-on-surface text-balance">
+        <StyledText className="text-h2 font-black text-ink text-balance">
           {isFree ? 'Upgrade' : 'Subscription'}
         </StyledText>
       </StyledView>
 
       <StyledView className="px-6 pb-12" style={{ gap: 24 }}>
         {/* Plan Header Card */}
-        <Surface variant="primary" className="p-6 rounded-3xl overflow-hidden relative">
+        <Surface variant="hero" className="p-6 rounded-3xl overflow-hidden relative">
           <StyledView className="z-10">
-            <StyledText className="text-label-caps font-bold text-on-primary opacity-80 mb-1">
+            <StyledText className="text-label-caps font-bold text-card opacity-80 mb-1">
               {isFree ? 'Current Plan' : 'Your Active Plan'}
             </StyledText>
-            <StyledText className="text-4xl font-black text-on-primary mb-2">
+            <StyledText className="text-4xl font-black text-card mb-2">
               {PLAN_DATA[currentPlan].name}
             </StyledText>
-            <StyledText className="text-body-lg text-on-primary opacity-90">
+            <StyledText className="text-body-lg text-card opacity-90">
               {isFree ? 'Start growing your business today' : `Enjoying the full power of ${PLAN_DATA[currentPlan].name}`}
             </StyledText>
           </StyledView>
           
           {/* Background Decor */}
           <StyledView 
-            className="absolute -right-10 -bottom-10 w-40 h-40 rounded-full bg-white/10" 
+            className="absolute -right-10 -bottom-10 w-40 h-40 rounded-full bg-card/10" 
             style={{ transform: [{ scale: 1.5 }] }} 
           />
         </Surface>
 
         {/* Feature List */}
         <StyledView style={{ gap: 16 }}>
-          <StyledText className="text-xl font-bold text-on-surface">
+          <StyledText className="text-xl font-bold text-ink">
             {isFree ? 'What you get with Pro' : 'Your Plan Features'}
           </StyledText>
           
@@ -118,10 +118,10 @@ export default function UpgradeScreen() {
             {PLAN_DATA[isFree ? 'pro' : currentPlan].features.map((feature, index) => (
               <StyledView 
                 key={index} 
-                className="flex-row items-center px-5 py-4 border-b border-outline-variant/50 last:border-b-0"
+                className="flex-row items-center px-5 py-4 border-b border-border/50 last:border-b-0"
               >
-                <CheckCircle size={20} color={colors.primary} />
-                <StyledText className="flex-1 text-body-lg text-on-surface ml-3">
+                <CheckCircle size={20} color={colors.brand} />
+                <StyledText className="flex-1 text-body-lg text-ink ml-3">
                   {feature}
                 </StyledText>
               </StyledView>
@@ -133,16 +133,16 @@ export default function UpgradeScreen() {
         {isFree ? (
           <StyledView style={{ gap: 12 }} className="mt-4">
             <StyledView className="flex-row justify-between items-center px-2">
-              <StyledText className="text-body-sm text-on-surface-variant">
+              <StyledText className="text-body-sm text-muted">
                 Billed monthly. Cancel anytime.
               </StyledText>
-              <StyledText className="text-xl font-bold text-primary">
+              <StyledText className="text-xl font-bold text-brand">
                 {PLAN_DATA.pro.price}
               </StyledText>
             </StyledView>
             
             <StyledTouchableOpacity
-              className="bg-primary py-4 rounded-2xl items-center justify-center"
+              className="bg-brand py-4 rounded-2xl items-center justify-center"
               onPress={() => {
                 toast.info(
                   'Payment integration is coming soon. We will notify you once you can upgrade!',
@@ -150,28 +150,28 @@ export default function UpgradeScreen() {
                 );
               }}
             >
-              <StyledText className="text-on-primary font-bold text-lg">Upgrade Now</StyledText>
+              <StyledText className="text-card font-bold text-lg">Upgrade Now</StyledText>
             </StyledTouchableOpacity>
           </StyledView>
         ) : (
           <StyledView style={{ gap: 12 }} className="mt-4">
             <StyledTouchableOpacity
-              className="bg-outline-variant/30 py-4 rounded-2xl items-center justify-center border border-outline-variant/50 opacity-50"
+              className="bg-border/30 py-4 rounded-2xl items-center justify-center border border-border/50 opacity-50"
               accessibilityRole="button"
               accessibilityState={{ disabled: true }}
               accessibilityLabel="Manage Subscription — coming soon"
             >
-              <StyledText className="text-on-surface-variant font-semibold text-body-lg">Manage Subscription</StyledText>
+              <StyledText className="text-muted font-semibold text-body-lg">Manage Subscription</StyledText>
             </StyledTouchableOpacity>
             
             {currentPlan !== 'growth' && (
               <StyledTouchableOpacity
-                className="bg-primary py-4 rounded-2xl items-center justify-center"
+                className="bg-brand py-4 rounded-2xl items-center justify-center"
                 onPress={() => {
                   toast.info('Growth plan options are coming soon!', 'Coming Soon');
                 }}
               >
-                <StyledText className="text-on-primary font-bold text-lg">Explore Growth Plan</StyledText>
+                <StyledText className="text-card font-bold text-lg">Explore Growth Plan</StyledText>
               </StyledTouchableOpacity>
             )}
           </StyledView>
