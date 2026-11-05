@@ -33,29 +33,7 @@ export const copy = {
     register: 'Register',
   },
   welcome: {
-    eyebrow: 'Nigerian retail, reimagined',
-    tagline: 'The market is loud. The numbers shouldn’t be.',
-    slides: [
-      {
-        illustration: 'welcomeStore',
-        title: 'Know your stock',
-        body: 'See what is selling, what is owed, and what is empty — before a customer leaves. That is how you stop guessing.',
-      },
-      {
-        illustration: 'welcomeChat',
-        title: 'Sell on WhatsApp',
-        body: 'Share your catalogue and receipts straight to the stall owner. No app switch, no retyping prices.',
-      },
-      {
-        illustration: 'welcomeGrowth',
-        title: 'Know your real profit',
-        body: 'Sales minus expenses, as you record them. See what you actually made, not what you hoped.',
-      },
-    ] as const,
-    getStarted: 'Open your stall',
     signIn: 'I already have an account',
-    footer: 'OjaPaddi · The market, in your pocket',
-    slideLabel: 'Slide {current} of {total}',
   },
   setPassword: {
     title: 'Set your password',
