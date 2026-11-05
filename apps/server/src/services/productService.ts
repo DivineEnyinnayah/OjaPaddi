@@ -58,6 +58,7 @@ export async function getProductById(db: Database, businessId: string, productId
 }
 
 export async function createProduct(db: Database, businessId: string, data: {
+  id?: string;
   name: string;
   description?: string;
   sku?: string;
@@ -72,8 +73,16 @@ export async function createProduct(db: Database, businessId: string, data: {
   if (!businessId || typeof businessId !== "string") {
     throw new Error(`Missing or invalid businessId for product creation. Received: ${JSON.stringify(businessId)}`);
   }
+  // Idempotent create: the client sends a UUID generated once per form
+  // submission. A retry/replay hitting this same ID returns the existing
+  // row instead of inserting a duplicate.
+  if (data.id) {
+    const existing = await getProductById(db, businessId, data.id);
+    if (existing) return existing;
+  }
   try {
     const [newProduct] = await db.insert(products).values({
+      ...(data.id ? { id: data.id } : {}),
       businessId,
       name: data.name,
       description: data.description || null,

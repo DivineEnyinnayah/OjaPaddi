@@ -28,9 +28,9 @@ import {
   Storefront,
   User,
   ChartLineUp,
+  UsersThree,
 } from "phosphor-react-native";
 import { withUniwind } from "uniwind";
-import { ILLUSTRATIONS } from "@/constants/illustrations";
 import { TAB_BAR_OFFSET } from "@/lib/tab-bar";
 import { formatCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -343,11 +343,9 @@ export default function CustomersScreen() {
         }
         ListEmptyComponent={
           <StyledView className="items-center mt-20">
-            <Image
-              source={{ uri: ILLUSTRATIONS.emptyCustomers }}
-              style={{ width: 80, height: 80 }}
-              resizeMode="contain"
-            />
+            <StyledView className="size-20 rounded-3xl bg-surface-container-lowest border border-outline-variant items-center justify-center mb-4">
+              <UsersThree size={40} color={colors.onSurfaceVariant} weight="duotone" />
+            </StyledView>
             <StyledText className="text-body-lg text-on-surface-variant mt-4 text-center">
               {search.trim() ? "No results match your search." : "No entries found. Tap + to add!"}
             </StyledText>

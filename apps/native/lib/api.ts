@@ -68,7 +68,9 @@ async function enqueueRequest(
   const queue = await getOfflineQueue();
   queue.push(request);
   await saveOfflineQueue(queue);
-  console.log(`[API] Request queued offline: ${request.endpoint} (queue size: ${queue.length})`);
+  if (typeof __DEV__ !== 'undefined' && __DEV__) {
+    console.log(`[API] Request queued offline: ${request.endpoint} (queue size: ${queue.length})`);
+  }
 }
 
 async function dequeueAndRetry(): Promise<void> {
@@ -125,11 +127,12 @@ function ensureConnectivityListener(): void {
   }, 10000);
 
   // Cleanup on app termination (best effort)
-  if (typeof global !== 'undefined' && (global as any).__DEV__) {
+  if (typeof global !== 'undefined' && typeof __DEV__ !== 'undefined' && __DEV__) {
+    const g = global as typeof globalThis & { __cleanupOfflineListener?: () => void };
     // In dev mode, clear interval on hot reload
-    const original = (global as any).__cleanupOfflineListener;
+    const original = g.__cleanupOfflineListener;
     if (original) original();
-    (global as any).__cleanupOfflineListener = () => clearInterval(interval);
+    g.__cleanupOfflineListener = () => clearInterval(interval);
   }
 }
 
@@ -188,7 +191,9 @@ async function executeRequest<T>(
     // Wait before retry (skip on first attempt)
     if (attempt > 0) {
       const delay = getRetryDelay(attempt - 1);
-      console.log(`[API] Retry attempt ${attempt}/${maxRetries} for ${endpoint} in ${delay}ms`);
+      if (typeof __DEV__ !== 'undefined' && __DEV__) {
+        console.log(`[API] Retry attempt ${attempt}/${maxRetries} for ${endpoint} in ${delay}ms`);
+      }
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
@@ -197,15 +202,19 @@ async function executeRequest<T>(
       if (attempt > 0 && enableOfflineQueue) {
         const online = await isOnline();
         if (!online) {
-          // Queue for later
-          await enqueueRequest({
-            id: generateRequestId(),
-            endpoint,
-            options,
-            timestamp: Date.now(),
-          });
-          ensureConnectivityListener();
-          return { success: false, error: { code: 'OFFLINE', message: 'No network connection. Request queued for retry.' } };
+          const method = (options.method || 'GET').toUpperCase();
+          if (method === 'GET' || method === 'HEAD') {
+            // Queue for later (idempotent)
+            await enqueueRequest({
+              id: generateRequestId(),
+              endpoint,
+              options,
+              timestamp: Date.now(),
+            });
+            ensureConnectivityListener();
+            return { success: false, error: { code: 'OFFLINE', message: 'No network connection. Request queued for retry.' } };
+          }
+          return { success: false, error: { code: 'OFFLINE', message: 'No network connection. Cannot retry non-idempotent request.' } };
         }
       }
 
@@ -262,14 +271,18 @@ async function executeRequest<T>(
       if (isNetworkError(error) && enableOfflineQueue) {
         const online = await isOnline();
         if (!online) {
-          await enqueueRequest({
-            id: generateRequestId(),
-            endpoint,
-            options,
-            timestamp: Date.now(),
-          });
-          ensureConnectivityListener();
-          return { success: false, error: { code: 'OFFLINE', message: 'No network connection. Request queued for retry.' } };
+          const method = (options.method || 'GET').toUpperCase();
+          if (method === 'GET' || method === 'HEAD') {
+            await enqueueRequest({
+              id: generateRequestId(),
+              endpoint,
+              options,
+              timestamp: Date.now(),
+            });
+            ensureConnectivityListener();
+            return { success: false, error: { code: 'OFFLINE', message: 'No network connection. Request queued for retry.' } };
+          }
+          return { success: false, error: { code: 'OFFLINE', message: 'No network connection. Cannot retry non-idempotent request.' } };
         }
       }
 
@@ -279,7 +292,9 @@ async function executeRequest<T>(
       }
 
       // Non-retryable error or no retries left
-      console.error(`[API] Request failed: ${endpoint}`, error);
+      if (typeof __DEV__ !== 'undefined' && __DEV__) {
+        console.error(`[API] Request failed: ${endpoint}`, error);
+      }
       return {
         success: false,
         error: {
@@ -437,7 +452,9 @@ export async function apiFormDataRequest<T>(
     // Wait before retry (skip on first attempt)
     if (attempt > 0) {
       const delay = getRetryDelay(attempt - 1);
-      console.log(`[API] Retry attempt ${attempt}/${retries} for ${endpoint} in ${delay}ms`);
+      if (typeof __DEV__ !== 'undefined' && __DEV__) {
+        console.log(`[API] Retry attempt ${attempt}/${retries} for ${endpoint} in ${delay}ms`);
+      }
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
@@ -446,22 +463,26 @@ export async function apiFormDataRequest<T>(
       if (attempt > 0 && enableOfflineQueue) {
         const online = await isOnline();
         if (!online) {
-          // Serialize FormData for offline storage
-          const entries: [string, string | Blob][] = [];
-          formData.forEach((value, key) => {
-            entries.push([key, value as string | Blob]);
-          });
+          const m = (method || 'POST').toUpperCase();
+          if (m === 'GET' || m === 'HEAD') {
+            // Serialize FormData for offline storage
+            const entries: [string, string | Blob][] = [];
+            formData.forEach((value, key) => {
+              entries.push([key, value as string | Blob]);
+            });
 
-          await enqueueRequest({
-            id: generateRequestId(),
-            endpoint,
-            options: { method },
-            timestamp: Date.now(),
-            isFormData: true,
-            formDataEntries: entries,
-          });
-          ensureConnectivityListener();
-          return { success: false, error: { code: 'OFFLINE', message: 'No network connection. Request queued for retry.' } };
+            await enqueueRequest({
+              id: generateRequestId(),
+              endpoint,
+              options: { method },
+              timestamp: Date.now(),
+              isFormData: true,
+              formDataEntries: entries,
+            });
+            ensureConnectivityListener();
+            return { success: false, error: { code: 'OFFLINE', message: 'No network connection. Request queued for retry.' } };
+          }
+          return { success: false, error: { code: 'OFFLINE', message: 'No network connection. Cannot retry non-idempotent request.' } };
         }
       }
 
@@ -518,21 +539,25 @@ export async function apiFormDataRequest<T>(
       if (isNetworkError(error) && enableOfflineQueue) {
         const online = await isOnline();
         if (!online) {
-          const entries: [string, string | Blob][] = [];
-          formData.forEach((value, key) => {
-            entries.push([key, value as string | Blob]);
-          });
+          const m = (method || 'POST').toUpperCase();
+          if (m === 'GET' || m === 'HEAD') {
+            const entries: [string, string | Blob][] = [];
+            formData.forEach((value, key) => {
+              entries.push([key, value as string | Blob]);
+            });
 
-          await enqueueRequest({
-            id: generateRequestId(),
-            endpoint,
-            options: { method },
-            timestamp: Date.now(),
-            isFormData: true,
-            formDataEntries: entries,
-          });
-          ensureConnectivityListener();
-          return { success: false, error: { code: 'OFFLINE', message: 'No network connection. Request queued for retry.' } };
+            await enqueueRequest({
+              id: generateRequestId(),
+              endpoint,
+              options: { method },
+              timestamp: Date.now(),
+              isFormData: true,
+              formDataEntries: entries,
+            });
+            ensureConnectivityListener();
+            return { success: false, error: { code: 'OFFLINE', message: 'No network connection. Request queued for retry.' } };
+          }
+          return { success: false, error: { code: 'OFFLINE', message: 'No network connection. Cannot retry non-idempotent request.' } };
         }
       }
 
@@ -541,7 +566,9 @@ export async function apiFormDataRequest<T>(
         continue;
       }
 
-      console.error(`[API] FormData request failed: ${endpoint}`, error);
+      if (typeof __DEV__ !== 'undefined' && __DEV__) {
+        console.error(`[API] FormData request failed: ${endpoint}`, error);
+      }
       return {
         success: false,
         error: {

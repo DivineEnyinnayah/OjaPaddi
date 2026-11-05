@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { useProducts, type Product } from './useProducts';
 import { useToast } from '@/components/ui/toast';
@@ -21,6 +21,10 @@ export function useProductForm(editId?: string) {
   const toast = useToast();
   
   const [isSaving, setIsSaving] = useState(false);
+  // Ref guard: state updates don't apply synchronously, so two rapid taps
+  // could both pass before `isSaving` disables the button. This blocks
+  // the second submission immediately.
+  const isSavingRef = useRef(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -167,7 +171,9 @@ export function useProductForm(editId?: string) {
   };
 
   const handleSave = async (onSuccess: (product: Product) => void) => {
+    if (isSavingRef.current) return;
     if (!validateForm()) return;
+    isSavingRef.current = true;
     setIsSaving(true);
     try {
       const payload = {
@@ -196,6 +202,7 @@ export function useProductForm(editId?: string) {
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Failed to save product', 'Error');
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
   };

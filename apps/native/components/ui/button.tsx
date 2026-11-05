@@ -22,27 +22,27 @@ export function Button({
   ...props
 }: ButtonProps) {
   const sizeStyles = {
-    sm: "px-3 py-1.5 h-9",
-    md: "px-4 py-2.5 h-12",
-    lg: "px-6 py-4 h-14",
+    sm: "px-3 py-2 min-h-11",
+    md: "px-4 py-3 min-h-12",
+    lg: "px-5 py-4 min-h-14",
   };
 
   const variantStyles = {
     primary: "bg-primary border border-primary",
-    secondary: "bg-transparent border border-primary",
-    accent: "bg-secondary-container border border-secondary-container",
+    secondary: "bg-surface-container-lowest border border-primary",
+    accent: "bg-secondary border border-secondary",
   };
 
   const textSizeStyles = {
-    sm: "text-body-sm font-semibold text-center",
-    md: "text-body-lg font-semibold text-center",
-    lg: "text-h2 text-center",
+    sm: "text-label-bold text-center",
+    md: "text-body-lg text-center font-label",
+    lg: "text-h3 text-center",
   };
 
   const textVariantStyles = {
     primary: "text-on-primary",
     secondary: "text-primary",
-    accent: "text-on-secondary-container",
+    accent: "text-on-secondary",
   };
 
   return (

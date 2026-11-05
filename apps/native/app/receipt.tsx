@@ -148,7 +148,7 @@ export default function ReceiptScreen() {
               <StyledView className="border-t border-dashed border-outline-variant pt-4">
                 <StyledView className="flex-row justify-between items-center mb-3">
                   <StyledText className="text-body-sm text-on-surface-variant">Reference</StyledText>
-                  <StyledText className="text-body-sm font-semibold text-on-surface">
+                  <StyledText className="text-body-sm font-ledger font-semibold text-on-surface">
                     {sale.reference}
                   </StyledText>
                 </StyledView>

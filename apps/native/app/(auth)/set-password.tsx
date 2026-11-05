@@ -23,7 +23,8 @@ function interpolate(template: string, values: Record<string, string | number>) 
   return template.replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? `{${key}}`));
 }
 
-export default function SetPasswordScreen() {
+export default function SetPasswordScreen()
+ {
   const router = useRouter();
   const params = useLocalSearchParams<{ email?: string }>();
   const setUser = useAuthStore((state) => state.setUser);
@@ -31,12 +32,8 @@ export default function SetPasswordScreen() {
   const toast = useToast();
 
   // Login hands the email forward so the user does not retype it.
-  const params = useLocalSearchParams<{ email?: string }>();
   const [email, setEmail] = useState((params.email as string | undefined) ?? '');
   const [isEditingEmail, setIsEditingEmail] = useState(false);
-  const setUser = useAuthStore((state) => state.setUser);
-  const colors = useThemeColor();
-  const toast = useToast();
 
   const [formData, setFormData] = useState({ code: '', password: '', confirm: '' });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -104,7 +101,7 @@ export default function SetPasswordScreen() {
         { label: copy.setPassword.troubleshootWait },
         { 
           label: copy.setPassword.resend, 
-          style: 'primary', 
+          style: 'default', 
           onPress: () => void sendCode(true) 
         },
         { label: 'Cancel', style: 'cancel' },

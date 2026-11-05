@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Image } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Camera, CaretUp, CaretDown, CheckCircle } from 'phosphor-react-native';
@@ -188,10 +188,15 @@ export default function BusinessProfileScreen() {
         </StyledText>
       </StyledView>
 
-      <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
       >
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
         <StyledText className="text-body-sm text-on-surface-variant mb-6 px-1">
           {copy.businessProfile.subtitle}
         </StyledText>
@@ -297,6 +302,7 @@ export default function BusinessProfileScreen() {
           )}
         </StyledTouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingView>
     </Container>
   );
 }

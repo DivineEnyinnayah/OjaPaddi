@@ -8,44 +8,40 @@ import {
   Vibration,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowRight } from 'phosphor-react-native';
+import { ArrowRight, ChatCircleDots, Storefront, TrendUp } from 'phosphor-react-native';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
 import { StyledView, StyledText, StyledImage, StyledTouchableOpacity } from '@/components/ui/styled';
-import { ILLUSTRATIONS } from '@/constants/illustrations';
 import { copy } from '@/constants/copy';
 import { useThemeColor } from '@/hooks/useThemeColor';
+import { useResponsive } from '@/lib/responsive';
 
 type Slide = (typeof copy.welcome.slides)[number];
-
 const SLIDES: readonly Slide[] = copy.welcome.slides;
 const LAST_INDEX = SLIDES.length - 1;
-
-/** Flick threshold in px / velocity for advancing a slide. */
 const SWIPE_DISTANCE = 45;
 const SWIPE_VELOCITY = 0.4;
-
-/** How far the illustration drifts relative to the text, as a fraction of width. */
-const PARALLAX = 0.22;
-
-/** Fraction of the drag distance allowed past the first/last slide. */
-const EDGE_RESISTANCE = 0.35;
-
-/** Matches the stagger used on the onboarding screen so the two flows feel like one product. */
+const PARALLAX = 0.18;
+const EDGE_RESISTANCE = 0.3;
 const STAGGER_STEP = 0.18;
 const STAGGER_SPAN = 0.6;
+
+function SlideIcon({ index, colors }: { index: number; colors: ReturnType<typeof useThemeColor> }) {
+  const size = useResponsive().scale(96);
+  if (index === 0) return <Storefront size={size} color={colors.primary} weight="duotone" />;
+  if (index === 1) return <ChatCircleDots size={size} color={colors.secondary} weight="duotone" />;
+  return <TrendUp size={size} color={colors.primary} weight="duotone" />;
+}
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const colors = useThemeColor();
   const { width: screenWidth } = useWindowDimensions();
+  const responsive = useResponsive();
 
   const [index, setIndex] = useState(0);
-
-  /** Fractional carousel position — 0, 1, 2 while idle, anything between while dragging. */
   const position = useRef(new Animated.Value(0)).current;
   const entrance = useRef(new Animated.Value(0)).current;
-
   const indexRef = useRef(0);
   indexRef.current = index;
 
@@ -70,10 +66,8 @@ export default function WelcomeScreen() {
         position.setValue(clamped);
         return;
       }
-
       setIndex(clamped);
       playEntrance();
-
       if (Platform.OS === 'ios' || Platform.OS === 'android') Vibration.vibrate(8);
       Animated.spring(position, {
         toValue: clamped,
@@ -89,52 +83,35 @@ export default function WelcomeScreen() {
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        // Horizontal intent only, so it never fights vertical scroll.
         onMoveShouldSetPanResponder: (_evt, gesture) =>
           Math.abs(gesture.dx) > 10 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.4,
         onPanResponderMove: (_evt, gesture) => {
           const raw = indexRef.current - gesture.dx / screenWidth;
-          // Rubber-band past the ends rather than letting the carousel run away.
-          if (raw < 0) {
-            position.setValue(raw * EDGE_RESISTANCE);
-          } else if (raw > LAST_INDEX) {
-            position.setValue(LAST_INDEX + (raw - LAST_INDEX) * EDGE_RESISTANCE);
-          } else {
-            position.setValue(raw);
-          }
+          if (raw < 0) position.setValue(raw * EDGE_RESISTANCE);
+          else if (raw > LAST_INDEX) position.setValue(LAST_INDEX + (raw - LAST_INDEX) * EDGE_RESISTANCE);
+          else position.setValue(raw);
         },
         onPanResponderRelease: (_evt, gesture) => {
-          const current = indexRef.current;
-          let next = current;
-
-          if (gesture.dx <= -SWIPE_DISTANCE || gesture.vx <= -SWIPE_VELOCITY) {
-            next = current + 1;
-          } else if (gesture.dx >= SWIPE_DISTANCE || gesture.vx >= SWIPE_VELOCITY) {
-            next = current - 1;
-          }
-
+          let next = indexRef.current;
+          if (gesture.dx <= -SWIPE_DISTANCE || gesture.vx <= -SWIPE_VELOCITY) next = indexRef.current + 1;
+          else if (gesture.dx >= SWIPE_DISTANCE || gesture.vx >= SWIPE_VELOCITY) next = indexRef.current - 1;
           goTo(next);
         },
       }),
     [goTo, position, screenWidth],
   );
 
-  /** Fade + lift for the nth text block of the active slide. */
   const stagger = useCallback(
     (i: number) => {
       const start = i * STAGGER_STEP;
       const end = Math.min(start + STAGGER_SPAN, 1);
       return {
-        opacity: entrance.interpolate({
-          inputRange: [start, end],
-          outputRange: [0, 1],
-          extrapolate: 'clamp',
-        }),
+        opacity: entrance.interpolate({ inputRange: [start, end], outputRange: [0, 1], extrapolate: 'clamp' }),
         transform: [
           {
             translateY: entrance.interpolate({
               inputRange: [start, end],
-              outputRange: [20, 0],
+              outputRange: [18, 0],
               extrapolate: 'clamp',
             }),
           },
@@ -156,25 +133,21 @@ export default function WelcomeScreen() {
     extrapolate: 'clamp',
   });
 
+  const heroSize = Math.round(Math.min(Math.max(screenWidth * 0.58, 176), 244));
+
   return (
-    <Container isScrollable={false} withSafeAreaTop={true} className="px-6 py-4">
-      {/* Compact brand lockup — always visible so the screen identifies itself as you swipe. */}
-      <StyledView className="flex-row items-center gap-3">
-        <StyledView className="w-11 h-11 rounded-2xl bg-primary-container items-center justify-center">
-          <StyledImage
-            source={require('@/assets/images/logo.png')}
-            className="w-7 h-7"
-            resizeMode="contain"
-          />
-        </StyledView>
-        <StyledView className="flex-1">
-          <StyledText className="text-body-lg font-bold text-on-surface">{copy.app.name}</StyledText>
-          <StyledText className="text-label-bold text-on-surface-variant">{copy.app.tagline}</StyledText>
-        </StyledView>
+    <Container isScrollable={false} withSafeAreaTop={true} className="px-6 py-4 bg-background">
+      {/* Brand lockup — never use remote assets when the app already ships the logo. */}
+      <StyledView className="flex-row items-center">
+        <StyledImage
+          source={require('@/assets/images/logo-lockup.png')}
+          resizeMode="contain"
+          style={{ width: responsive.scale(172), height: responsive.scale(44) }}
+          accessibilityLabel="OjaPaddi"
+        />
       </StyledView>
 
-      {/* Carousel */}
-      <StyledView className="flex-1 justify-center" {...panResponder.panHandlers}>
+      <Animated.View style={{ marginTop: 10 }} {...panResponder.panHandlers}>
         <Animated.View
           style={{
             width: screenWidth * SLIDES.length,
@@ -185,18 +158,18 @@ export default function WelcomeScreen() {
           {SLIDES.map((slide, i) => (
             <StyledView
               key={slide.title}
-              className="items-center justify-center px-6"
               style={{ width: screenWidth }}
+              className="items-center justify-center px-6"
               accessibilityElementsHidden={i !== index}
               importantForAccessibility={i === index ? 'yes' : 'no-hide-descendants'}
             >
               <Animated.View style={{ transform: [{ translateX: illustrationTranslateX }] }}>
-                <StyledView className="w-56 h-56 items-center justify-center mb-2">
-                  <StyledImage
-                    source={{ uri: ILLUSTRATIONS[slide.illustration] }}
-                    style={{ width: 200, height: 200 }}
-                    resizeMode="contain"
-                  />
+                <StyledView
+                  style={{ width: heroSize, height: heroSize }}
+                  className="mb-4 rounded-[28px] bg-surface-container-lowest border border-outline-variant items-center justify-center shadow-sm"
+                >
+                  <StyledView className="absolute right-4 top-4 size-4 rounded-full bg-secondary" />
+                  <SlideIcon index={i} colors={colors} />
                 </StyledView>
               </Animated.View>
 
@@ -204,26 +177,25 @@ export default function WelcomeScreen() {
                 <StyledText className="text-label-caps text-primary mb-3">
                   {copy.welcome.eyebrow}
                 </StyledText>
-                <StyledText className="text-h1 font-bold text-on-surface text-center text-balance">
+                <StyledText className="text-h1 font-extrabold text-on-surface text-center text-balance tracking-tight">
                   {slide.title}
                 </StyledText>
               </Animated.View>
 
-              <Animated.View style={[stagger(1), { marginTop: 10 }]}>
-                <StyledText className="text-body-lg text-on-surface-variant text-center text-pretty">
+              <Animated.View style={[stagger(1), { marginTop: 12 }]}>
+                <StyledText className="text-body-lg text-on-surface-variant text-center text-pretty leading-6">
                   {slide.body}
                 </StyledText>
               </Animated.View>
             </StyledView>
           ))}
         </Animated.View>
-      </StyledView>
+      </Animated.View>
 
       {/* Progress dots — also the non-gesture way to move between slides. */}
-      <StyledView className="flex-row items-center justify-center gap-2 mb-6">
+      <StyledView className="flex-row items-center justify-center gap-2 my-5">
         {SLIDES.map((slide, i) => {
           const isActive = i === index;
-
           return (
             <StyledTouchableOpacity
               key={slide.title}
@@ -234,19 +206,25 @@ export default function WelcomeScreen() {
               hitSlop={12}
             >
               <StyledView
-                className={`h-2 rounded-full ${
-                  isActive ? 'w-7 bg-primary' : 'w-2 bg-outline-variant'
-                }`}
+                className={`h-2 rounded-full ${isActive ? 'w-8 bg-primary' : 'w-2 bg-outline-variant'}`}
               />
             </StyledTouchableOpacity>
           );
         })}
       </StyledView>
 
+      <StyledView className="flex-row flex-wrap gap-2 justify-center mb-4 opacity-90">
+        {['Live ledger', 'WhatsApp receipt', 'Offline-ready'].map((label) => (
+          <StyledView key={label} className="rounded-full border border-outline-variant bg-surface-container-lowest px-3 py-1.5">
+            <StyledText className="text-label-sm font-label text-on-surface-variant">{label}</StyledText>
+          </StyledView>
+        ))}
+      </StyledView>
+
       <StyledView className="gap-3">
         <Button size="lg" variant="primary" onPress={() => router.push('/register')}>
           <StyledView className="flex-row items-center gap-2">
-            <StyledText className="text-h2 text-on-primary font-bold">{copy.welcome.getStarted}</StyledText>
+            <StyledText className="text-h3 text-on-primary font-extrabold">{copy.welcome.getStarted}</StyledText>
             <ArrowRight size={22} color={colors.onPrimary} weight="bold" />
           </StyledView>
         </Button>

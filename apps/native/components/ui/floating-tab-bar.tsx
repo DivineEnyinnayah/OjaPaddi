@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { TouchableOpacity, Animated, useWindowDimensions, Platform, View } from 'react-native';
+import { TouchableOpacity, Animated, Platform, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useThemeColor } from '@/hooks/useThemeColor';
-import { cn } from '../../lib/utils';
+import { useResponsive } from '@/lib/responsive';
 import { StyledText } from './styled';
 
 type TabIcon = keyof typeof Ionicons.glyphMap;
@@ -24,9 +24,9 @@ const TAB_CONFIG: Record<string, { label: string; activeIcon: TabIcon; inactiveI
 };
 
 export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth, isXs, isTablet } = useResponsive();
   const colors = useThemeColor();
-  const margin = 16;
+  const horizontalMargin = isTablet ? Math.round((screenWidth - 640) / 2) : 16;
 
   const routes = useMemo(
     () => state.routes.filter((r): r is (typeof state.routes)[number] => r.name in TAB_CONFIG),
@@ -34,7 +34,8 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
   );
 
   const tabCount = routes.length;
-  const tabWidth = (screenWidth - margin * 2 - 16) / tabCount;
+  const usableWidth = screenWidth - horizontalMargin * 2 - 16;
+  const tabWidth = usableWidth / tabCount;
 
   const indicatorAnim = useRef(new Animated.Value(0)).current;
 
@@ -58,9 +59,9 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
     <View
       style={{
         position: 'absolute',
-        bottom: insets.bottom + 16,
-        left: margin,
-        right: margin,
+        bottom: insets.bottom + 12,
+        left: horizontalMargin,
+        right: horizontalMargin,
       }}
     >
       <View
@@ -68,6 +69,8 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
           flexDirection: 'row',
           alignItems: 'center',
           borderRadius: 28,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.outlineVariant,
           backgroundColor: colors.tabBarBg,
           paddingHorizontal: 8,
           paddingVertical: 8,
@@ -87,9 +90,9 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
         <Animated.View
           style={{
             position: 'absolute',
-            borderRadius: 22,
+            borderRadius: 20,
             width: tabWidth,
-            height: 44,
+            height: 52,
             backgroundColor: colors.tabIndicatorBg,
             transform: [{ translateX: indicatorAnim }],
           }}
@@ -105,19 +108,21 @@ export function FloatingTabBar({ state, navigation, insets }: TabBarProps) {
               accessibilityRole="tab"
               accessibilityState={{ selected: isFocused }}
               accessibilityLabel={config.label}
-              style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 44, gap: 1 }}
-              activeOpacity={0.6}
+              style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: 52, gap: 2 }}
+              activeOpacity={0.65}
             >
               <Ionicons
                 name={isFocused ? config.activeIcon : config.inactiveIcon}
-                size={24}
+                size={isXs ? 20 : 24}
                 color={isFocused ? colors.tabActiveIcon : colors.tabInactiveIcon}
               />
               <StyledText
-                className={cn(
-                  'text-label-sm font-label',
-                  isFocused ? 'font-semibold text-on-surface' : 'text-on-surface-variant'
-                )}
+                className={
+                  isXs
+                    ? 'text-[10px] leading-[12px] font-label text-on-surface-variant'
+                    : `text-label-sm font-label ${isFocused ? 'font-semibold text-on-surface' : 'text-on-surface-variant'}`
+                }
+                maxFontSizeMultiplier={1.2}
               >
                 {config.label}
               </StyledText>

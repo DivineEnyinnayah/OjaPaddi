@@ -81,69 +81,69 @@ export interface ThemeColors {
 
 const LIGHT_COLORS: ThemeColors = {
   // Core surfaces
-  background: '#f1fcf7',
-  surface: '#f1fcf7',
-  surfaceDim: '#d1ddd8',
-  surfaceContainerLowest: '#ffffff',
-  surfaceContainerLow: '#ebf6f1',
-  surfaceContainer: '#e5f0eb',
-  surfaceContainerHigh: '#dfeae5',
-  surfaceContainerHighest: '#e0e4dd',
-  surfaceVariant: '#e0e4dd',
+  background: '#FAFAF7',
+  surface: '#FAFAF7',
+  surfaceDim: '#E4E2DA',
+  surfaceContainerLowest: '#FFFFFF',
+  surfaceContainerLow: '#E7F1EC',
+  surfaceContainer: '#E7F1EC',
+  surfaceContainerHigh: '#DCEBE4',
+  surfaceContainerHighest: '#CDE0D4',
+  surfaceVariant: '#E4E2DA',
 
   // On-surface
-  onBackground: '#181d19',
-  onSurface: '#181d19',
-  onSurfaceVariant: '#404940',
+  onBackground: '#14201C',
+  onSurface: '#14201C',
+  onSurfaceVariant: '#5C6B66',
 
   // Outline
-  outline: '#707a70',
-  outlineVariant: '#bfc9c2',
+  outline: '#5C6B66',
+  outlineVariant: '#E4E2DA',
 
   // Primary
-  primary: '#2e8b57',
-  onPrimary: '#ffffff',
-  primaryContainer: '#bdf3d8',
-  onPrimaryContainer: '#002111',
+  primary: '#1F6F5C',
+  onPrimary: '#FFFFFF',
+  primaryContainer: '#E7F1EC',
+  onPrimaryContainer: '#154E40',
 
   // Secondary
-  secondary: '#835500',
-  onSecondary: '#ffffff',
-  secondaryContainer: '#feae2c',
-  onSecondaryContainer: '#6b4500',
+  secondary: '#D97706',
+  onSecondary: '#FFFFFF',
+  secondaryContainer: '#FDE9C8',
+  onSecondaryContainer: '#6B4500',
 
   // Tertiary
-  tertiary: '#782c38',
-  onTertiary: '#ffffff',
-  tertiaryContainer: '#96434f',
-  onTertiaryContainer: '#ffcace',
+  tertiary: '#154E40',
+  onTertiary: '#FFFFFF',
+  tertiaryContainer: '#E7F1EC',
+  onTertiaryContainer: '#154E40',
 
   // Error
-  error: '#ba1a1a',
-  onError: '#ffffff',
-  errorContainer: '#ffdad6',
-  onErrorContainer: '#93000a',
+  error: '#B42318',
+  onError: '#FFFFFF',
+  errorContainer: '#FDE8E4',
+  onErrorContainer: '#B42318',
 
   // Success
-  success: '#2e7d32',
-  onSuccess: '#ffffff',
-  successContainer: '#e8f5e9',
-  onSuccessContainer: '#1b5e20',
+  success: '#1F6F5C',
+  onSuccess: '#FFFFFF',
+  successContainer: '#E7F1EC',
+  onSuccessContainer: '#154E40',
 
   // Inverse
-  inverseSurface: '#2d322d',
-  inverseOnSurface: '#eef2eb',
-  inversePrimary: '#89d89e',
+  inverseSurface: '#154E40',
+  inverseOnSurface: '#FFFFFF',
+  inversePrimary: '#A7D9BE',
 
   // Special semantic
-  tabActiveIcon: '#2E8B57',
-  tabInactiveIcon: '#9CA3AF',
-  tabBarBg: '#ffffff',
-  tabIndicatorBg: 'rgba(46, 139, 87, 0.1)',
-  tabBarShadowColor: '#000000',
-  tabBarShadowOpacity: 0.12,
-  tabBarElevation: 10,
-  emptyStateIcon: '#D4D4D4',
+  tabActiveIcon: '#1F6F5C',
+  tabInactiveIcon: '#9AA6A0',
+  tabBarBg: '#FFFFFF',
+  tabIndicatorBg: 'rgba(31, 111, 92, 0.12)',
+  tabBarShadowColor: '#14201C',
+  tabBarShadowOpacity: 0.16,
+  tabBarElevation: 8,
+  emptyStateIcon: '#D2D0C7',
 
   // StatusBar
   statusBarStyle: 'dark',
@@ -151,69 +151,69 @@ const LIGHT_COLORS: ThemeColors = {
 
 const DARK_COLORS: ThemeColors = {
   // Core surfaces
-  background: '#121414',
-  surface: '#121414',
-  surfaceDim: '#121414',
-  surfaceContainerLowest: '#0e0e0e',
-  surfaceContainerLow: '#1a1c1c',
-  surfaceContainer: '#1e2020',
-  surfaceContainerHigh: '#282b2b',
-  surfaceContainerHighest: '#333535',
-  surfaceVariant: '#404943',
+  background: '#0F130F',
+  surface: '#0F130F',
+  surfaceDim: '#262D29',
+  surfaceContainerLowest: '#1D241F',
+  surfaceContainerLow: '#17251D',
+  surfaceContainer: '#17251D',
+  surfaceContainerHigh: '#1F2A23',
+  surfaceContainerHighest: '#26352D',
+  surfaceVariant: '#262D29',
 
   // On-surface
-  onBackground: '#e1e3e0',
-  onSurface: '#e1e3e0',
-  onSurfaceVariant: '#bfc9c1',
+  onBackground: '#EAF0EC',
+  onSurface: '#EAF0EC',
+  onSurfaceVariant: '#9AA6A0',
 
   // Outline
-  outline: '#8a938c',
-  outlineVariant: '#404943',
+  outline: '#9AA6A0',
+  outlineVariant: '#262D29',
 
   // Primary
-  primary: '#238546',
-  onPrimary: '#ffffff',
-  primaryContainer: '#114223',
-  onPrimaryContainer: '#a7f3c4',
+  primary: '#79C7A0',
+  onPrimary: '#0F130F',
+  primaryContainer: '#17251D',
+  onPrimaryContainer: '#A7D9BE',
 
   // Secondary
-  secondary: '#ebc23e',
-  onSecondary: '#3c2f00',
-  secondaryContainer: '#574500',
-  onSecondaryContainer: '#ffe087',
+  secondary: '#F2B84B',
+  onSecondary: '#2E2100',
+  secondaryContainer: '#332408',
+  onSecondaryContainer: '#F2B84B',
 
   // Tertiary
-  tertiary: '#c8c6c5',
-  onTertiary: '#303030',
-  tertiaryContainer: '#9d9b9a',
-  onTertiaryContainer: '#333333',
+  tertiary: '#A7D9BE',
+  onTertiary: '#0F130F',
+  tertiaryContainer: '#17251D',
+  onTertiaryContainer: '#A7D9BE',
 
   // Error
-  error: '#ffb4ab',
-  onError: '#690005',
-  errorContainer: '#93000a',
-  onErrorContainer: '#ffdad6',
+  error: '#FF8A7A',
+  onError: '#331B19',
+  errorContainer: '#331B19',
+  onErrorContainer: '#FF8A7A',
 
   // Success
-  success: '#66bb6a',
-  onSuccess: '#1b5e20',
-  successContainer: '#1b5e20',
-  onSuccessContainer: '#a5d6a7',
+  success: '#79C7A0',
+  onSuccess: '#0F130F',
+  successContainer: '#17251D',
+  onSuccessContainer: '#A7D9BE',
 
   // Inverse
-  inverseSurface: '#e1e3e0',
-  inverseOnSurface: '#2d322d',
-  inversePrimary: '#006e1c',
+  inverseSurface: '#EAF0EC',
+  inverseOnSurface: '#0F130F',
+  inversePrimary: '#1F6F5C',
 
   // Special semantic
-  tabActiveIcon: '#78dc77',
-  tabInactiveIcon: '#8a938c',
-  tabBarBg: '#1e2020',
-  tabIndicatorBg: 'rgba(120, 220, 119, 0.12)',
+  tabActiveIcon: '#79C7A0',
+  tabInactiveIcon: '#9AA6A0',
+  tabBarBg: '#1D241F',
+  tabIndicatorBg: 'rgba(121, 199, 160, 0.14)',
   tabBarShadowColor: '#000000',
-  tabBarShadowOpacity: 0.25,
-  tabBarElevation: 12,
-  emptyStateIcon: '#404943',
+  tabBarShadowOpacity: 0.28,
+  tabBarElevation: 10,
+  emptyStateIcon: '#404A43',
 
   // StatusBar
   statusBarStyle: 'light',

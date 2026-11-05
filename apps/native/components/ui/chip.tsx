@@ -14,15 +14,15 @@ export function Chip({
   ...props
 }: ChipProps) {
   const variantStyles = {
-    success: "bg-success-container border-success",
-    warning: "bg-secondary-container border-secondary",
-    error: "bg-error-container border-error",
-    default: "bg-surface-container border-outline-variant",
+    success: "bg-success-container border-primary/30",
+    warning: "bg-secondary-container border-secondary/40",
+    error: "bg-error-container border-error/40",
+    default: "bg-surface-container-low border-outline-variant",
   };
 
   const textStyles = {
     success: "text-on-success-container",
-    warning: "text-on-secondary-container",
+    warning: "text-secondary",
     error: "text-on-error-container",
     default: "text-on-surface-variant",
   };

@@ -1,9 +1,10 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { bearer } from "better-auth/plugins";
+import { bearer, emailOTP } from "better-auth/plugins";
 import { env } from "@ojapaddi/env/server";
 import { createDb } from "@ojapaddi/db";
 import * as schema from "@ojapaddi/db/schema";
+import { sendEmail } from "./email";
 import { dash } from "@better-auth/infra"
 
 /**
@@ -30,37 +31,7 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
-    // Passwords are hashed by Better Auth (bcrypt) into `account.password`.
-    // There is no plaintext or legacy hash to migrate.
     autoSignIn: true,
-    /**
-     * Delivers password-reset codes.
-     *
-     * This is the only way a user migrated from Supabase can set their first
-     * password, so it must be wired to a real transport — the code is the sole
-     * proof that the requester controls the inbox.
-     */
-    sendResetPassword: async ({ user, token }) => {
-      // We derive a 6-digit code from the token to keep the UX consistent
-      // while using Better Auth's secure token for the actual reset.
-      const code = token.slice(0, 6).toUpperCase();
-      
-      await sendEmail({
-        to: user.email,
-        subject: "Reset your OjaPaddi password",
-        text: [
-          "Hi,",
-          "",
-          "Use this code to set a new password for your OjaPaddi account:",
-          "",
-          `    ${code}`,
-          "",
-          "It expires in 10 minutes.",
-          "",
-          "If you did not request this, you can ignore this email.",
-        ].join("\n"),
-      });
-    },
   },
 
   session: {
@@ -94,6 +65,31 @@ export const auth = betterAuth({
 
   plugins: [
     bearer(),
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        if (type === "forget-password") {
+          await sendEmail({
+            to: email,
+            subject: "Reset your OjaPaddi password",
+            text: [
+              "Hi,",
+              "",
+              "Use this code to set a new password for your OjaPaddi account:",
+              "",
+              `    ${otp}`,
+              "",
+              "It expires in 10 minutes.",
+              "",
+              "If you did not request this, you can ignore this email.",
+            ].join("\n"),
+          });
+        }
+      },
+      // Security Hardening
+      otpLength: 6,
+      expiresIn: 600, // 10 minutes
+      allowedAttempts: 3, // Prevent brute force
+    }),
     dash({ apiKey: env.BETTER_AUTH_API_KEY }),
   ],
 });

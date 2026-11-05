@@ -17,12 +17,12 @@ export function Surface({
   ...props
 }: SurfaceProps) {
   const variantStyles = {
-    primary: "bg-surface-container-lowest shadow-sm shadow-black/5",
-    secondary: "bg-surface-container-low shadow-md shadow-black/8",
-    outline: "bg-surface-container-lowest border border-outline-variant/60 shadow-sm",
+    primary: "bg-surface-container-lowest border border-outline-variant/40",
+    secondary: "bg-surface-container-low border border-primary/20",
+    outline: "bg-surface-container-lowest border border-outline-variant",
     "primary-solid": "bg-primary",
-    "secondary-solid": "bg-secondary-container",
-    warning: "bg-error-container border border-error/30",
+    "secondary-solid": "bg-secondary",
+    warning: "bg-error-container border border-error/40",
   };
 
   return (

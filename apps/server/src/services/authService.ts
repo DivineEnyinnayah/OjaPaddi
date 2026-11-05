@@ -1,9 +1,7 @@
 import type { Database } from "@ojapaddi/db";
-import crypto from "node:crypto";
 import { account, businesses, user, verification } from "@ojapaddi/db/schema";
 import { auth } from "@ojapaddi/auth";
-import { and, eq, or, sql } from "drizzle-orm";
-import { sendEmail } from "@ojapaddi/auth/email";
+import { and, eq, or } from "drizzle-orm";
 
 /**
  * Raised when a user account exists but has never set a password — the state
@@ -196,8 +194,7 @@ async function hasPasswordlessAccount(db: Database, email: string): Promise<bool
 /**
  * Emails a password-reset code.
  *
- * Bypasses Better Auth's internal background queue to ensure delivery on
- * Cloudflare Workers. Manually manages the verification token.
+ * Uses the Better Auth Email OTP plugin to generate and manage a 6-digit code.
  */
 export async function requestPasswordResetCode(db: Database, email: string) {
   const normalizedEmail = email.toLowerCase();
@@ -210,71 +207,42 @@ export async function requestPasswordResetCode(db: Database, email: string) {
 
   if (!known) return;
 
-  // Generate a 6-digit code for the user and a long secure token for the API
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const token = crypto.randomBytes(32).toString("hex");
-  const value = `${code}:${token}`;
-
-  // Store in verification table (expires in 10 minutes)
-  await db.insert(verification).values({
-    id: crypto.randomUUID(),
-    identifier: normalizedEmail,
-    value,
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-  });
-
-  await sendEmail({
-    to: normalizedEmail,
-    subject: "Reset your OjaPaddi password",
-    text: [
-      "Hi,",
-      "",
-      "Use this code to set a new password for your OjaPaddi account:",
-      "",
-      `    ${code}`,
-      "",
-      "It expires in 10 minutes.",
-      "",
-      "If you did not request this, you can ignore this email.",
-    ].join("\n"),
+  await auth.api.sendVerificationOTP({
+    body: {
+      email: normalizedEmail,
+      type: "forget-password",
+    },
   });
 }
 
 /** Validates a reset code and sets the new password. */
-export async function resetPassword(db: Database, token: string, newPassword: string) {
-  console.log(`[AUTH] Attempting reset with code: ${token}`);
-  
-  // The 'token' passed from the app is the 6-digit code.
-  // We look for a verification record that starts with this code.
+export async function resetPassword(db: Database, otp: string, newPassword: string) {
+  // Use the Email OTP plugin's specialized reset method.
+  // Since the plugin handles its own DB lookup by email + otp,
+  // we first need to find the email associated with this OTP.
   const [v] = await db.select()
     .from(verification)
-    .where(and(
-      sql`value LIKE ${token + ":%"}`,
-      sql`expires_at > ${Date.now()}`
-    ))
+    .where(eq(verification.value, otp))
     .limit(1);
 
   if (!v) {
-    console.error(`[AUTH] No valid verification record found for code: ${token}`);
+    console.error(`[AUTH] No valid OTP found for code: ${otp}`);
     throw new Error("Invalid or expired verification code");
   }
 
-  console.log(`[AUTH] Found matching token: ${v.value.split(":")[1].slice(0, 5)}...`);
-
-  const [, longToken] = v.value.split(":");
-
   try {
-    await auth.api.resetPassword({
-      body: { token: longToken, newPassword },
+    await auth.api.resetPasswordEmailOTP({
+      body: {
+        email: v.identifier,
+        otp,
+        password: newPassword,
+      },
     });
-    console.log(`[AUTH] Better Auth successfully reset password for ${v.identifier}`);
+    console.log(`[AUTH] Better Auth successfully reset password via OTP for ${v.identifier}`);
   } catch (e: any) {
-    console.error(`[AUTH] Better Auth rejected token ${longToken.slice(0, 5)}...: ${e.message}`);
+    console.error(`[AUTH] Better Auth rejected OTP ${otp}: ${e.message}`);
     throw e;
   }
-
-  // Cleanup
-  await db.delete(verification).where(eq(verification.id, v.id));
 }
 
 /**

@@ -7,6 +7,8 @@ const emptyToUndefined = z.preprocess(
 );
 
 export const CreateProductSchema = z.object({
+  // Client-generated UUID so retries/duplicates collapse into one row.
+  id: z.string().uuid("Invalid product ID").optional(),
   name: z.string().min(1, "Product name is required"),
   description: emptyToUndefined,
   sku: emptyToUndefined,

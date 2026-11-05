@@ -16,8 +16,7 @@ import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StyledView, StyledText, StyledTouchableOpacity, StyledImage } from '@/components/ui/styled';
-import { ILLUSTRATIONS } from '@/constants/illustrations';
+import { StyledView, StyledText, StyledTouchableOpacity } from '@/components/ui/styled';
 import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
 import { formatCurrency } from '@/lib/currency';
 
@@ -208,13 +207,9 @@ export default function HomeScreen() {
             {summary.totalProducts === 0 ? (
               <StyledView className="mb-6">
                 <StyledView className="bg-primary/5 rounded-2xl border-2 border-dashed border-primary/30 p-6 items-center">
-                  <StyledView className="size-16 rounded-full bg-primary/10 items-center justify-center mb-4">
-                    <StyledImage
-                      source={{ uri: ILLUSTRATIONS.homeWelcome }}
-                      className="size-11"
-                      resizeMode="contain"
-                    />
-                  </StyledView>
+                <StyledView className="size-16 rounded-full bg-primary/10 border border-primary/20 items-center justify-center mb-4">
+                  <Package size={32} color={colors.primary} weight="duotone" />
+                </StyledView>
                   <StyledText className="text-h2 font-bold text-on-surface text-center mb-2 text-balance">Welcome to OjaPaddi!</StyledText>
                   <StyledText className="text-body-lg text-on-surface-variant text-center mb-6 text-pretty">
                     Your first step to market success — add your first product and start selling!
@@ -250,11 +245,9 @@ export default function HomeScreen() {
 
                 {!summary.topProducts || summary.topProducts.length === 0 ? (
                   <StyledView className="p-8 items-center bg-surface-container-lowest rounded-2xl border border-dashed border-outline-variant">
-                    <StyledImage
-                      source={{ uri: ILLUSTRATIONS.noSalesYet }}
-                      className="size-16"
-                      resizeMode="contain"
-                    />
+                    <StyledView className="size-16 rounded-2xl bg-surface-container-lowest border border-outline-variant items-center justify-center">
+                      <Receipt size={30} color={colors.primary} weight="duotone" />
+                    </StyledView>
                     <StyledText className="text-on-surface-variant text-body-sm font-medium mt-2 text-pretty">No sales recorded yet.</StyledText>
                     <StyledText className="text-on-surface-variant text-body-sm mt-1 text-pretty">Start by recording your first sale!</StyledText>
                   </StyledView>

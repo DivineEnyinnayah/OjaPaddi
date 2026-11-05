@@ -255,6 +255,7 @@ export default function RecordSaleScreen() {
       return;
     }
 
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       const expectedDaysNum = parseInt(expectedPaymentDays) || 14;

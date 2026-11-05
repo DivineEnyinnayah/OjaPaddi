@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Animated,
   Share,
-  useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -44,6 +43,7 @@ import { Surface } from "@/components/ui/surface";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/currency";
+import { useResponsive } from "@/lib/responsive";
 
 const StyledView = withUniwind(View);
 const StyledText = withUniwind(Text);
@@ -119,8 +119,12 @@ export default function AnalyticsScreen() {
   const colors = useThemeColor();
   const toast = useToast();
   const router = useRouter();
-  const { width: screenWidth } = useWindowDimensions();
-  const CHART_WIDTH = screenWidth - 64;
+  const responsive = useResponsive();
+  const { width: screenWidth, gutter } = responsive;
+  // Keep the chart readable on tablets instead of stretching it across the full width.
+  const CHART_WIDTH = responsive.isTablet
+    ? Math.min(screenWidth - gutter * 2, 720)
+    : screenWidth - gutter * 2;
   const [period, setPeriod] = React.useState<Period>("week");
   const [chartData, setChartData] = React.useState<RevenueChartPoint[]>([]);
   const [chartLoading, setChartLoading] = React.useState(false);

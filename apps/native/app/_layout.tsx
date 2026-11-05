@@ -11,6 +11,19 @@ import {
   HankenGrotesk_700Bold,
   HankenGrotesk_800ExtraBold,
 } from '@expo-google-fonts/hanken-grotesk';
+import {
+  LeagueSpartan_400Regular,
+  LeagueSpartan_600SemiBold,
+  LeagueSpartan_700Bold,
+  LeagueSpartan_800ExtraBold,
+  LeagueSpartan_900Black,
+} from '@expo-google-fonts/league-spartan';
+import {
+  IBMPlexMono_400Regular,
+  IBMPlexMono_500Medium,
+  IBMPlexMono_600SemiBold,
+  IBMPlexMono_700Bold,
+} from '@expo-google-fonts/ibm-plex-mono';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuthStore } from '../stores/authStore';
 import { AppThemeProvider, useAppTheme } from '@/contexts/app-theme-context';
@@ -37,6 +50,15 @@ function RootLayoutInner() {
     HankenGrotesk_600SemiBold,
     HankenGrotesk_700Bold,
     HankenGrotesk_800ExtraBold,
+    LeagueSpartan_400Regular,
+    LeagueSpartan_600SemiBold,
+    LeagueSpartan_700Bold,
+    LeagueSpartan_800ExtraBold,
+    LeagueSpartan_900Black,
+    IBMPlexMono_400Regular,
+    IBMPlexMono_500Medium,
+    IBMPlexMono_600SemiBold,
+    IBMPlexMono_700Bold,
   });
 
 

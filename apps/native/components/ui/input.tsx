@@ -33,7 +33,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(
       <StyledView className={cn("w-full mb-4", containerClassName)}>
         {label && (
           <StyledText
-            className="text-body-sm text-on-surface font-semibold mb-2 ml-1"
+            className="text-body-sm text-on-surface font-label mb-2 ml-1"
             // Visually paired with the input, but not programmatically
             // associated with it — the input carries its own label instead.
             accessibilityElementsHidden
@@ -44,7 +44,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(
         )}
         <StyledView
           className={cn(
-            "w-full rounded-input border bg-surface-container-lowest px-4 h-12 justify-center",
+            "w-full rounded-input border bg-surface-container-lowest px-4 min-h-14 justify-center",
             error ? "border-error" : "border-outline-variant",
             className
           )}

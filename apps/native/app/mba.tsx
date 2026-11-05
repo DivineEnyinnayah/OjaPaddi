@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   Share,
-  useWindowDimensions,
   Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -28,6 +27,7 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import { useToast } from "@/components/ui/toast";
 import { Container } from "@/components/container";
 import { Surface } from "@/components/ui/surface";
+import { useResponsive } from "@/lib/responsive";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { StyledView, StyledText, StyledTouchableOpacity } from "@/components/ui/styled";
@@ -39,7 +39,8 @@ export default function MBAScreen() {
   const colors = useThemeColor();
   const toast = useToast();
   const router = useRouter();
-  const { width: screenWidth } = useWindowDimensions();
+  const responsive = useResponsive();
+  const { width: screenWidth } = responsive;
 
   const [activeTab, setActiveTab] = useState<Tab>("recommendations");
   const [minSupport, setMinSupport] = useState<number>(0.1);

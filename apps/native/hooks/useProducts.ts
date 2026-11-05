@@ -28,6 +28,7 @@ export interface ProductsResponse {
 }
 
 export interface ProductInput {
+  id?: string;
   name: string;
   description?: string;
   sku?: string;
@@ -36,6 +37,18 @@ export interface ProductInput {
   costPrice?: number;
   quantity: number;
   lowStockThreshold?: number;
+}
+
+export function generateProductId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  // Fallback for Hermes without randomUUID: v4-style UUID from Math.random.
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
 export function useProducts() {
@@ -94,10 +107,13 @@ export function useProducts() {
   const addProduct = async (productData: ProductInput) => {
     setIsLoading(true);
     try {
+      // retries: 0 — automatic POST retries created duplicate products when
+      // the insert succeeded but the response was lost. Idempotency is now
+      // handled by the client-generated `id` (server returns existing row).
       const result = await apiRequest<Product>('/products', {
         method: 'POST',
-        body: JSON.stringify(productData),
-      });
+        body: JSON.stringify({ id: generateProductId(), ...productData }),
+      }, { retries: 0 });
 
       if (result.success && result.data) {
         // Non-critical: refresh the list in the background, don't let it mask success

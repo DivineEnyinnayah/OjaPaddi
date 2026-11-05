@@ -7,9 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
 import { Chip } from '@/components/ui/chip';
-import { Plus, User, ShoppingCart, Storefront, Bell } from 'phosphor-react-native';
+import { Plus, User, ShoppingCart, Storefront, Bell, Receipt } from 'phosphor-react-native';
 import { withUniwind } from 'uniwind';
-import { ILLUSTRATIONS } from '@/constants/illustrations';
 import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -298,11 +297,9 @@ export default function SalesScreen() {
         }
         ListEmptyComponent={
           <StyledView className="items-center mt-24 px-6">
-            <Image
-              source={{ uri: ILLUSTRATIONS.emptySales }}
-              style={{ width: 80, height: 80 }}
-              resizeMode="contain"
-            />
+            <StyledView className="size-20 rounded-3xl bg-surface-container-lowest border border-outline-variant items-center justify-center mb-4">
+              <Receipt size={40} color={colors.onSurfaceVariant} weight="duotone" />
+            </StyledView>
             <StyledText className="text-body-lg text-on-surface-variant mt-4 text-center text-pretty">
               No sales recorded yet. Record your first sale!
             </StyledText>

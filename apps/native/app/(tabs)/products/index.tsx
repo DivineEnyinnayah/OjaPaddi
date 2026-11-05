@@ -15,10 +15,10 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/container';
 import { Surface } from '@/components/ui/surface';
-import { MagnifyingGlass, Plus } from 'phosphor-react-native';
+import { MagnifyingGlass, Plus, Package } from 'phosphor-react-native';
 import { withUniwind } from 'uniwind';
 import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
-import { ILLUSTRATIONS } from '@/constants/illustrations';
+import { useResponsive } from '@/lib/responsive';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/currency';
 
@@ -43,6 +43,8 @@ export default function ProductsScreen() {
   const router = useRouter();
   const { products, isLoading, error, fetchProducts } = useProducts();
   const colors = useThemeColor();
+  const responsive = useResponsive();
+  const numColumns = responsive.isTablet ? 4 : 2;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -269,8 +271,9 @@ export default function ProductsScreen() {
         data={filteredProducts}
         keyExtractor={(item) => item.id}
         renderItem={renderProductCard}
-        numColumns={2}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+        key={numColumns}
+        numColumns={numColumns}
+        contentContainerStyle={{ paddingHorizontal: responsive.gutter - 8, paddingBottom: 16 }}
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
@@ -281,13 +284,11 @@ export default function ProductsScreen() {
         }
         ListEmptyComponent={
           <StyledView className="items-center mt-16 px-6">
-            <Image
-              source={{ uri: ILLUSTRATIONS.emptyProducts }}
-              style={{ width: 80, height: 80 }}
-              resizeMode="contain"
-            />
+            <StyledView className="size-24 rounded-3xl bg-surface-container-low border border-outline-variant items-center justify-center">
+              <Package size={44} color={colors.onSurfaceVariant} weight="duotone" />
+            </StyledView>
             <StyledText className="text-body-lg text-on-surface-variant mt-4 text-center text-pretty">
-              No products yet
+              No stock yet
             </StyledText>
             <Button
               size="lg"

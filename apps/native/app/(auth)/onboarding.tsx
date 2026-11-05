@@ -20,7 +20,6 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { apiRequest, apiFormDataRequest } from '../../lib/api';
 import { useAuthStore, type User } from '../../stores/authStore';
 import { StyledView, StyledText, StyledTouchableOpacity, StyledTextInput, StyledImage, StyledKeyboardAvoidingView } from '@/components/ui/styled';
-import { ILLUSTRATIONS } from '@/constants/illustrations';
 
 interface FormErrors {
   businessName?: string;
@@ -366,14 +365,10 @@ export default function OnboardingScreen() {
     </StyledView>
   );
 
-  const StepHero = ({ illustration, caption }: { illustration: string; caption: string }) => (
+  const StepHero = ({ icon, caption }: { icon: React.ReactNode; caption: string }) => (
     <StyledView className="items-center mb-5">
-      <StyledView className="w-20 h-20 rounded-3xl bg-primary-container items-center justify-center mb-3">
-        <StyledImage
-          source={{ uri: illustration }}
-          style={{ width: 56, height: 56 }}
-          resizeMode="contain"
-        />
+      <StyledView className="size-20 rounded-3xl bg-primary-container items-center justify-center mb-3">
+        {icon}
       </StyledView>
       <StyledText className="text-body-lg text-on-surface-variant text-center text-pretty">{caption}</StyledText>
     </StyledView>
@@ -401,7 +396,7 @@ export default function OnboardingScreen() {
     <StyledView>
       <Animated.View style={stagger(0)}>
         <StepHero
-          illustration={ILLUSTRATIONS.onboardingStore}
+          icon={<Storefront size={40} color={colors.primary} weight="duotone" />}
           caption="Let's set up your store in just a few steps!"
         />
       </Animated.View>
@@ -450,7 +445,7 @@ export default function OnboardingScreen() {
     <StyledView>
       <Animated.View style={stagger(0)}>
         <StepHero
-          illustration={ILLUSTRATIONS.onboardingContact}
+          icon={<Phone size={40} color={colors.primary} weight="duotone" />}
           caption="Customers reach you through WhatsApp. Let's set that up!"
         />
       </Animated.View>
@@ -509,7 +504,7 @@ export default function OnboardingScreen() {
     <StyledView>
       <Animated.View style={stagger(0)}>
         <StepHero
-          illustration={ILLUSTRATIONS.onboardingDone}
+          icon={<Check size={40} color={colors.primary} weight="duotone" />}
           caption="You're almost ready! Review and finish setup."
         />
       </Animated.View>
