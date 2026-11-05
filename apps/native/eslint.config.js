@@ -24,4 +24,13 @@ module.exports = defineConfig([
       "no-unused-vars": "off",
     },
   },
+  {
+    // The offline queue / retry transport logs its decisions with a structured
+    // `[API]` prefix. That is intentional transport observability, not a stray
+    // debug log, so `log` is permitted at this one boundary.
+    files: ["lib/api.ts"],
+    rules: {
+      "no-console": ["error", { allow: ["warn", "error", "log"] }],
+    },
+  },
 ]);
