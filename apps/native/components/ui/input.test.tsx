@@ -23,7 +23,7 @@ describe("Input", () => {
   it("marks the field invalid when an error is present", () => {
     render(<Input label="Email" error="Required" testID="email" />);
     const field = screen.getByTestId("email");
-    expect(field.props.accessibilityState?.invalid ?? field.props["aria-invalid"]).toBe(true);
+    expect(field.props["aria-invalid"]).toBe(true);
   });
 
   it("does not render an error when none is provided", () => {

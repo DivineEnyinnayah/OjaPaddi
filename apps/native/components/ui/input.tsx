@@ -59,7 +59,6 @@ export const Input = React.forwardRef<TextInput, InputProps>(
             className={cn("flex-1 py-3 font-body text-body text-ink", inputClassName)}
             placeholderTextColor={colors.muted}
             accessibilityLabel={accessibilityLabel ?? label ?? props.placeholder}
-            accessibilityState={{ invalid: !!error }}
             aria-invalid={!!error}
             {...props}
           />
