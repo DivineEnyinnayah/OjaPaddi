@@ -8,7 +8,7 @@
 
 **Mobile:** React Native + Expo SDK 55, Expo Router v4 (file-based), Zustand, Tailwind v4 + uniwind (NativeWind v5 compat), AsyncStorage (not MMKV — Expo Go compat), SecureStore (tokens only), Expo Image Picker, Expo Vector Icons / Lucide.
 
-**Backend:** HonoJS, Drizzle ORM + **SQLite (Turso/libSQL)**, **Better Auth**, Zod validation, `@t3-oss/env-core` for typed env vars. Image storage on **Cloudflare R2**.
+**Backend:** HonoJS, Drizzle ORM + **SQLite (Turso/libSQL)**, **Better Auth**, Zod validation, `@t3-oss/env-core` for typed env vars. Image storage on **Turso** (BLOB rows in the `images` table).
 
 > Supabase was removed on the SQLite/Better Auth migration. It had only ever been used for Auth and file storage. See `DEPLOY.md`.
 
@@ -39,7 +39,7 @@
 | `pnpm build` | Build all apps |
 | `pnpm smoke` | End-to-end suite against a throwaway local SQLite file (58 assertions) |
 | `pnpm migrate:data -- --dry-run` | Preview the Supabase → SQLite data migration |
-| `pnpm migrate:images -- --dry-run` | Preview the Supabase Storage → R2 image copy |
+| `pnpm --filter @ojapaddi/server migrate:images:turso -- --dry-run` | Preview moving existing remote image URLs into Turso blobs |
 
 **Server dev server:** runs on `http://0.0.0.0:3001` (configurable via `PORT` env).
 **Native dev server:** via Expo on `http://localhost:8081`.
@@ -91,12 +91,12 @@
 - **Critical rules:** every query scoped by `business_id`; `sale_items` stores price snapshots (never join back to live product prices); product delete = soft delete (`is_active: false`); stock decrement in transaction.
 - **FK behaviour:** SQLite has no cascades in the engine, but the generated migration declares `ON DELETE CASCADE` / `SET NULL`. Drizzle enables `PRAGMA foreign_keys` per connection.
 
-## Images (Cloudflare R2)
+## Images (Turso)
 
-- `products.image_url` and `businesses.logo_url` store the **bare object key** (e.g. `products/<businessId>/<file>.jpg`), never a full URL.
-- `resolveImageUrl()` prefixes it with `R2_PUBLIC_URL` on read; values already starting with `http` are passed through untouched (legacy Supabase data).
-- Uploads go through `uploadImage(c.env.IMAGES, key, buffer, contentType)` (binding name `IMAGES`, bucket `ojapaddi-images`).
-- Because R2 reuses the same key namespace, migrating images from Supabase Storage does **not** require rewriting any rows.
+- `products.image_url` and `businesses.logo_url` store either `/v1/images/<id>` (new uploads) or an absolute `http(s)://` URL (legacy rows not yet migrated).
+- Uploads are shrunk to **≤800px JPEG** on-device (`apps/native/lib/image.ts`, via `expo-image-manipulator`) before hitting the API, then stored as BLOBs by `saveImage()` in `apps/server/src/services/storageService.ts`. The server re-validates type and a 2 MB cap.
+- Images are served by a **public, unauthenticated** `GET /v1/images/:id` endpoint with `Cache-Control: public, max-age=31536000, immutable`. The native app prefixes stored paths with the API origin via `imageUri()` (`apps/native/lib/image.ts`) before handing them to `<Image>`.
+- `resolveImageUrl()` passes stored values through untouched; legacy Cloudinary/R2 absolute URLs are migrated to Turso via `pnpm --filter @ojapaddi/server migrate:images:turso -- --dry-run` (then without the flag).
 
 ---
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { useProducts, type Product } from './useProducts';
 import { useToast } from '@/components/ui/toast';
+import { prepareImageForUpload } from '../lib/image';
 
 export interface FormErrors {
   name?: string;
@@ -122,7 +123,8 @@ export function useProductForm(editId?: string) {
         toast.error("Please select an image under 2 MB.", "Image Too Large");
         return;
       }
-      setImageUri(asset.uri);
+      const prepared = await prepareImageForUpload(asset);
+      setImageUri(prepared.uri);
       if (errors.image) {
         setErrors(prev => ({ ...prev, image: undefined }));
       }

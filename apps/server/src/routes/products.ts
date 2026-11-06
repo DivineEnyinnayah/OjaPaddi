@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, adjustStock, getCategories } from "../services/productService";
-import { uploadImage, validateImageFile } from "../services/storageService";
+import { saveImage, validateImageFile } from "../services/storageService";
 import { authMiddleware, type AuthContext } from "../middleware/auth";
 import { validate } from "../middleware/validate";
 import { CreateProductSchema, UpdateProductSchema, AdjustStockSchema } from "../validators/products";
@@ -126,12 +126,8 @@ productRoutes.post("/:id/image", async (c) => {
     const buffer = Buffer.from(arrayBuffer);
     const contentType = file.type;
 
-    const filename = `${productId}-${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-    const objectKey = `products/${businessId}/${filename}`;
-
-    // Upload to Cloudinary and store its stable public URL.
-    const logoUrl = await uploadImage(c.env.IMAGES, objectKey, buffer, contentType);
-    const updatedProduct = await updateProduct(db, businessId, productId, { imageUrl: logoUrl });
+    const imageUrl = await saveImage(db, businessId, "product", buffer, contentType);
+    const updatedProduct = await updateProduct(db, businessId, productId, { imageUrl });
 
     return c.json({ success: true, data: updatedProduct }, 200);
   } catch (error: unknown) {

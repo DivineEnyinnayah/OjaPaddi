@@ -15,6 +15,7 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
 import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
+import { imageUri as imageUriFromStore } from '@/lib/image';
 import { Input } from '@/components/ui/input';
 import { useProducts } from '@/hooks/useProducts';
 import { useProductForm } from '@/hooks/useProductForm';
@@ -219,7 +220,7 @@ export default function AddProductScreen() {
         >
           {(imageUri || existingImageUrl) ? (
             <StyledImage
-              source={{ uri: imageUri || existingImageUrl! }}
+              source={{ uri: imageUri || imageUriFromStore(existingImageUrl)! }}
               className="w-full h-full"
               resizeMode="cover"
               accessible
@@ -419,7 +420,7 @@ export default function AddProductScreen() {
               >
                 {(imageUri || existingImageUrl) ? (
                   <StyledImage
-                    source={{ uri: imageUri || existingImageUrl! }}
+                    source={{ uri: imageUri || imageUriFromStore(existingImageUrl)! }}
                     className="w-full h-full"
                     resizeMode="cover"
                     accessible

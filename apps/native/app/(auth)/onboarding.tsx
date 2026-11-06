@@ -18,6 +18,7 @@ import {
 } from 'phosphor-react-native';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { apiRequest, apiFormDataRequest } from '../../lib/api';
+import { prepareImageForUpload } from '../../lib/image';
 import { useAuthStore, type User } from '../../stores/authStore';
 import {
   StyledView,
@@ -247,15 +248,12 @@ export default function OnboardingScreen() {
         // Upload logo if one was selected
         if (logoAsset && result.data.user) {
           try {
-            const fileName = logoAsset.uri.split('/').pop() || 'logo.jpg';
-            const match = /\.(\w+)$/.exec(fileName);
-            const type = match ? `image/${match[1]}` : 'image/jpeg';
-
+            const prepared = await prepareImageForUpload(logoAsset);
             const logoFormData = new FormData();
             logoFormData.append('logo', {
-              uri: logoAsset.uri,
-              name: fileName,
-              type,
+              uri: prepared.uri,
+              name: prepared.name,
+              type: prepared.type,
             } as unknown as Blob);
 
             await apiFormDataRequest('/business/logo', logoFormData, 'POST');

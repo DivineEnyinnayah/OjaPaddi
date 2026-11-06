@@ -13,6 +13,7 @@ import { useProducts, type Product } from "../../../hooks/useProducts";
 import { buildProductShareMessage, shareViaWhatsApp } from "@/lib/whatsapp";
 import { radius, spacing } from "@/constants/tokens";
 import { formatCurrency } from "@/lib/currency";
+import { imageUri } from "@/lib/image";
 
 const StyledImage = withUniwind(Image);
 const StyledScrollView = withUniwind(ScrollView);
@@ -169,7 +170,7 @@ export default function ProductDetailScreen() {
           >
             {hasPhoto ? (
               <StyledImage
-                source={{ uri: product.imageUrl }}
+                source={{ uri: imageUri(product.imageUrl) }}
                 className="h-full w-full"
                 resizeMode="cover"
                 onError={() => setImageError(true)}

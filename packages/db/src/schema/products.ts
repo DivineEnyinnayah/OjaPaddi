@@ -56,5 +56,21 @@ export const products = sqliteTable(
     uniqueIndex("products_business_sku_uniq")
       .on(table.businessId, table.sku)
       .where(sql`${table.sku} IS NOT NULL`),
+    // Exact-copy guard for products without a SKU. Retries/double-submits must
+    // not be able to insert the same active item under new IDs. Price and
+    // description are part of the fingerprint so legitimate same-name packs
+    // with different pricing or descriptions are still allowed. Stock quantity
+    // is intentionally excluded because inventory changes after creation.
+    uniqueIndex("products_active_fingerprint_uniq")
+      .on(
+        table.businessId,
+        sql`lower(trim(${table.name}))`,
+        sql`coalesce(lower(trim(${table.description})), '')`,
+        sql`coalesce(lower(trim(${table.category})), '')`,
+        sql`coalesce(lower(trim(${table.sku})), '')`,
+        sql`printf('%.2f', cast(${table.price} as real))`,
+        sql`case when ${table.costPrice} is null or trim(${table.costPrice}) = '' then '' else printf('%.2f', cast(${table.costPrice} as real)) end`
+      )
+      .where(sql`${table.isActive} = 1`),
   ]
 );

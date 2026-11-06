@@ -22,6 +22,7 @@ if (!process.env.TURSO_DATABASE_URL.startsWith("file:") && process.env.SMOKE_ALL
 
 process.env.BETTER_AUTH_SECRET = process.env.BETTER_AUTH_SECRET ?? "smoke-test-secret-at-least-32-characters-long";
 process.env.BETTER_AUTH_URL = process.env.BETTER_AUTH_URL ?? "http://localhost:3001";
+process.env.BETTER_AUTH_API_KEY = process.env.BETTER_AUTH_API_KEY ?? "smoke-test-api-key";
 process.env.R2_PUBLIC_URL = process.env.R2_PUBLIC_URL ?? "https://images.example.com";
 process.env.NODE_ENV = "test";
 // Email is the ONLY way a reset code reaches a user. The suite intercepts the

@@ -3,6 +3,7 @@ export * from "./auth";
 
 // App tables
 export * from "./businesses";
+export * from "./images";
 export * from "./products";
 export * from "./customers";
 export * from "./sales";

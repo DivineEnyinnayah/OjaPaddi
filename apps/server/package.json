@@ -14,13 +14,14 @@
     "start": "node dist/server.js",
     "smoke": "tsx src/scripts/smoke.ts",
     "migrate:data": "tsx src/scripts/migrate-from-supabase.ts",
-    "migrate:images": "tsx src/scripts/migrate-images.ts"
+    "migrate:images": "tsx src/scripts/migrate-images.ts",
+    "migrate:images:turso": "tsx --env-file=.env src/scripts/migrate-images-to-turso.ts",
+    "dedupe:products": "tsx src/scripts/dedupe-products.ts"
   },
   "dependencies": {
     "@ojapaddi/auth": "workspace:*",
     "@ojapaddi/db": "workspace:*",
     "@ojapaddi/env": "workspace:*",
-    "cloudinary": "^2.11.0",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.8.2",
     "zod": "catalog:"
@@ -30,6 +31,7 @@
     "@types/node": "catalog:",
     "@types/pg": "^8.16.0",
     "pg": "^8.17.1",
+    "sharp": "^0.35.5",
     "tsdown": "^0.6.0",
     "tsx": "^4.19.0",
     "typescript": "catalog:",

@@ -105,8 +105,12 @@ export async function createProduct(db: Database, businessId: string, data: {
     if (code === "23502" || code === "SQLITE_CONSTRAINT_NOTNULL") {
       throw new Error(`Missing required field: ${error?.column ?? "unknown"}`);
     }
-    // Unique violation on the partial (business_id, sku) index.
+    // Unique violations: partial (business_id, sku) index or active-product fingerprint.
     if (code === "23505" || code === "SQLITE_CONSTRAINT_UNIQUE" || code === "SQLITE_CONSTRAINT_PRIMARYKEY") {
+      const msg = String(error?.message ?? "").toLowerCase();
+      if (msg.includes("products_active_fingerprint_uniq")) {
+        throw new Error("An identical active product already exists in your store.");
+      }
       throw new Error(`A product with this SKU already exists in your store.`);
     }
     throw new Error(`Failed to insert product: ${error?.message ?? String(error)}`);

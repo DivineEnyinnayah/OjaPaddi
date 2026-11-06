@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { getBusinessByUserId, updateBusiness } from "../services/businessService";
 import { authMiddleware, type AuthContext } from "../middleware/auth";
-import { uploadImage, validateImageFile } from "../services/storageService";
+import { saveImage, validateImageFile } from "../services/storageService";
 import { validate } from "../middleware/validate";
 import { UpdateBusinessSchema } from "../validators/business";
 import { UpdateStorefrontSettingsSchema, SlugSchema } from "../validators/slug";
@@ -86,12 +86,7 @@ businessRoutes.post("/logo", async (c) => {
     const buffer = Buffer.from(arrayBuffer);
     const contentType = file.type;
 
-    const filename = `logo-${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-    const objectKey = `business/${businessId}/${filename}`;
-
-    // R2 objects are served from a stable public URL, so storing it directly is
-    // safe — unlike the old signed-URL-into-DB behaviour which expired hourly.
-    const logoUrl = await uploadImage(c.env.IMAGES, objectKey, buffer, contentType);
+    const logoUrl = await saveImage(db, businessId, "business_logo", buffer, contentType);
 
     await updateBusiness(db, businessId, { logoUrl } as Record<string, unknown>);
 

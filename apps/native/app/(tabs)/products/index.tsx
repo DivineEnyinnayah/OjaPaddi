@@ -5,6 +5,7 @@ import { withUniwind } from "uniwind";
 import { MagnifyingGlass, Package, SortAscending, Plus } from "phosphor-react-native";
 import { useProducts, type Product } from "../../../hooks/useProducts";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { imageUri } from "@/lib/image";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/container";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -144,7 +145,7 @@ export default function ProductsScreen() {
           >
             {item.imageUrl ? (
               <StyledImage
-                source={{ uri: item.imageUrl }}
+                source={{ uri: imageUri(item.imageUrl) }}
                 className="h-full w-full rounded-input"
                 resizeMode="cover"
                 accessible

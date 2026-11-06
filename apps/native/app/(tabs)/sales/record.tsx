@@ -31,6 +31,7 @@ import { StyledView, StyledText, StyledTextInput, StyledTouchableOpacity, Styled
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/currency';
 import { TAB_BAR_OFFSET } from '@/lib/tab-bar';
+import { imageUri } from '@/lib/image';
 import { colorTokens, radius, typeScale, controlHeight } from '@/constants/tokens';
 
 type OrderType = 'customer' | 'supermarket';
@@ -345,7 +346,7 @@ export default function RecordSaleScreen() {
             style={{ backgroundColor: isOutOfStock ? colorTokens.border.light : colors.accentSoft }}
           >
             {product.imageUrl ? (
-              <StyledImage source={{ uri: product.imageUrl }} className="h-full w-full" />
+              <StyledImage source={{ uri: imageUri(product.imageUrl) }} className="h-full w-full" />
             ) : (
               <StyledText className="font-display text-accent" style={{ fontSize: typeScale.section.fontSize }}>
                 {getInitials(product.name)}

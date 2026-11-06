@@ -9,6 +9,7 @@ import { Surface } from "@/components/ui/surface";
 import { useToast } from "@/components/ui/toast";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { useBusiness, type UpdateBusinessPayload } from "@/hooks/useBusiness";
+import { imageUri, prepareImageForUpload } from "@/lib/image";
 import { copy } from "@/constants/copy";
 import { typeScale } from "@/constants/tokens";
 
@@ -108,7 +109,8 @@ export default function BusinessProfileScreen() {
         toast.error("Please select an image under 5 MB.", "Image Too Large");
         return;
       }
-      setLogoUri(asset.uri);
+      const prepared = await prepareImageForUpload(asset);
+      setLogoUri(prepared.uri);
       setIsDirty(true);
     }
   };
@@ -220,7 +222,7 @@ export default function BusinessProfileScreen() {
             >
               {logoUri ? (
                 <StyledImage
-                  source={{ uri: logoUri }}
+                  source={{ uri: imageUri(logoUri) }}
                   className="h-16 w-16 rounded-pill"
                   style={{ backgroundColor: colors.brandSoft }}
                 />
